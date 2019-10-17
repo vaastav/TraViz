@@ -1,0 +1,34 @@
+Attributes:Cycles,Agent,ProcessName,TaskID,ParentEventID,Label,Title,Host,HRT,Timestamp,TenantClass,ThreadID,ThreadName,EventID,ProcessID,Tag,Duration,Operation,Source,BaggageBytes
+Average number of events1427.65060563
+Min number of events0
+Max number of events9697
+Number of traces71001
+Values for attribute Cycles: 1
+Values: 0
+Values for attribute Agent: 15
+Values: edu.brown.cs.systems.retro.benchmarks.hdfs_client.Writer,Execution-CPU,org.apache.hadoop.ipc.ProtobufRpcEngine,edu.brown.cs.systems.xtrace.logging.BaggageWrappers,org.apache.hadoop.ipc.Server,org.apache.hadoop.hdfs.server.namenode.FSNamesystem.audit,Execution-Sleep,org.apache.hadoop.hdfs.StateChange,edu.brown.cs.systems.pivottracing2.baggage.PivotTracingBaggage,org.apache.hadoop.hdfs.server.datanode.DataNode,edu.brown.cs.systems.xtrace.logging.XTraceInit,org.apache.hadoop.hdfs.server.datanode.DataNode.clienttrace,org.apache.hadoop.hdfs.server.namenode.FSEditLog,edu.brown.cs.systems.retro.benchmarks.hdfs_client.Reader,edu.brown.cs.systems.retro.benchmarks.hdfs_client.ReaderRandomSize
+Values for attribute ProcessName: 4
+Values: Writ,Name,Data,Read
+Values for attribute TaskID: 70966
+Values for attribute ParentEventID: 100858063
+Values for attribute Label: 210597
+Values for attribute Title: 1
+Values: X-Trace Task
+Values for attribute Host: 9
+Values: pinky19.mpi-sws.org,pinky27.mpi-sws.org,pinky26.mpi-sws.org,pinky20.mpi-sws.org,pinky23.mpi-sws.org,pinky21.mpi-sws.org,pinky22.mpi-sws.org,pinky24.mpi-sws.org,pinky25.mpi-sws.org
+Values for attribute HRT: 101363143
+Values for attribute Timestamp: 101284660
+Values for attribute TenantClass: 1
+Values: 0
+Values for attribute ThreadID: 33325
+Values for attribute ThreadName: 1
+Values: 
+Values for attribute EventID: 101363193
+Values for attribute ProcessID: 18
+Values: 46617,2171,2319,31438,17069,13111,24612,20775,28841,28692,28198,2801,6356,21035,48141,36430,11446,40748
+Values for attribute Tag: 10107
+Values for attribute Duration: 1552331
+Values for attribute Operation: 5
+Values: unset,fork,set,waited,join
+Values for attribute Source: 77
+Values for attribute BaggageBytes: 40760514

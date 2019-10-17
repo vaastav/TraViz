@@ -1,0 +1,31 @@
+Attributes:Cycles,Agent,ProcessName,TaskID,ParentEventID,Label,Title,Host,HRT,Timestamp,Source,ThreadID,EventID,ProcessID,Operation,RequestID,clientType,Tag
+Average number of events99.4177510545
+Min number of events3
+Max number of events736
+Number of traces22286
+Values for attribute Cycles: 2119454
+Values for attribute Agent: 17
+Values: luaxtrace.cpp,lua_baggage.cpp,MediaHandler.h,ClientPool.h,StartTrace,thread_local_baggage.cpp,UniqueIdHandler.h,TextHandler.h,UserMentionHandler.h,ComposePostHandler.h,UserHandler.h,UrlShortenHandler.h,PostStorageHandler.h,UserTimelineHandler.h,SocialGraphHandler.h,WriteHomeTimelineService.cpp,HomeTimelineHandler.h
+Values for attribute ProcessName: 13
+Values: ,MediaService,UniqueIdService,TextService,UserMentionService,ComposePostService,UserService,UrlShortenService,PostStorageService,UserTimelineService,SocialGraphService,WriteHomeTimelineService,HomeTimelineService
+Values for attribute TaskID: 22285
+Values for attribute ParentEventID: 2108280
+Values for attribute Label: 2472
+Values for attribute Title: 1
+Values: X-Trace Task
+Values for attribute Host: 13
+Values: nginx-thrift,media-service,unique-id-service,text-service,user-mention-service,compose-post-service,user-service,url-shorten-service,post-storage-service,user-timeline-service,social-graph-service,write-home-timeline-service,home-timeline-service
+Values for attribute HRT: 2215243
+Values for attribute Timestamp: 536960
+Values for attribute Source: 500
+Values for attribute ThreadID: 3368
+Values for attribute EventID: 2214793
+Values for attribute ProcessID: 20
+Values: 11,1,24,12,10,8,25,17,9,18,23,7,13,19,16,15,22,14,20,21
+Values for attribute Operation: 3
+Values: fork,set,unset
+Values for attribute RequestID: 22260
+Values for attribute clientType: 11
+Values: compose-post,url-shorten-service,user-mention-service,redis,post-storage-client,rabbitmq,user-timeline-client,user-timeline-redis,social-graph,social-graph-service,home-timeline-redis
+Values for attribute Tag: 7
+Values: ['NginxWebServer5', 'ComposePost'],['NginxWebServer', 'ReadUserTimeline'],['NginxWebServer', 'Follow'],['WriteHomeTimelineService'],['NginxWebServer', 'Register'],['NginxWebServer', 'ReadHomeTimeline'],['NginxWebServer', 'Unfollow']
