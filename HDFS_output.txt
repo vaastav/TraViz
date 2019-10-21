@@ -32,3 +32,17 @@ Values for attribute Operation: 5
 Values: unset,fork,set,waited,join
 Values for attribute Source: 77
 Values for attribute BaggageBytes: 40760514
+Avg Num Parent Events Per Event: 1.19158682186
+Min Parent Events Per Event: 1
+Max Parent Events Per Event: 2
+Avg Num Unique Threads Per Trace: 6.98170422535
+Min Unique Threads Per Trace: 0
+Max Unique Threads Per Trace: 14
+Avg Num Tags Per Trace: 2.0
+Min Num Tags Per Trace: 2
+Max Num Tags Per Trace: 2
+Number of files in source: 1714
+Total number of lines in source: 548915
+Avg. number of lines per file: 328.298444976
+Max number of lines per file: 19520
+Min number of lines per file: 0

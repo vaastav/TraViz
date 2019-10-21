@@ -29,3 +29,14 @@ Values for attribute clientType: 11
 Values: compose-post,url-shorten-service,user-mention-service,redis,post-storage-client,rabbitmq,user-timeline-client,user-timeline-redis,social-graph,social-graph-service,home-timeline-redis
 Values for attribute Tag: 7
 Values: ['NginxWebServer5', 'ComposePost'],['NginxWebServer', 'ReadUserTimeline'],['NginxWebServer', 'Follow'],['WriteHomeTimelineService'],['NginxWebServer', 'Register'],['NginxWebServer', 'ReadHomeTimeline'],['NginxWebServer', 'Unfollow']
+Avg Num Parent Events Per Event: 1.04609536636
+Min Parent Events Per Event: 0
+Max Parent Events Per Event: 2
+Avg Num Unique Threads Per Trace: 6.63349187831
+Min Unique Threads Per Trace: 1
+Max Unique Threads Per Trace: 44
+Number of files in source: 47
+Total number of lines in source: 8058
+Avg. number of lines per file: 171.446808511
+Max number of lines per file: 1252
+Min number of lines per file: 24
