@@ -1,18 +1,21 @@
 \section{Introduction}
 
-Distributed systems form the backbone of many modern applications. The Google search engine,
-YouTube, Facebook, and even the mediocre web app built by your neighbor's prodigy kid touches
-a distributed system in some way. These systems form much of the mission critical infrastructure
-of modern computing and are comprised of multiple nodes with complex communication patterns. Because
-of the importance and complexity of distributed systems, it is crucial for the developers building
-them to identify performance bottlenecks and visualize different communication patterns. 
+Distributed systems are prevalent in society to the extent that billions of people either directly or 
+indirectly depend on the correct functioning of a distributed system. From banking applications to social
+networks, from large-scale data analytics to online video streaming, from web searches to cryptocurrencies,
+most of the successful computing applications of today are powered by distributed systems.
+The meteoric rise of cloud computing in the past decade has only increased our dependence on these
+distributed systems in our lives.
 
-Tracing is a technique that allows developers to better understand distributed systems. A trace represents the
-path of one request through the system and contains information such as the timing of requests, 
+Tasks like monitoring, root cause analysis, performance comprehension require techniques that cut across component,
+system, and machine boundaries to collect, correlate, and integrate data. Distributed Tracing is one such cross-cutting technique
+that correlates events across the system to a specific request by propagating a unique context per system with the request.
+A trace represents the path of one request through the system and contains information such as the timing of requests, 
 the events executed, and the nodes where these events were executed. Moreover, traces can be used
-to identify slow requests and understand the difference between request executions. In this project, we
-propose to create a visualization tool that uses data from traces to succintly represent the structure 
+to identify slow requests and understand the difference between request executions. 
+
+In this project, we propose to create a visualization tool that uses data from traces to succinctly represent the structure 
 and performance of a distributed system. Our tool will allow users to compare the path taken by a group
 of requests to the path taken by other requests. We believe that a visualization tool that can represent the
-structure of a trace, while also visually encoding releveant performance information, will make distributed
-systems more understandable and debuggable.
+structure of a group of traces, while also visually encoding relevant performance information, will make
+it easier for the developers to triage root causes of performance bugs.
