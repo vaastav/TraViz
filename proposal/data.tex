@@ -1,0 +1,76 @@
+\section{Data}
+
+We have a collection of traces and source code for a couple of different systems. Our traces come from two datasets.
+The first dataset is called HDFS and contains the traces from a Haddop file system used for distributed storage 
+and big data processing. This dataset has a total of 71,001 traces. The second dataset is called socialNetwork and
+was obtained from the DeathStarBench open-source benchmark for cloud microservices. This dataset's traces model
+the microservices of a social network composed of multiple individual applications. The socialNetwork dataset has
+a total of 22,286 traces. The attributes of both datasets model five different entities: traces, events, hosts,
+processes and threads. These entities are illustrated in \ref{fig:entities}.
+
+\begin{figure}
+    \includegraphics[width=\linewidth]{../data_abstractions.png}
+    \caption{The different entities in TraViz.}
+    \label{fig:entities}
+  \end{figure}
+
+\subsection{Trace}
+
+A trace is a collection of events. It represents a request from a client to a service and shows the path of the
+request through the microservice. A trace has three attributes: \textit{id}, \textit{list\_of\_tags}, and \textit{list\_of\_events}.
+The \textit{id} of the trace is a categorical attribute used to identify a trace. The \textit{list\_of\_tags} is a list of human defined keywords that serve as
+the metadata for the trace. There are on average two tags per trace in both datasets, but the socialNetwork
+dataset has a total of 8 different tags and the HDFS dataset has a total of 22285 different tags. The
+\textit{list\_of\_events} attribute is a list of the events that happened in a trace. The events in the list
+are ordered, with events that caused another event preceding the caused event in the list. The causal relationship
+between the events forms a DAG. There are around 100 events per trace in the socialNetwork dataset and 1400 events per trace
+in the HDFS dataset.
+
+\subsection{Event}
+
+Events are important things that happen in a system, such as acquiring a lock, sending a request to another server,
+or performing an update. In short, events are anything a developer things is useful enough to log. Events have 11
+different attributes. They are \textit{id}, \textit{trace\_id}, \textit{thread\_id}, \textit{process\_id}, \textit{host\_name},
+\textit{parent\_event\_ids}, \textit{hrt}, \textit{lrt}, \textit{src\_line}, \textit{file\_path}, and \textit{label}. The
+\textit{id} is a categorical variable used to uniquely identify an event. The \textit{trace\_id} is another categorical
+attribute that indentifies the trace that holds an event. The \textit{thread\_id} is a categorical variable that identifies the
+thread that executed the event. The \textit{process\_id} gives the id of the process holding the thread that executed the event.
+The \textit{host\_name} gives the name of the machine running the process that executed the event. An event can have at most one
+host. The \textit{parent\_event\_ids} attribute is a collection of event ids. Each id maps to a parent event. The ids are used to
+create a causal ordering between events. The socialNetwork and HDFS datasets have on average one parent event id per event, but 
+can have up to two parent events for one event. 
+
+The \textit{hrt} is a quantitative attribute that stands for high resolution time
+stamp, and provides nanosecond level precision for the time an event was initiated. The \textit{lrt} is also a quantitative attribute.
+It provides a milisecond level precision low resolution time stamp for the time an event occured. The \textit{src\_line} gives the line
+in the source code where an event was logged. The \textit{file\_path} is a categorical attribute that gives the path to the file where 
+a programmer logged this specific event. This attribute can be used with the \textit{src\_line} to find the exact line of code of a logged event.
+The last attribute in an event is the \textit{label}. The label is a free-form text annotaion that gives a high-level description of the
+event. Labels are a meaningful human added annotation for debugging, and there are 2,472 labels in the socialNetwork dataset and 210,957 labels
+in the HDFS dataset.
+
+\subsection{Host}
+
+A host represents a node in the distributed system. Hosts encapsulate the processes and threads
+that execute the events in a trace. There are 13 different hosts across the social network dataset
+and 9 different hosts across the HDFS dataset. The host is identified by a categorical \textit{name} attribute , which is
+referenced by events and threads.
+
+\subsection{Process}
+
+The process entity represents a operating system process running on
+a host. Processes have a categorical \textit{id} attribute, which is referenced by the events and threads executed in
+the process. The process also has a categorical \textit{name} attribute, which gives a human understandable name for the
+application running the process. There are around 20 different processes per trace in the socialNetwork
+dataset and 18 different processes per trace in the HDFS dataset. There are 13 different process names
+in the socialNetwork dataset and 4 different process names in the HDFS dataset.
+
+\subsection{Thread}
+
+The thread entity represents
+a kernel or user thread. Distinguishing between both is not important for the purposes of this project, so we
+simply see it as the basic unit of execution. Threads have a categorical \textit{id} attribute that identifies a thread
+within a trace. Events use the \textit{id} to signal the thread that executed them. It is important to note
+that the thread \textit{id} does not match across traces, and the total number of threads is not useful because it's
+not possible to correlate them between traces. Each thread also has two more categorical attributes: the \textit{host\_name}
+and \textit{process\_id}. These attributes are used to identify the host and process that executed a thread. 

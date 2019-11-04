@@ -1,0 +1,19 @@
+\section{Proposed Solution}
+
+The events of a trace will be transformed into a node-link graph. We will compare the graphs formed by the events of different traces
+by partitioning them into side-by-side views. Because of the limited screen space of a computer monitor, we will allow at most two
+graphs to be compared at one time. Even though our tool will only allow two graphs to be compared at once, users will still be able
+to compare multiple traces by aggregating traces that go through the exact same nodes into one graph. In other words, traces that have
+the same structure can be aggregated into one graph. This aggregation procedure will allow us to make comparisons that involve many
+traces while only using two DAGs. The links of the graph will be saturated according to the average time it takes for the event in
+the end of the link to complete.
+
+One use-case scenario is a developer that wants to find out why two similar requests have very different completion times. The developer
+will select the two traces corresponding to the requests. After the traces are selected, our tool will use the events of these traces
+to generate a node-link graph. The graph of each trace will be partitioned into a side-by-side view. Using our tool, the developer may
+realize that even though both requests are retrieving similar things (let's suppose they are retrieving the profile picture of a user in 
+a social network), one of them forms a bigger graph with many red links. The developer may then realize that the fast request used a cached
+version of the image, while the other did not. Knowing the cost of a cache miss in this situation, the developer can optimize his service
+accordingly. 
+
+\textbf{ADD ILLUSTRATION OF WHAT INTERFACE WILL LOOK LIKE}
