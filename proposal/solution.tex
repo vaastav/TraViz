@@ -18,14 +18,6 @@ At the moment, our proposed solution for source code integration does not have a
 providing a link to the file and line in the github repo corresponding to the selected event in a trace. At least initially, we are not
 going to do any complicated visualization to accomplish the source code integration task.
 
-One use-case scenario is a developer that wants to find out why two similar requests have very different completion times. The developer
-will select the two traces corresponding to the requests. After the traces are selected, our tool will use the events of these traces
-to generate a node-link graph. The graph of each trace will be partitioned into a side-by-side view. Using our tool, the developer may
-realize that even though both requests are retrieving similar things (let's suppose they are retrieving the profile picture of a user in 
-a social network), one of them forms a bigger graph with many red links. The developer may then realize that the fast request used a cached
-version of the image, while the other did not. Knowing the cost of a cache miss in this situation, the developer can optimize his service
-accordingly. 
-
 \begin{figure}
     \includegraphics[width=\linewidth]{comparison.jpg}
     \caption{Example of a comparison task where we compare one task that calls Postgres and another that calls Redis. The trace that
