@@ -6,7 +6,17 @@ graphs to be compared at one time. Even though our tool will only allow two grap
 to compare multiple traces by aggregating traces that go through the exact same nodes into one graph. In other words, traces that have
 the same structure can be aggregated into one graph. This aggregation procedure will allow us to make comparisons that involve many
 traces while only using two DAGs. The links of the graph will be saturated according to the average time it takes for the event in
-the end of the link to complete.
+the end of the link to complete. We will also use colour hue to identify the \textit{process\_name} of each event. A preliminary sketch of
+this visualization can be seen in Figure \ref{fig:comparison}.
+
+We will use a similar approach to create the dependency graph. To create the dependency graph for one trace, we will transform the list
+of events into a DAG represented by a node-link graph. All the events with the same \textit{process\_name} will be aggregated into the same
+node. In this representation, the aggreated node will represent a service in a microservice. The links to the node will be saturated according
+to the amount of time it takes for all the events in a service to complete. A preliminary sketch of this visualization can be seen in Figure \ref{fig:aggregation}.
+
+At the moment, our proposed solution for source code integration does not have a specific visualization in mind. We are thinking about
+providing a link to the file and line in the github repo corresponding to the selected event in a trace. At least initially, we are not
+going to do any complicated visualization to accomplish the source code integration task.
 
 One use-case scenario is a developer that wants to find out why two similar requests have very different completion times. The developer
 will select the two traces corresponding to the requests. After the traces are selected, our tool will use the events of these traces
@@ -16,4 +26,15 @@ a social network), one of them forms a bigger graph with many red links. The dev
 version of the image, while the other did not. Knowing the cost of a cache miss in this situation, the developer can optimize his service
 accordingly. 
 
-\textbf{ADD ILLUSTRATION OF WHAT INTERFACE WILL LOOK LIKE}
+\begin{figure}
+    \includegraphics[width=\linewidth]{comparison.jpg}
+    \caption{Example of a comparison task where we compare one task that calls Postgres and another that calls Redis. The trace that
+    called Postgres triggers slow events (represented by the red links) and triggers more events in general.}
+    \label{fig:comparison}
+\end{figure}
+
+\begin{figure}
+    \includegraphics[width=\linewidth]{agg.jpg}
+    \caption{Example of an aggregation task where events with the same \textit{process\_name} get aggregated into the same node.}
+    \label{fig:aggregation}
+\end{figure}
