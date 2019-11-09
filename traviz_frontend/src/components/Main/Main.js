@@ -4,6 +4,8 @@ import Home from "../../pages/Home/Home";
 import ComparisonPage from "../../pages/Comparison/ComparisonPage";
 import DependenciesPage from "../../pages/Dependencies/DependenciesPage";
 
+import "./Main.css";
+
 function Main() {
     return (
         <main>
