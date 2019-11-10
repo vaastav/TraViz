@@ -15,6 +15,7 @@ import (
 
 type Config struct {
     Dir string `json:"dir"`
+    Cache string `json:"cache"`
 }
 
 
@@ -56,6 +57,10 @@ func parseConfig(filename string) (Config, error) {
     return config, nil
 }
 
+func buildState(config Config) error {
+    filepath.Walk(config.Dir, VisitFile)
+}
+
 //Returns the overview of the traces
 func overview(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "Welcome home!")
@@ -67,13 +72,17 @@ func main() {
 
     flag.Parse()
 
-    log.Println("Config File: " , *configPtr)
+    log.Println("Parsing config file")
     config, err := parseConfig(*configPtr)
     if err != nil {
         log.Fatal(err)
     }
 
-    filepath.Walk(config.Dir, VisitFile)
+    log.Println("Building State using the config")
+    err = buildState(config)
+    if err != nil {
+        log.Fatal(err)
+    }
 
     log.Println("Starting server now")
 
