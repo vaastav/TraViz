@@ -42,15 +42,17 @@ type XTrace struct {
     Events []Event `json:"reports"`
 }
 
+//Struct that represents the statistics to be collected when the trace is
+//processed to be inserted into the sql database
 type TraceStats struct {
     Duration uint64
     DOC time.Time
     NumEvents int
     Tags []string
     Source map[string]int
-    TS int64
 }
 
+//Struct that represents the Config with which the server should be started
 type Config struct {
     Dir string `json:"dir"`
     DB string `json:"db"`
@@ -59,6 +61,7 @@ type Config struct {
     IP string `json:"ip"`
 }
 
+//Struct that represents the Server
 type Server struct {
     DB *sql.DB
     Router *mux.Router
@@ -66,6 +69,8 @@ type Server struct {
     Dir string
 }
 
+//Processes a given XTrace and returns the statistics collected
+//for the given trace
 func processTrace(trace XTrace) TraceStats {
     var earliest_timestamp int64
     var earliest_time_hrt uint64
@@ -92,9 +97,10 @@ func processTrace(trace XTrace) TraceStats {
     }
     duration := latest_time_hrt - earliest_time_hrt
     doc := time.Unix(0, earliest_timestamp * 1000000)
-    return TraceStats{Duration: duration, DOC: doc, NumEvents: len(trace.Events), Tags: tags, Source: sourceMap, TS: earliest_timestamp}
+    return TraceStats{Duration: duration, DOC: doc, NumEvents: len(trace.Events), Tags: tags, Source: sourceMap}
 }
 
+//Parses config from a json file and returns the parsed Config struct
 func parseConfig(filename string) (Config, error) {
     jsonFile, err := os.Open(filename)
     if err != nil {
@@ -113,6 +119,8 @@ func parseConfig(filename string) (Config, error) {
     return config, nil
 }
 
+//Sets up the server with the given config
+//Also updates the database if the database needs to be updated
 func setupServer(config Config) (*Server, error) {
     connString := config.Username + ":" + config.Password + "@tcp(127.0.0.1:3306)/" + config.DB
     db, err := sql.Open("mysql", connString)
@@ -134,6 +142,7 @@ func setupServer(config Config) (*Server, error) {
     return &server, nil
 }
 
+//Checks and loads any new traces that are available
 func (s * Server) LoadTraces() error {
     results, err := s.DB.Query("SELECT trace_id, loc FROM overview;")
     if err != nil {
