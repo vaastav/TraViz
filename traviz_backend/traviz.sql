@@ -23,6 +23,7 @@ CREATE TABLE `traviz`.`sourcecode`(
     trace_id varchar(64) NOT NULL,
     linenum int,
     fname varchar(256),
+    num int,
     primary key(trace_id, linenum, fname),
     foreign key(trace_id) references overview(trace_id)
 );
