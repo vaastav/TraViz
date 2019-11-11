@@ -4,9 +4,10 @@ USE traviz ;
 
 CREATE TABLE `traviz`.`overview`(
     trace_id varchar(64) NOT NULL,
-    duration UNSIGNED BIGINT,
+    duration BIGINT UNSIGNED,
     doc date,
     loc varchar(256),
+    num_events int,
     unique(trace_id),
     primary key(trace_id)
 );
