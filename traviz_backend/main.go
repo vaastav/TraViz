@@ -250,12 +250,30 @@ func (s * Server) LoadTraces() error {
 func (s * Server) routes() {
     s.Router.HandleFunc("/", s.Overview)
     s.Router.HandleFunc("/overview", s.Overview)
+    s.Router.HandleFunc("/traces/{id}", s.GetTrace)
+    s.Router.HandleFunc("/source", s.SourceCode)
+    s.Router.HandleFunc("/dependency", s.Dependency)
 }
 
 //Returns the overview of the traces
 func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
     log.Println(r)
     fmt.Fprintf(w, "Welcome home!")
+}
+
+func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
+    log.Println(r)
+    fmt.Fprintf(w, "Not Implemented Yet!\n")
+}
+
+func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
+    log.Println(r)
+    fmt.Fprintf(w, "Not Implemented Yet!\n")
+}
+
+func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
+    log.Println(r)
+    fmt.Fprintf(w, "Not Implemented Yet!\n")
 }
 
 
