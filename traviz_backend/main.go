@@ -7,13 +7,49 @@ import (
     "fmt"
     "io/ioutil"
     "log"
+    "math"
     "net/http"
     "os"
     "path/filepath"
+    "strconv"
+    "strings"
+    "time"
     "github.com/gorilla/mux"
     _ "github.com/go-sql-driver/mysql"
 )
 
+// Represents an event in the trace. Currently, only a subset of the fields are parsed
+// which are relevant to TraViz
+type Event struct {
+    ProcessName string `json:"ProcessName"`
+    Label string `json:Label"`
+    Timestamp int64 `json:"Timestamp"`
+    HRT uint64 `json:"HRT"`
+    EventID string `json:"EventID"`
+    Parents []string `json:"ParentEventID"`
+    ThreadID int `json:"ThreadID"`
+    Agent string `json:"Agent"`
+    ProcessID int `json:"ProcessID"`
+    Tags []string `json:"Tag"`
+    Source string `json:"Source"`
+    Host string `json:"Host"`
+    Cycles int `json:"Cycles"`
+}
+
+//Struct that represents an XTrace. This corresponds to XTraceV4
+type XTrace struct {
+    ID string `json:"id"`
+    Events []Event `json:"reports"`
+}
+
+type TraceStats struct {
+    Duration uint64
+    DOC time.Time
+    NumEvents int
+    Tags []string
+    Source map[string]int
+    TS int64
+}
 
 type Config struct {
     Dir string `json:"dir"`
@@ -27,26 +63,36 @@ type Server struct {
     DB *sql.DB
     Router *mux.Router
     Traces map[string]string
+    Dir string
 }
 
-func VisitFile(fp string, fi os.FileInfo, err error) error {
-    if err != nil {
-        log.Println(err)
-        return nil
+func processTrace(trace XTrace) TraceStats {
+    var earliest_timestamp int64
+    var earliest_time_hrt uint64
+    earliest_time_hrt = math.MaxUint64
+    var latest_time_hrt uint64
+    var tags []string
+    sourceMap := make(map[string]int)
+    for _ ,event := range trace.Events {
+        if event.HRT < earliest_time_hrt {
+            earliest_time_hrt = event.HRT
+            earliest_timestamp = event.Timestamp
+        }
+        if event.HRT > latest_time_hrt {
+            latest_time_hrt = event.HRT
+        }
+        for _ , tag := range event.Tags {
+            tags = append(tags, tag)
+        }
+        if v, ok := sourceMap[event.Source]; !ok {
+            sourceMap[event.Source] = 1
+        } else {
+            sourceMap[event.Source] = v + 1
+        }
     }
-    if fi.IsDir() {
-        return nil
-    }
-
-    matched, err :=  filepath.Match("*.json", fi.Name())
-    if err != nil {
-        log.Fatal(err)
-    }
-    if matched {
-        fmt.Println(fp)
-    }
-
-    return nil
+    duration := latest_time_hrt - earliest_time_hrt
+    doc := time.Unix(0, earliest_timestamp * 1000000)
+    return TraceStats{Duration: duration, DOC: doc, NumEvents: len(trace.Events), Tags: tags, Source: sourceMap, TS: earliest_timestamp}
 }
 
 func parseConfig(filename string) (Config, error) {
@@ -77,13 +123,118 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
-    log.Println("Database connection setup")
-    router := mux.NewRouter().StrictSlash(true)
     traces := make(map[string]string)
-    server := Server{DB: db, Router:router, Traces: traces}
+    router := mux.NewRouter().StrictSlash(true)
+    server := Server{DB: db, Router:router, Traces: traces, Dir: config.Dir}
+    err = server.LoadTraces()
+    if err != nil {
+        return nil, err
+    }
     server.routes()
-    //filepath.Walk(config.Dir, VisitFile)
     return &server, nil
+}
+
+func (s * Server) LoadTraces() error {
+    results, err := s.DB.Query("SELECT trace_id, loc FROM overview;")
+    if err != nil {
+        return err
+    }
+
+    for results.Next() {
+        var tid string
+        var loc string
+        err = results.Scan(&tid, &loc)
+        if err != nil {
+            return err
+        }
+        s.Traces[tid] = loc
+    }
+
+    overview_stmtIns, err := s.DB.Prepare("INSERT INTO overview VALUES( ?, ?, ?, ?, ? )")
+    if err != nil {
+        return err
+    }
+    defer overview_stmtIns.Close()
+    tags_stmtIns, err := s.DB.Prepare("INSERT INTO tags VALUES( ?, ? )")
+    if err != nil {
+        return err
+    }
+    defer tags_stmtIns.Close()
+    srccode_stmtIns, err := s.DB.Prepare("INSERT INTO sourcecode VALUES( ?, ?, ?, ? )")
+
+    var newTraces []XTrace
+    err = filepath.Walk(s.Dir, func(fp string, fi os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+        if fi.IsDir() {
+            return nil
+        }
+
+        matched, err :=  filepath.Match("*.json", fi.Name())
+        if err != nil {
+            log.Fatal(err)
+        }
+        if matched {
+            var traces []XTrace
+            f, err := os.Open(fp)
+            if err != nil {
+                return err
+            }
+            defer f.Close()
+            dec := json.NewDecoder(f)
+            err = dec.Decode(&traces)
+            if err != nil {
+                return err
+            }
+            if len(traces) != 1 {
+                //Multiple traces in 1 file not handled yet
+                return nil
+            }
+            if _, ok := s.Traces[traces[0].ID]; !ok {
+                // This trace is not in the database yet
+                s.Traces[traces[0].ID] = fp
+                newTraces = append(newTraces, traces[0])
+            }
+        }
+        return nil
+    })
+    if err != nil {
+        return err
+    }
+    log.Println("New traces to be processed", len(newTraces))
+    const createdFormat = "2006-01-02 15:04:05"
+    for _, trace := range newTraces {
+        log.Println("Processing", trace.ID)
+        stats := processTrace(trace)
+        _, err = overview_stmtIns.Exec( trace.ID, stats.Duration, stats.DOC.Format(createdFormat), s.Traces[trace.ID], stats.NumEvents)
+        if err != nil {
+            log.Println(stats.TS, trace.ID, s.Traces[trace.ID])
+            return err
+        }
+        for _, tag := range stats.Tags {
+            _, err = tags_stmtIns.Exec( trace.ID, tag)
+            if err != nil {
+                return err
+            }
+        }
+        for source, val := range stats.Source {
+            if source == " " || source == "" {
+                continue
+            }
+            tokens := strings.Split(source, ":")
+            linenum, err := strconv.Atoi(tokens[1])
+            if err != nil {
+                return err
+            }
+            fname := tokens[0]
+            _, err = srccode_stmtIns.Exec( trace.ID, linenum, fname, val)
+            if err != nil {
+                return err
+            }
+        }
+    }
+    return nil
 }
 
 //Setup the various API endpoints for this server
