@@ -161,6 +161,7 @@ func setupServer(config Config) (*Server, error) {
 //Checks and loads any new traces that are available
 func (s * Server) LoadTraces() error {
     results, err := s.DB.Query("SELECT trace_id, loc FROM overview;")
+    locations := make(map[string]bool)
     if err != nil {
         return err
     }
@@ -173,6 +174,7 @@ func (s * Server) LoadTraces() error {
             return err
         }
         s.Traces[tid] = loc
+        locations[loc] = true
     }
 
     overview_stmtIns, err := s.DB.Prepare("INSERT INTO overview VALUES( ?, ?, ?, ?, ? )")
@@ -201,25 +203,27 @@ func (s * Server) LoadTraces() error {
             log.Fatal(err)
         }
         if matched {
-            var traces []XTrace
-            f, err := os.Open(fp)
-            if err != nil {
-                return err
-            }
-            defer f.Close()
-            dec := json.NewDecoder(f)
-            err = dec.Decode(&traces)
-            if err != nil {
-                return err
-            }
-            if len(traces) != 1 {
-                //Multiple traces in 1 file not handled yet
-                return nil
-            }
-            if _, ok := s.Traces[traces[0].ID]; !ok {
-                // This trace is not in the database yet
-                s.Traces[traces[0].ID] = fp
-                newTraces = append(newTraces, traces[0])
+            if _, ok := locations[fp] ; !ok{
+                var traces []XTrace
+                f, err := os.Open(fp)
+                if err != nil {
+                    return err
+                }
+                defer f.Close()
+                dec := json.NewDecoder(f)
+                err = dec.Decode(&traces)
+                if err != nil {
+                    return err
+                }
+                if len(traces) != 1 {
+                    //Multiple traces in 1 file not handled yet
+                    return nil
+                }
+                if _, ok := s.Traces[traces[0].ID]; !ok {
+                    // This trace is not in the database yet
+                    s.Traces[traces[0].ID] = fp
+                    newTraces = append(newTraces, traces[0])
+                }
             }
         }
         return nil
