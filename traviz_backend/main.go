@@ -218,7 +218,7 @@ func (s * Server) LoadTraces() error {
         stats := processTrace(trace)
         _, err = overview_stmtIns.Exec( trace.ID, stats.Duration, stats.DOC.Format(createdFormat), s.Traces[trace.ID], stats.NumEvents)
         if err != nil {
-            log.Println(stats.TS, trace.ID, s.Traces[trace.ID])
+            log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
             return err
         }
         for _, tag := range stats.Tags {
@@ -258,21 +258,55 @@ func (s * Server) routes() {
 //Returns the overview of the traces
 func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
     log.Println(r)
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
     fmt.Fprintf(w, "Welcome home!")
 }
 
 func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
     log.Println(r)
-    fmt.Fprintf(w, "Not Implemented Yet!\n")
+    w.Header().Set("Content-Type", "application/json")
+    params := mux.Vars(r)
+    if len(params) != 1 {
+        w.WriteHeader(http.StatusBadRequest)
+        fmt.Fprintf(w, "Invalid Request\n")
+        return
+    }
+    traceID := params["id"]
+    if v, ok := s.Traces[traceID]; !ok {
+        w.WriteHeader(http.StatusBadRequest)
+        fmt.Fprintf(w, "Invalid Trace ID\n")
+        return
+    } else {
+        var traces []XTrace
+        f, err := os.Open(v)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            fmt.Fprintf(w, "Internal Server Error\n")
+        }
+        defer f.Close()
+        dec := json.NewDecoder(f)
+        err = dec.Decode(&traces)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            fmt.Fprintf(w, "Internal Server Error\n")
+        }
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(traces[0])
+    }
 }
 
 func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
     log.Println(r)
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
     fmt.Fprintf(w, "Not Implemented Yet!\n")
 }
 
 func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
     log.Println(r)
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
     fmt.Fprintf(w, "Not Implemented Yet!\n")
 }
 
