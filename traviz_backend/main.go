@@ -62,8 +62,6 @@ type Config struct {
 }
 
 type SourceCodeRow struct {
-    ID string
-    Date string
     Linenum int
     Fname string
     Count int
@@ -348,7 +346,7 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
 func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
-    rows, err := s.DB.Query("SELECT overview.trace_id, overview.doc, sourcecode.linenum, sourcecode.num, sourcecode.fname FROM overview INNER JOIN sourcecode ON overview.trace_id = sourcecode.trace_id")
+    rows, err := s.DB.Query("SELECT fname,linenum,SUM(num) FROM sourcecode GROUP BY fname,linenum")
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
         fmt.Fprintf(w, "Internal Server Error\n")
@@ -357,7 +355,7 @@ func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
     var responseRows []SourceCodeRow
     for rows.Next() {
         var responseRow SourceCodeRow
-        err = rows.Scan(&responseRow.ID, &responseRow.Date, &responseRow.Linenum, &responseRow.Count, &responseRow.Fname)
+        err = rows.Scan(&responseRow.Fname, &responseRow.Linenum, &responseRow.Count)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
             fmt.Fprintf(w, "Internal Server Error\n")
