@@ -1,9 +1,9 @@
 import axios from "axios";
-const API_URL = "https://stuffthingstuff.com"
+const API_URL = "198.162.52.119:9000"
 
 class TraceService {
     async getAllTraces() {
-        const url = `${API_URL}/traces/`;
+        const url = `${API_URL}/overview`;
         return axios.get(url).then(response => response.data)
     }
 

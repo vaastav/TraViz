@@ -13,7 +13,10 @@ class Home extends React.Component {
     }
 
     compoenentDidMount() {
+        console.log("Mounting")
         this.traceService.getAllTraces().then(response => {
+            console.log("Getting all traces")
+            console.log(response)
             this.setState({ traces: response});
         });
     }

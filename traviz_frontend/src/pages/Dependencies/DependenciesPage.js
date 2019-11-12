@@ -14,8 +14,8 @@ class DependenciesPage extends React.Component {
     componentDidMount() {
         const id = this.props.match.params.id;
 
-        this.traceService(id).then(response => {
-            this.setState({ trace: response });
+        this.traceService.getTrace(id).then(response => {
+            this.setState({ trace: response});
         });
     }
 
