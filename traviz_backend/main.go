@@ -61,6 +61,22 @@ type Config struct {
     IP string `json:"ip"`
 }
 
+type SourceCodeRow struct {
+    ID string
+    Date string
+    Linenum int
+    Fname string
+    Count int
+}
+
+type OverviewRow struct {
+    ID string
+    Duration uint64
+    Date string
+    NumEvents int
+    Tags []string
+}
+
 //Struct that represents the Server
 type Server struct {
     DB *sql.DB
@@ -259,8 +275,37 @@ func (s * Server) routes() {
 func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
+    rows, err := s.DB.Query("SELECT overview.trace_id, overview.doc, overview.duration, overview.num_events FROM overview")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        fmt.Fprintf(w, "Internal Server Error\n")
+        return
+    }
+    var responseRows []OverviewRow
+    for rows.Next() {
+        var responseRow OverviewRow
+        err = rows.Scan(&responseRow.ID, &responseRow.Date, &responseRow.Duration, &responseRow.NumEvents)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            fmt.Fprintf(w, "Internal Server Error\n")
+            return
+        }
+        tagRows, err :=  s.DB.Query("SELECT tag FROM tags WHERE trace_id=?", responseRow.ID)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            fmt.Fprintf(w, "Internal Server Error\n")
+            return
+        }
+        for tagRows.Next() {
+            var tag string
+            tagRows.Scan(&tag)
+            responseRow.Tags = append(responseRow.Tags, tag)
+        }
+        responseRows = append(responseRows, responseRow)
+    }
+    log.Println("Sending", len(responseRows), "rows")
     w.WriteHeader(http.StatusOK)
-    fmt.Fprintf(w, "Welcome home!")
+    json.NewEncoder(w).Encode(responseRows)
 }
 
 func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
@@ -299,8 +344,26 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
 func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
+    rows, err := s.DB.Query("SELECT overview.trace_id, overview.doc, sourcecode.linenum, sourcecode.num, sourcecode.fname FROM overview INNER JOIN sourcecode ON overview.trace_id = sourcecode.trace_id")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        fmt.Fprintf(w, "Internal Server Error\n")
+        return
+    }
+    var responseRows []SourceCodeRow
+    for rows.Next() {
+        var responseRow SourceCodeRow
+        err = rows.Scan(&responseRow.ID, &responseRow.Date, &responseRow.Linenum, &responseRow.Count, &responseRow.Fname)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            fmt.Fprintf(w, "Internal Server Error\n")
+            return
+        }
+        responseRows = append(responseRows, responseRow)
+    }
+    log.Println("Sending", len(responseRows), "rows")
     w.WriteHeader(http.StatusOK)
-    fmt.Fprintf(w, "Not Implemented Yet!\n")
+    json.NewEncoder(w).Encode(responseRows)
 }
 
 func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
