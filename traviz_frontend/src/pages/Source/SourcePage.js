@@ -13,16 +13,15 @@ class SourcePage extends React.Component {
 
     componentDidMount() {
         const id = this.props.match.params.id;
-        console.log("Inside component did mount");
         this.SourceService.getSource(id).then(response => {
-            console.log(response)
             this.setState({ source: response});
         });
+        console.log("this is the state")
+        console.log(this.state)
     }
 
     render() {
         const source = this.state.source;
-        console.log("Inside render");
         return (
             <div>
                 <h2>Source:</h2>

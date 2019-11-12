@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "198.162.52.119:9000"
+const API_URL = "http://198.162.52.119:9000"
 
 class TraceService {
     async getAllTraces() {

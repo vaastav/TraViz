@@ -14,7 +14,7 @@ function Main() {
                 <Route exact path="/" component={Home} />
                 <Route path="/comparison/" component={ComparisonPage} />
                 <Route path="/dependencies/:id" component={DependenciesPage} />
-                <Route path="/source/" component={SourcePage} />
+                <Route path="/srccode/" component={SourcePage} />
             </Switch>
         </main>
     );
