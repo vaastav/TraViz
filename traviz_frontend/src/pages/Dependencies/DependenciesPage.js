@@ -17,6 +17,7 @@ class DependenciesPage extends React.Component {
         this.traceService.getTrace(id).then(response => {
             this.setState({ trace: response});
         });
+        console.log(this.state)
     }
 
     render() {

@@ -12,7 +12,7 @@ class Home extends React.Component {
         this.traceService = new TraceService();
     }
 
-    compoenentDidMount() {
+    componentDidMount() {
         this.traceService.getAllTraces().then(response => {
             this.setState({ traces: response});
         });
@@ -22,7 +22,7 @@ class Home extends React.Component {
         return this.state.traces.map((trace, id) => {
             return (
                 <li id={id}>
-                    <Link to={`/dependencies/${trace.id}`}> {trace.tags} </Link>
+                    <Link to={`/dependencies/${trace.ID}`}> {trace.Date} </Link>
                 </li>
             )
         })

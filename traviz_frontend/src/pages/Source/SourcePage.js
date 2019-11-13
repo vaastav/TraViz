@@ -16,8 +16,6 @@ class SourcePage extends React.Component {
         this.SourceService.getSource(id).then(response => {
             this.setState({ source: response});
         });
-        console.log("this is the state")
-        console.log(this.state)
     }
 
     render() {
