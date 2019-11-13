@@ -4,7 +4,6 @@ import (
     "database/sql"
     "encoding/json"
     "flag"
-    "fmt"
     "io/ioutil"
     "log"
     "math"
@@ -73,6 +72,10 @@ type OverviewRow struct {
     Date string
     NumEvents int
     Tags []string
+}
+
+type ErrorResponse struct {
+    Error string
 }
 
 //Struct that represents the Server
@@ -273,14 +276,21 @@ func (s * Server) routes() {
     s.Router.HandleFunc("/dependency", s.Dependency)
 }
 
+func setupResponse(w *http.ResponseWriter, r *http.Request) {
+    (*w).Header().Set("Access-Control-Allow-Origin", "*")
+    (*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+    (*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
 //Returns the overview of the traces
 func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
     rows, err := s.DB.Query("SELECT overview.trace_id, overview.doc, overview.duration, overview.num_events FROM overview")
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
-        fmt.Fprintf(w, "Internal Server Error\n")
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
         return
     }
     var responseRows []OverviewRow
@@ -289,13 +299,13 @@ func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
         err = rows.Scan(&responseRow.ID, &responseRow.Date, &responseRow.Duration, &responseRow.NumEvents)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprintf(w, "Internal Server Error\n")
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
             return
         }
         tagRows, err :=  s.DB.Query("SELECT tag FROM tags WHERE trace_id=?", responseRow.ID)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprintf(w, "Internal Server Error\n")
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
             return
         }
         for tagRows.Next() {
@@ -311,32 +321,33 @@ func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
     params := mux.Vars(r)
     if len(params) != 1 {
         w.WriteHeader(http.StatusBadRequest)
-        fmt.Fprintf(w, "Invalid Request\n")
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Request"})
         return
     }
     traceID := params["id"]
     if v, ok := s.Traces[traceID]; !ok {
         w.WriteHeader(http.StatusBadRequest)
-        fmt.Fprintf(w, "Invalid Trace ID\n")
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID"})
         return
     } else {
         var traces []XTrace
         f, err := os.Open(v)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprintf(w, "Internal Server Error\n")
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
         }
         defer f.Close()
         dec := json.NewDecoder(f)
         err = dec.Decode(&traces)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprintf(w, "Internal Server Error\n")
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
         }
         w.WriteHeader(http.StatusOK)
         json.NewEncoder(w).Encode(traces[0])
@@ -344,12 +355,13 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
     rows, err := s.DB.Query("SELECT fname,linenum,SUM(num) FROM sourcecode GROUP BY fname,linenum")
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
-        fmt.Fprintf(w, "Internal Server Error\n")
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
         return
     }
     var responseRows []SourceCodeRow
@@ -358,7 +370,7 @@ func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
         err = rows.Scan(&responseRow.Fname, &responseRow.Linenum, &responseRow.Count)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprintf(w, "Internal Server Error\n")
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
             return
         }
         responseRows = append(responseRows, responseRow)
@@ -369,10 +381,11 @@ func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(http.StatusOK)
-    fmt.Fprintf(w, "Not Implemented Yet!\n")
+    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented Yet"})
 }
 
 
