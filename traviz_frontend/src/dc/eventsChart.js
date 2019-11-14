@@ -20,6 +20,7 @@ const eventsChartFunc = (divRef, ndx) => {
     .filterPrinter( (filters) => {
         var filter = filters[0], s = '';
         s += numberFormat(filter[0]) + ' -> ' + numberFormat(filter[1]);
+        return s;
     });
 
     eventsChart.xAxis().tickFormat(

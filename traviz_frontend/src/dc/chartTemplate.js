@@ -4,16 +4,15 @@ import * as dc from "dc";
 
 const ResetButton = props => {
   return (
-    <span
+    <input class="btn" type="button" value="Reset"
       onClick={() => {
         props.chart.filterAll();
         dc.redrawAll();
       }}
-    >
-      reset
-    </span>
+    />
   );
 };
+
 export const ChartTemplate = props => {
     /*
     We render the dc chart using an effect. We want to pass the chart as a prop after the dc call,
@@ -36,9 +35,8 @@ export const ChartTemplate = props => {
     <div
       ref={div}
     >
-    
-     <ResetButton chart={chart} /> 
      <label>{props.title}</label>
+     <ResetButton chart={chart} /> 
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { TraceTable } from "./traceTable";
 import { DataContext } from "./cxContext";
 import { css } from 'glamor';
 import { EventsChart } from './eventsChart';
+import { DurationChart } from './durationChart';
 
 export const Dashboard = (props)=>{
 
@@ -23,6 +24,9 @@ export const Dashboard = (props)=>{
                     <Col md={3} >
                         <Row>
                             <EventsChart />
+                        </Row>
+                        <Row>
+                            <DurationChart />
                         </Row>
                     </Col>
                 </Row>
