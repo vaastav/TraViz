@@ -7,7 +7,7 @@ const NextButton = props => {
         <input id="next" class="btn" type="button" value="Next"
             onClick={() => {
                 var totFilteredRecs = props.ndx.groupAll().value();
-                var ofs = props.table.endSlice();
+                var ofs = props.table.beginSlice();
                 var pag = 50;
                 var ofs = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
                 console.log(ofs);
