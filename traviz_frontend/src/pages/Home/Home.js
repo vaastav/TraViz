@@ -1,6 +1,6 @@
 import React from "react";
 import { Grid } from "react-flexbox-grid";
-import { Dashboard } from "../../DataContext/dashboard";
+import { Dashboard } from "../../dc/dashboard";
 
 class Home extends React.Component {
 
@@ -16,3 +16,4 @@ class Home extends React.Component {
 }
 
 export default Home
+
