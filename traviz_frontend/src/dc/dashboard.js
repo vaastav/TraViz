@@ -3,6 +3,7 @@ import {Grid,Row,Col} from 'react-flexbox-grid'
 import { TraceTable } from "./traceTable";
 import { DataContext } from "./cxContext";
 import { css } from 'glamor';
+import { EventsChart } from './eventsChart';
 
 export const Dashboard = (props)=>{
 
@@ -14,8 +15,15 @@ export const Dashboard = (props)=>{
         <div {...style}>
         <DataContext>
                 <Row>
-                    <Col md={12} >
+                    <Col md={6} >
                         <TraceTable />
+                    </Col>
+                    <Col md={3} >
+                    </Col>
+                    <Col md={3} >
+                        <Row>
+                            <EventsChart />
+                        </Row>
                     </Col>
                 </Row>
         </DataContext>
