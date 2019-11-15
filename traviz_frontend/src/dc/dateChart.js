@@ -7,12 +7,13 @@ const dateChartFunc = (divRef, ndx) => {
     const dateChart = dc.barChart(divRef);
     const dimension = ndx.dimension(function(d) { return d.dd;});
     const dates = dimension.group(d3.timeDay);
+    console.log(dimension.bottom(1));
     dateChart
     .dimension(dimension)
     .group(dates)
     .round(d3.timeDay.round)
     .x(d3.scaleTime()
-        .domain([d3.min(dimension.bottom(1)[0].dd), d3.max(dimension.top(1)[0].dd)])
+        .domain([dimension.bottom(1)[0].dd, dimension.top(1)[0].dd])
         .rangeRound([0, 10 * 90])
     );
 
