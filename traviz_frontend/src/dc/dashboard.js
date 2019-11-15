@@ -5,6 +5,7 @@ import { DataContext } from "./cxContext";
 import { css } from 'glamor';
 import { EventsChart } from './eventsChart';
 import { DurationChart } from './durationChart';
+import { DateChart } from './dateChart';
 
 export const Dashboard = (props)=>{
 
@@ -27,6 +28,9 @@ export const Dashboard = (props)=>{
                         </Row>
                         <Row>
                             <DurationChart />
+                        </Row>
+                        <Row>
+                            <DateChart />
                         </Row>
                     </Col>
                 </Row>

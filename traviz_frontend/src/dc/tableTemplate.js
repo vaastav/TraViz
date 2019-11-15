@@ -10,11 +10,9 @@ const NextButton = props => {
                 var ofs = props.table.beginSlice();
                 var pag = 50;
                 var ofs = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
-                console.log(ofs);
                 props.table.beginSlice(ofs);
                 props.table.endSlice(ofs+pag);
                 props.table.redraw();
-                console.log("Reached here");
             }} />
     );
 };

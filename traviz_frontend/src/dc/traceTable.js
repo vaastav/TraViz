@@ -42,7 +42,6 @@ const tableFunc = (divRef, ndx) => {
     .showGroups(false)
     .on('preRender', function (table) {
           var totFilteredRecs = ndx.groupAll().value();
-          console.log("PreRender");
           var end = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
           ofs = ofs >= totFilteredRecs ? Math.floor((totFilteredRecs - 1) / pag) * pag : ofs;
           ofs = ofs < 0 ? 0 : ofs;
@@ -51,7 +50,6 @@ const tableFunc = (divRef, ndx) => {
     })
     .on('preRedraw', function (table) {
           var totFilteredRecs = ndx.groupAll().value();
-          console.log("PreRedraw");
           ofs = table.beginSlice();
           console.log(ofs);
           var end = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
