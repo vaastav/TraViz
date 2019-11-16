@@ -2,19 +2,14 @@ import React from 'react'
 import {Grid,Row,Col} from 'react-flexbox-grid'
 import { TraceTable } from "./traceTable";
 import { DataContext } from "./cxContext";
-import { css } from 'glamor';
 import { EventsChart } from './eventsChart';
 import { DurationChart } from './durationChart';
 import { DateChart } from './dateChart';
 
 export const Dashboard = (props)=>{
 
-    const style = css({
-        padding:'1rem',
-        marginTop:'2rem'
-    })
     return(
-        <div {...style}>
+        <div>
         <DataContext>
                 <Row>
                     <Col md={6} >

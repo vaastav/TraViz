@@ -5,7 +5,7 @@ import "dc/dc.css";
 import {format as d3Format } from 'd3'
 import * as d3 from "d3";
 import { TableTemplate } from "./tableTemplate";
-import { numberFormat } from "./cxContext";
+import { numberFormat, CXContext } from "./cxContext";
 
 const tableFunc = (divRef, ndx) => {
     const traceTable = dc.dataTable(divRef);
@@ -83,5 +83,5 @@ const tableFunc = (divRef, ndx) => {
 }
 
 export const TraceTable = props => (
-    <TableTemplate tableFunction={tableFunc} title="Summary Table"/>
+    <TableTemplate tableFunction={tableFunc} context={React.useContext(CXContext)} title="Summary Table"/>
 )

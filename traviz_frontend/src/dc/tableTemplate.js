@@ -42,7 +42,7 @@ export const Pagination = props => {
 }
 
 export const TableTemplate = props => {
-    const context = React.useContext(CXContext);
+    const context = props.context;
     const [table,updateTable] = React.useState(null);
     const ndx = context.ndx;
     const div = React.useRef(null);
