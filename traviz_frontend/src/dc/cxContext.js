@@ -18,7 +18,7 @@ export class DataContext extends React.Component {
     this.traceService = new TraceService();
   }
 
-  componentDidMount(){
+  componentDidMount() {
       if (this.state.hasNDX){
           return
       }
