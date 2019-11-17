@@ -27,8 +27,6 @@ export class DataContext extends React.Component {
       }
       this.setState({loading:true})
       this.traceService.getAllTraces().then(traces => {
-          console.log("Reached here");
-          console.log(traces);
           traces.forEach(function (d) {
               d.dd = dateFormatParser(d.Date);
               d.month = timeMonth(d.dd);
@@ -36,7 +34,6 @@ export class DataContext extends React.Component {
               d.NumEvents = +d.NumEvents;
               d.Tags = d.Tags;
           });
-          console.log(traces);
           this.ndx = crossfilter(traces);
           this.setState({loading:false,hasNDX:true});  
       });

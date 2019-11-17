@@ -7,7 +7,6 @@ const dateChartFunc = (divRef, ndx) => {
     const dateChart = dc.barChart(divRef);
     const dimension = ndx.dimension(function(d) { return d.dd;});
     const dates = dimension.group(d3.timeDay);
-    console.log(dimension.bottom(1));
     dateChart
     .dimension(dimension)
     .group(dates)
