@@ -10,10 +10,10 @@ const tableFunc = (divRef, ndx)=> {
     var ofs=0;
     var pag=50;
     srcTable.dimension(dimension)
-    .group(d=>{return d.Fname;} )
+    .group(d=>{return null;} )
     .columns([
-        'Line',
-        'Filename',
+        'Linenum',
+        'Fname',
         'Count'
     ])
     .sortBy(function (d) { return d.Count; })

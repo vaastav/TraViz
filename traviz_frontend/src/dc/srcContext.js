@@ -21,10 +21,11 @@ export class SourceContext extends React.Component {
         this.setState({loading:true})
         this.sourceService.getSource().then(sources=> {
             sources.forEach(function (d) {
-                d.Linenum = +d.Linenum;
-                d.Fname = d.Fname;
                 d.Count = +d.Count;
+                d.Fname = d.Fname;
+                d.Linenum = +d.Linenum;
             });
+            console.log(sources);
 
             this.ndx = crossfilter(sources);
             this.setState({loading:false,hasNDX:true});
