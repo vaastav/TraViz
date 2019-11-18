@@ -15,7 +15,7 @@ const eventsChartFunc = (divRef, ndx) => {
     .x(scaleLinear().domain([0,400]).rangeRound([0, 10 * 20]))
     .y(scaleLinear().domain([0, 10000]))
     .valueAccessor(x=>x.value)
-    .centerBar(true)
+    .centerBar(false)
     .xUnits(function() { return 21; })
     .renderHorizontalGridLines(true)
     .filterPrinter( (filters) => {

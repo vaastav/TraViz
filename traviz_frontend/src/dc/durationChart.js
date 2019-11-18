@@ -13,9 +13,9 @@ const durationChartFunc = (divRef, ndx) => {
     .group(group)
     .gap(1)
     .x(scaleLinear().domain([0,1000]).rangeRound([0, 10 * 40]))
-    .y(scaleLinear().domain([0, 2000]))
+    .y(scaleLinear().domain([0, dimension.top(1)[0].Duration]))
     .valueAccessor(x=>x.value)
-    .centerBar(true)
+    .centerBar(false)
     .xUnits(function() { return 21; })
     .round(dc.round.floor)
     .filterPrinter( (filters) => {
@@ -29,7 +29,7 @@ const durationChartFunc = (divRef, ndx) => {
     );
 
     durationChart.yAxis().tickFormat(
-        function (v) { return v;}
+        function (v) { return v/ 1000 + 'K';}
     );
 
     return durationChart;
