@@ -117,6 +117,49 @@ func processTrace(trace XTrace) TraceStats {
     return TraceStats{Duration: duration, DOC: doc, NumEvents: len(trace.Events), Tags: tags, Source: sourceMap}
 }
 
+func all_parents_seen(event Event, seen_events map[string]bool) bool {
+    result := true
+    for _, parent := range event.Parents {
+        if _, ok := seen_events[parent]; ok {
+            // This parent is already in the log. We can continue
+            continue
+        } else {
+            // Add the current event to waiting events
+            result = false
+            break
+        }
+    }
+    return result
+}
+
+func sort_events(events []Event) []Event {
+    var sorted_events []Event
+    seen_events := make(map[string]bool)
+    var waiting_events []Event
+    for _, event := range events {
+        // Check if each parent has been seen before
+        parents_seen := all_parents_seen(event, seen_events)
+        if parents_seen {
+            sorted_events = append(sorted_events, event)
+            seen_events[event.EventID] = true
+            // Check the waiting list
+            for _, waiting_event := range waiting_events {
+                // We have already marked this waiting_event as seen. #LazyRemoval
+                if _, ok := seen_events[waiting_event.EventID]; ok {
+                    continue
+                }
+                if all_parents_seen(waiting_event, seen_events) {
+                    sorted_events = append(sorted_events, waiting_event)
+                    seen_events[waiting_event.EventID] = true
+                }
+            }
+        } else {
+            waiting_events = append(waiting_events, event)
+        }
+    }
+    return sorted_events
+}
+
 //Parses config from a json file and returns the parsed Config struct
 func parseConfig(filename string) (Config, error) {
     jsonFile, err := os.Open(filename)
@@ -350,7 +393,7 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
         }
         w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(traces[0])
+        json.NewEncoder(w).Encode(sort_events(traces[0].Events))
     }
 }
 
