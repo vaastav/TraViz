@@ -12,8 +12,13 @@ const tableFunc = (divRef, ndx)=> {
     srcTable.dimension(dimension)
     .group(d=>{return null;} )
     .columns([
+        {
+            label: 'Filename',
+            format: function(d) {
+                return '<a href=' + d.Link + '>' + d.Fname + '</a>';
+            }
+        },
         'Linenum',
-        'Fname',
         'Count'
     ])
     .sortBy(function (d) { return d.Count; })

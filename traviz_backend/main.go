@@ -51,6 +51,11 @@ type TraceStats struct {
     Source map[string]int
 }
 
+type Swap struct {
+    Src string `json:"src"`
+    Dst string `json:"dst`
+}
+
 //Struct that represents the Config with which the server should be started
 type Config struct {
     Dir string `json:"dir"`
@@ -59,6 +64,7 @@ type Config struct {
     Password string `json:"pwd"`
     IP string `json:"ip"`
     Repo string `json:"repo"`
+    Swaps []Swap `json:"swaps"`
 }
 
 type SourceCodeRow struct {
@@ -85,8 +91,7 @@ type Server struct {
     DB *sql.DB
     Router *mux.Router
     Traces map[string]string
-    Dir string
-    Repo string
+    Config Config
 }
 
 //Processes a given XTrace and returns the statistics collected
@@ -196,7 +201,7 @@ func setupServer(config Config) (*Server, error) {
     }
     traces := make(map[string]string)
     router := mux.NewRouter().StrictSlash(true)
-    server := Server{DB: db, Router:router, Traces: traces, Dir: config.Dir, Repo: config.Repo}
+    server := Server{DB: db, Router:router, Traces: traces, Config: config}
     err = server.LoadTraces()
     if err != nil {
         return nil, err
@@ -237,7 +242,7 @@ func (s * Server) LoadTraces() error {
     srccode_stmtIns, err := s.DB.Prepare("INSERT INTO sourcecode VALUES( ?, ?, ?, ? )")
 
     var newTraces []XTrace
-    err = filepath.Walk(s.Dir, func(fp string, fi os.FileInfo, err error) error {
+    err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
         if err != nil {
             return err
         }
@@ -419,7 +424,10 @@ func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
             return
         }
-        responseRow.Link = s.Repo + responseRow.Fname + "#L" + strconv.Itoa(responseRow.Linenum)
+        for _, swap := range s.Config.Swaps {
+            responseRow.Fname = strings.Replace(responseRow.Fname, swap.Src, swap.Dst, 1)
+        }
+        responseRow.Link = s.Config.Repo + responseRow.Fname + "#L" + strconv.Itoa(responseRow.Linenum)
         responseRow.Fname = filepath.Base(responseRow.Fname)
         responseRows = append(responseRows, responseRow)
     }

@@ -23,7 +23,7 @@ const dateChartFunc = (divRef, ndx) => {
         .rangeRound([0, 10 * 10])
     );
 
-    dateChart.xAxis().ticks(3).tickFormat(
+    dateChart.xAxis().ticks(2).tickFormat(
         function (v) { return monthNames[v.getMonth()] + " " + v.getDate(); }
     )
 

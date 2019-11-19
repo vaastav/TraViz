@@ -24,6 +24,7 @@ export class SourceContext extends React.Component {
                 d.Count = +d.Count;
                 d.Fname = d.Fname;
                 d.Linenum = +d.Linenum;
+                d.Link = d.Link;
             });
             console.log(sources);
 
