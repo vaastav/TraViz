@@ -58,12 +58,14 @@ type Config struct {
     Username string `json:"username"`
     Password string `json:"pwd"`
     IP string `json:"ip"`
+    Repo string `json:"repo"`
 }
 
 type SourceCodeRow struct {
     Linenum int
     Fname string
     Count int
+    Link string
 }
 
 type OverviewRow struct {
@@ -84,6 +86,7 @@ type Server struct {
     Router *mux.Router
     Traces map[string]string
     Dir string
+    Repo string
 }
 
 //Processes a given XTrace and returns the statistics collected
@@ -193,7 +196,7 @@ func setupServer(config Config) (*Server, error) {
     }
     traces := make(map[string]string)
     router := mux.NewRouter().StrictSlash(true)
-    server := Server{DB: db, Router:router, Traces: traces, Dir: config.Dir}
+    server := Server{DB: db, Router:router, Traces: traces, Dir: config.Dir, Repo: config.Repo}
     err = server.LoadTraces()
     if err != nil {
         return nil, err
@@ -416,6 +419,8 @@ func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
             return
         }
+        responseRow.Link = s.Repo + responseRow.Fname + "#L" + strconv.Itoa(responseRow.Linenum)
+        responseRow.Fname = filepath.Base(responseRow.Fname)
         responseRows = append(responseRows, responseRow)
     }
     log.Println("Sending", len(responseRows), "rows")
