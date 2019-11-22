@@ -88,14 +88,14 @@ type OverviewRow struct {
 }
 
 type D3Node struct {
-    Name string
-    Group int
+    Name string `json:"name"`
+    Group int `json:"group"`
 }
 
 type D3Link struct {
-    Source int
-    Target int
-    Weight int
+    Source int `json:"source"`
+    Target int `json:"target"`
+    Weight int `json:"weight"`
 }
 
 type DependencyResponse struct {
