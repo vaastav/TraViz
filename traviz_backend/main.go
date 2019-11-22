@@ -87,10 +87,20 @@ type OverviewRow struct {
     Tags []string
 }
 
-type ServiceRow struct {
-    Source string
-    Destination string
-    Num int
+type D3Node struct {
+    Name string
+    Group int
+}
+
+type D3Link struct {
+    Source int
+    Target int
+    Weight int
+}
+
+type DependencyResponse struct {
+    Nodes []D3Node
+    Links []D3Link
 }
 
 type ErrorResponse struct {
@@ -566,19 +576,40 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
         return
     }
-    var responseRows []ServiceRow
+    depMap := make(map[Dependency]int)
     for rows.Next() {
-        var responseRow ServiceRow
-        err = rows.Scan(&responseRow.Source, &responseRow.Destination, &responseRow.Num)
+        var dep Dependency
+        var num int
+        err = rows.Scan(&dep.Source, &dep.Destination, &num)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
             return
         }
-        responseRows = append(responseRows, responseRow)
+        depMap[dep] = num
+    }
+    ids := make(map[string]int)
+    curr_id := 0
+    var nodes []D3Node
+    var links []D3Link
+    for dep, v := range depMap{
+        if _, ok := ids[dep.Source]; !ok{
+            node := D3Node{Name: dep.Source, Group:1}
+            ids[dep.Source] = curr_id
+            curr_id += 1
+            nodes = append(nodes, node)
+        }
+        if _, ok := ids[dep.Destination]; !ok {
+            node := D3Node{Name: dep.Destination, Group:1}
+            ids[dep.Destination] = curr_id
+            curr_id += 1
+            nodes = append(nodes, node)
+        }
+        link := D3Link{Source: ids[dep.Source], Target: ids[dep.Destination], Weight: v}
+        links = append(links, link)
     }
     w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(responseRows)
+    json.NewEncoder(w).Encode(&DependencyResponse{Nodes: nodes, Links: links})
 }
 
 
