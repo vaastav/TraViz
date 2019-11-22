@@ -82,6 +82,12 @@ type OverviewRow struct {
     Tags []string
 }
 
+type ServiceRow struct {
+    Source string
+    Destination string
+    Count int
+}
+
 type ErrorResponse struct {
     Error string
 }
@@ -440,8 +446,25 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
     setupResponse(&w, r)
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
+    rows, err := s.DB.Query("SELECT source,destination,SUM(num) FROM dependencies GROUP BY source,destination")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+        return
+    }
+    var responseRows []ServiceRow
+    for rows.Next() {
+        var responseRow ServiceRow
+        err = rows.Scan(&responseRow.Source, &responseRow.Destination, &responseRow.Num)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            return
+        }
+        serviceRows = append(responseRows, responseRow)
+    }
     w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented Yet"})
+    json.NewEncoder(w).Encode(responseRows)
 }
 
 
