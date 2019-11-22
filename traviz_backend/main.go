@@ -51,6 +51,11 @@ type TraceStats struct {
     Source map[string]int
 }
 
+type Dependency struct {
+    Source string
+    Destination string
+}
+
 type Swap struct {
     Src string `json:"src"`
     Dst string `json:"dst`
@@ -85,7 +90,7 @@ type OverviewRow struct {
 type ServiceRow struct {
     Source string
     Destination string
-    Count int
+    Num int
 }
 
 type ErrorResponse struct {
@@ -129,6 +134,28 @@ func processTrace(trace XTrace) TraceStats {
     duration := latest_time_hrt - earliest_time_hrt
     doc := time.Unix(0, earliest_timestamp * 1000000)
     return TraceStats{Duration: duration, DOC: doc, NumEvents: len(trace.Events), Tags: tags, Source: sourceMap}
+}
+
+func processDependencies(trace XTrace) map[Dependency]int {
+    depMap := make(map[Dependency]int)
+    events := make(map[string]Event)
+    for _, event := range trace.Events {
+        events[event.EventID] = event
+    }
+    for _, e := range events {
+        for _, parent := range e.Parents {
+            parent_event := events[parent]
+            if parent_event.ProcessName != e.ProcessName {
+                dep := Dependency{Source: parent_event.ProcessName, Destination: e.ProcessName}
+                if n, ok := depMap[dep]; !ok {
+                    depMap[dep] = 1
+                } else {
+                    depMap[dep] = n + 1
+                }
+            }
+        }
+    }
+    return depMap
 }
 
 func all_parents_seen(event Event, seen_events map[string]bool) bool {
@@ -212,8 +239,95 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
+    err = server.LoadDependencies()
+    if err != nil {
+        return nil, err
+    }
     server.routes()
     return &server, nil
+}
+
+func (s * Server) LoadDependencies() error {
+    results, err := s.DB.Query("SELECT overview.trace_id, loc FROM overview, dependencies WHERE overview.trace_id = dependencies.trace_id")
+    if err != nil {
+        return err
+    }
+    locations := make(map[string]bool)
+    seen_traces := make(map[string]bool)
+
+    for results.Next() {
+        var tid string
+        var loc string
+        err = results.Scan(&tid, &loc)
+        if err != nil {
+            return err
+        }
+        seen_traces[tid] = true
+        locations[loc] = true
+    }
+
+    log.Println(len(locations))
+
+    dep_stmtIns, err := s.DB.Prepare("INSERT INTO dependencies VALUES( ?, ?, ?, ?)")
+    if err != nil {
+        return err
+    }
+    defer dep_stmtIns.Close()
+
+    var newTraces []XTrace
+    err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+        if fi.IsDir() {
+            return nil
+        }
+
+        matched, err :=  filepath.Match("*.json", fi.Name())
+        if err != nil {
+            log.Fatal(err)
+        }
+        if matched {
+            if _, ok := locations[fp] ; !ok{
+                var traces []XTrace
+                f, err := os.Open(fp)
+                if err != nil {
+                    return err
+                }
+                defer f.Close()
+                dec := json.NewDecoder(f)
+                err = dec.Decode(&traces)
+                if err != nil {
+                    return err
+                }
+                if len(traces) != 1 {
+                    //Multiple traces in 1 file not handled yet
+                    return nil
+                }
+                if _, ok := seen_traces[traces[0].ID]; !ok {
+                    // This trace is not in the database yet
+                    seen_traces[traces[0].ID] = true
+                    newTraces = append(newTraces, traces[0])
+                }
+            }
+        }
+        return nil
+    })
+    if err != nil {
+        return err
+    }
+    log.Println("New traces to be processed for dependencies :", len(newTraces))
+    for _, trace := range newTraces {
+        deps := processDependencies(trace)
+        for dep, num := range deps {
+            _, err = dep_stmtIns.Exec( trace.ID, dep.Source, dep.Destination, num)
+            if err != nil {
+                log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
+                return err
+            }
+        }
+    }
+    return nil
 }
 
 //Checks and loads any new traces that are available
@@ -461,7 +575,7 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
             return
         }
-        serviceRows = append(responseRows, responseRow)
+        responseRows = append(responseRows, responseRow)
     }
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(responseRows)
