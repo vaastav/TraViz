@@ -8509,6 +8509,11 @@ react-app-polyfill@^0.2.1:
     raf "3.4.1"
     whatwg-fetch "3.0.0"
 
+react-d3-graph@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/react-d3-graph/-/react-d3-graph-2.3.0.tgz#7f387d838033dc1fb1e6d81ab910a3062a49fdc2"
+  integrity sha512-KjWr53wZt6gbHf4CREFSR9NGuo7P+7nxaj5OXKFna/RclZogxWgCsQne+jYd9bNqEWAg08Qn+xNDh74mqtJHHw==
+
 react-dev-utils@^7.0.3:
   version "7.0.5"
   resolved "https://registry.yarnpkg.com/react-dev-utils/-/react-dev-utils-7.0.5.tgz#cb95375d01ae71ca27b3c7616006ef7a77d14e8e"
