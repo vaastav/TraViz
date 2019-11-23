@@ -5,7 +5,48 @@ class DepGraph extends React.Component {
     constructor(props) {
         super(props);
         const data = props.context.ndx; 
-        const config = {};
+        const config = {
+            "collapsible": true,
+            "nodeHighlightBehavior": true,
+            "linkHighlightBehavior": true,
+            "highlightDegree": 1,
+            "highlightOpacity": 0.2,
+            "node": {
+                "color": "#d3d3d3",
+                "fontColor": "black",
+                "fontSize": 12,
+                "fontWeight": "normal",
+                "highlightColor": "red",
+                "highlightFontSize": 12,
+                "highlightFontWeight": "bold",
+                "highlightStrokeColor": "SAME",
+                "highlightStrokeWidth": 1.5,
+                "mouseCursor": "pointer",
+                "opacity": 1,
+                "renderLabel": true,
+                "size": 450,
+                "strokeColor": "none",
+                "strokeWidth": 1.5,
+                "svg": "",
+                "symbolType": "circle"
+            },
+            "link": {
+                "color": "#d3d3d3",
+                "fontColor": "red",
+                "fontSize": 10,
+                "fontWeight": "normal",
+                "highlightColor": "blue",
+                "highlightFontSize": 8,
+                "highlightFontWeight": "bold",
+                "mouseCursor": "pointer",
+                "opacity": 1,
+                "renderLabel": true,
+                "semanticStrokeWidth": false,
+                "strokeWidth": 4,
+                "markerHeight": 6,
+                "markerWidth": 6
+            },
+        };
         const uischema = {
             height: { "ui:readonly": "true" },
             width: { "ui:readonly": "true" },
