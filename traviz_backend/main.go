@@ -88,14 +88,13 @@ type OverviewRow struct {
 }
 
 type D3Node struct {
-    ID int `json:"id"`
-    Name string `json:"name"`
+    ID string `json:"id"`
     Group int `json:"group"`
 }
 
 type D3Link struct {
-    Source int `json:"source"`
-    Target int `json:"target"`
+    Source string `json:"source"`
+    Target string `json:"target"`
     Weight int `json:"weight"`
 }
 
@@ -595,18 +594,18 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
     var links []D3Link
     for dep, v := range depMap{
         if _, ok := ids[dep.Source]; !ok{
-            node := D3Node{ID: curr_id, Name: dep.Source, Group:1}
+            node := D3Node{ID: dep.Source, Group:1}
             ids[dep.Source] = curr_id
             curr_id += 1
             nodes = append(nodes, node)
         }
         if _, ok := ids[dep.Destination]; !ok {
-            node := D3Node{ID: curr_id, Name: dep.Destination, Group:1}
+            node := D3Node{ID: dep.Destination, Group:1}
             ids[dep.Destination] = curr_id
             curr_id += 1
             nodes = append(nodes, node)
         }
-        link := D3Link{Source: ids[dep.Source], Target: ids[dep.Destination], Weight: v}
+        link := D3Link{Source: dep.Source, Target: dep.Destination, Weight: v}
         links = append(links, link)
     }
     w.WriteHeader(http.StatusOK)
