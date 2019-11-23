@@ -88,6 +88,7 @@ type OverviewRow struct {
 }
 
 type D3Node struct {
+    ID int `json:"id"`
     Name string `json:"name"`
     Group int `json:"group"`
 }
@@ -99,8 +100,8 @@ type D3Link struct {
 }
 
 type DependencyResponse struct {
-    Nodes []D3Node
-    Links []D3Link
+    Nodes []D3Node `json:"nodes"`
+    Links []D3Link `json:"links"`
 }
 
 type ErrorResponse struct {
@@ -594,13 +595,13 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
     var links []D3Link
     for dep, v := range depMap{
         if _, ok := ids[dep.Source]; !ok{
-            node := D3Node{Name: dep.Source, Group:1}
+            node := D3Node{ID: curr_id, Name: dep.Source, Group:1}
             ids[dep.Source] = curr_id
             curr_id += 1
             nodes = append(nodes, node)
         }
         if _, ok := ids[dep.Destination]; !ok {
-            node := D3Node{Name: dep.Destination, Group:1}
+            node := D3Node{ID: curr_id, Name: dep.Destination, Group:1}
             ids[dep.Destination] = curr_id
             curr_id += 1
             nodes = append(nodes, node)
