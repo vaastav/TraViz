@@ -1,6 +1,6 @@
 import React from "react";
 import * as dc from "dc";
-import { scaleLinear } from "d3";
+import { scaleLinear, scaleSymlog } from "d3";
 import { ChartTemplate } from "./chartTemplate";
 import { numberFormat } from "./cxContext";
 
@@ -13,7 +13,7 @@ const durationChartFunc = (divRef, ndx) => {
     .group(group)
     .gap(1)
     .x(scaleLinear().domain([0,1000]).rangeRound([0, 10 * 40]))
-    .y(scaleLinear().domain([0, dimension.top(1)[0].Duration]))
+    .y(scaleSymlog().domain([0, dimension.top(1)[0].Duration]))
     .valueAccessor(x=>x.value)
     .centerBar(false)
     .xUnits(function() { return 21; })
@@ -28,8 +28,13 @@ const durationChartFunc = (divRef, ndx) => {
         function (v) { return v;}
     );
 
-    durationChart.yAxis().tickFormat(
-        function (v) { return v/ 1000 + 'K';}
+    durationChart.yAxis().tickValues([1, 10, 100, 1000, 10000]).tickFormat(
+        function (v) {             
+            if((v % 1000) === 0) {
+                return v/1000 + 'K'; 
+            }
+            return v;
+        }
     );
 
     return durationChart;

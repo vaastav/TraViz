@@ -20,15 +20,20 @@ const dateChartFunc = (divRef, ndx) => {
     .xUnits(function() { return 21; })
     .x(d3.scaleTime()
         .domain([startDate, dimension.top(1)[0].dd])
-        .rangeRound([0, 10 * 10])
-    );
+        .rangeRound([0, 10 * 10]))
+    .y(d3.scaleSymlog().domain([0, 20000]));
 
     dateChart.xAxis().ticks(2).tickFormat(
         function (v) { return monthNames[v.getMonth()] + " " + v.getDate(); }
     )
 
-    dateChart.yAxis().ticks(10).tickFormat(
-        function (v) { return v / 1000 + 'K'; }
+    dateChart.yAxis().tickValues([1, 10, 100, 1000, 10000]).tickFormat(
+        function (v) {             
+            if((v % 1000) === 0) {
+                return v/1000 + 'K'; 
+            }
+            return v;
+        }
     );
 
     return dateChart;
