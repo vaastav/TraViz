@@ -2,7 +2,7 @@ import React from "react";
 import { Grid } from "react-flexbox-grid";
 import Swimlane from "../../components/Swimlane/Swimlane"
 
-class TraceEvents extends React.Component {
+class TraceEvents extends React.Component {zz
 
     render() {
         return (

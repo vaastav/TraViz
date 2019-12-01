@@ -13,7 +13,7 @@ function Main() {
             <Switch>
                 <Route exact path="/" component={Home} />
                 <Route exact path="/source" component={Source} />
-                <Route exact path="/trace" component={TraceEvents} />
+                <Route exact path="/trace/:id" component={TraceEvents} />
                 <Route exact path="/dependency" component={Dependency} />
             </Switch>
         </main>

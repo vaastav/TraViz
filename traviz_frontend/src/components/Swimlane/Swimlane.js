@@ -2,26 +2,105 @@ import React, { Component } from "react"
 import * as d3v3 from "d3-v3"
 import './Swimlane.css'
 import { parseData, generateRandomWorkItems } from "./randomData"
+import TraceService from "../../services/TraceService/TraceService";
+
+// export const  dateFormatSpecifier = '%Y-%m-%d %H:%M:%S';
+// export const dateFormat = d3v3.time.format(dateFormatSpecifier);
+// export const dateFormatParser = dateFormat.parse
+// export const dateFormatParser = d3v3.time.format('%Y-%m-%d %H:%M:%S').parse
+// export const numberFormat = d3v3.format('.2f');
+
+function createLanes(events) {
+    let lanes = []
+    let count = 0
+    events.forEach(event => {
+        if (!lanes.includes(event.ThreadID)) {
+            lanes.push({id: count, label: "thread" + event.ThreadID})
+        }
+        count++
+    });
+    return lanes
+}
+
+function createItems(events, lanes) {
+    events.forEach(event => {
+        
+    })
+}
+
+function getStartTime(events) {
+    let earliestStart = null
+    events.forEach(event => {
+        if (earliestStart === null) {
+            earliestStart = event.HRT
+        } else{
+            if (earliestStart > event.HRT) {
+                earliestStart = event.HRT
+            }
+        }
+    })
+}
+
+function getEndTime(events) {
+    let lastEnd = null
+    events.forEach(event => {
+        if (lastEnd === null) {
+            lastEnd = event.HRT
+        } else{
+            if (lastEnd < event.HRT) {
+                lastEnd = event.HRT
+            }
+        }
+    })
+}
+
+function createSpans(events) {
+
+}
 
 class Swimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
+        this.state = {trace: []};
+        this.traceService = new TraceService();
+
     }
 
     componentDidMount() {
-        this.createSwimlane();
+        const id = "018F8927E7620E61";
+        this.traceService.getTrace(id).then(trace => {
+            this.state.trace = trace
+            console.log(trace)
+            this.createSwimlane();
+        });
+        // console.log(trace.Date)
+        // trace.dd = dateFormatParser(trace.Date);
+        // trace.month = d3v3.time.month(trace.dd);
+        // trace.Duration = +trace.Duration / 1000000;x1DateAxis
+        // trace.NumEvents = +trace.NumEvents;
+        // trace.Tags = trace.Tags;
+        // this.createSwimlane();
     }
 
-    compomenentDidUpdate() {
+    componentDidUpdate() {
         this.createSwimlane();
     }
 
     createSwimlane() {
+        console.log("State trace")
+        console.log(this.state.trace)
         var data = parseData(generateRandomWorkItems())
-            , lanes = data.lanes
-            , items = data.items
-            , now = new Date();
+        let lanes = createLanes(this.state.trace)
+        let items = data.items
+        let now = new Date();
+        console.log("Items")
+        console.log(items)
+        console.log("Lanes")
+        console.log(lanes)
+        let start = getStartTime(this.state.trace)
+        let end = getEndTime(this.state.trace)
+        let duration = end - start
 
         var margin = { top: 20, right: 15, bottom: 15, left: 60 }
             , width = 960 - margin.left - margin.right
@@ -29,11 +108,8 @@ class Swimlane extends Component {
             , miniHeight = lanes.length * 12 + 50
             , mainHeight = height - miniHeight - 50;
 
-        var x = d3v3.time.scale()
-            .domain([d3v3.time.sunday(d3v3.min(items, function (d) { return d.start; })),
-            d3v3.max(items, function (d) { return d.end; })])
-            .range([0, width]);
-        var x1 = d3v3.time.scale().range([0, width]);
+        var x = d3v3.scale.linear().range([start, end]);
+        var x1 = d3v3.scale.linear().range([start, end]);
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         var y1 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, mainHeight]);
@@ -104,59 +180,60 @@ class Swimlane extends Component {
             .attr('class', 'laneText');
 
         // draw the x axis
-        var xDateAxis = d3v3.svg.axis()
+        var xAxis = d3v3.svg.axis()
             .scale(x)
             .orient('bottom')
-            .ticks(d3v3.time.mondays, (x.domain()[1] - x.domain()[0]) > 15552e6 ? 2 : 1)
-            .tickFormat(d3v3.time.format('%d'))
-            .tickSize(6, 0, 0);
+            // .ticks(d3v3.time.mondays, (x.domain()[1] - x.domain()[0]) > 15552e6 ? 2 : 1)
+            .ticks(start, end)
+            // .tickFormat(d3v3.time.format('%d'))
+            // .tickSize(6, 0, 0);
 
-        var x1DateAxis = d3v3.svg.axis()
+        var x1Axis = d3v3.svg.axis()
             .scale(x1)
             .orient('bottom')
-            .ticks(d3v3.time.days, 1)
-            .tickFormat(d3v3.time.format('%a %d'))
-            .tickSize(6, 0, 0);
+            .ticks(start, end)
+            // .tickFormat(d3v3.time.format('%a %d'))
+            // .tickSize(6, 0, 0);
 
-        var xMonthAxis = d3v3.svg.axis()
-            .scale(x)
-            .orient('top')
-            .ticks(d3v3.time.months, 1)
-            .tickFormat(d3v3.time.format('%b %Y'))
-            .tickSize(15, 0, 0);
+        // var xMonthAxis = d3v3.svg.axis()
+        //     .scale(x)
+        //     .orient('top')
+        //     .ticks(d3v3.time.months, 1)
+        //     .tickFormat(d3v3.time.format('%b %Y'))
+        //     .tickSize(15, 0, 0);
 
-        var x1MonthAxis = d3v3.svg.axis()
-            .scale(x1)
-            .orient('top')
-            .ticks(d3v3.time.mondays, 1)
-            .tickFormat(d3v3.time.format('%b - Week %W'))
-            .tickSize(15, 0, 0);
+        // var x1MonthAxis = d3v3.svg.axis()
+        //     .scale(x1)
+        //     .orient('top')
+        //     .ticks(d3v3.time.mondays, 1)
+        //     .tickFormat(d3v3.time.format('%b - Week %W'))
+        //     .tickSize(15, 0, 0);
 
         main.append('g')
             .attr('transform', 'translate(0,' + mainHeight + ')')
-            .attr('class', 'main axis date')
-            .call(x1DateAxis);
+            .attr('class', 'main axis')
+            .call(x1Axis);
 
-        main.append('g')
-            .attr('transform', 'translate(0,0.5)')
-            .attr('class', 'main axis month')
-            .call(x1MonthAxis)
-            .selectAll('text')
-            .attr('dx', 5)
-            .attr('dy', 12);
+        // main.append('g')
+        //     .attr('transform', 'translate(0,0.5)')
+        //     .attr('class', 'main axis month')
+        //     .call(x1MonthAxis)
+        //     .selectAll('text')
+        //     .attr('dx', 5)
+        //     .attr('dy', 12);
 
         mini.append('g')
             .attr('transform', 'translate(0,' + miniHeight + ')')
-            .attr('class', 'axis date')
-            .call(xDateAxis);
+            .attr('class', 'axis')
+            .call(xAxis);
 
-        mini.append('g')
-            .attr('transform', 'translate(0,0.5)')
-            .attr('class', 'axis month')
-            .call(xMonthAxis)
-            .selectAll('text')
-            .attr('dx', 5)
-            .attr('dy', 12);
+        // mini.append('g')
+        //     .attr('transform', 'translate(0,0.5)')
+        //     .attr('class', 'axis month')
+        //     .call(xMonthAxis)
+        //     .selectAll('text')
+        //     .attr('dx', 5)
+        //     .attr('dy', 12);
 
         // draw a line representing today's date
         main.append('line')
@@ -193,7 +270,7 @@ class Swimlane extends Component {
         // draw the selection area
         var brush = d3v3.svg.brush()
             .x(x)
-            .extent([d3v3.time.monday(now), d3v3.time.saturday.ceil(now)])
+            .extent([start, end])
             .on("brush", display);
 
         mini.append('g')
@@ -209,41 +286,41 @@ class Swimlane extends Component {
         function display() {
 
             var rects, labels
-                , minExtent = d3v3.time.day(brush.extent()[0])
-                , maxExtent = d3v3.time.day(brush.extent()[1])
+                , minExtent = brush.extent()[0]
+                , maxExtent = brush.extent()[1]
                 , visItems = items.filter(function (d) { return d.start < maxExtent && d.end > minExtent });
 
             mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
 
             x1.domain([minExtent, maxExtent]);
 
-            if ((maxExtent - minExtent) > 1468800000) {
-                x1DateAxis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%a %d'))
-                x1MonthAxis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%b - Week %W'))
-            }
-            else if ((maxExtent - minExtent) > 172800000) {
-                x1DateAxis.ticks(d3v3.time.days, 1).tickFormat(d3v3.time.format('%a %d'))
-                x1MonthAxis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%b - Week %W'))
-            }
-            else {
-                x1DateAxis.ticks(d3v3.time.hours, 4).tickFormat(d3v3.time.format('%I %p'))
-                x1MonthAxis.ticks(d3v3.time.days, 1).tickFormat(d3v3.time.format('%b %e'))
-            }
+            // if ((maxExtent - minExtent) > 1468800000) {
+            //     x1Axis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%a %d'))
+            //     // x1MonthAxis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%b - Week %W'))
+            // }
+            // else if ((maxExtent - minExtent) > 172800000) {
+            //     x1Axis.ticks(d3v3.time.days, 1).tickFormat(d3v3.time.format('%a %d'))
+            //     // x1MonthAxis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%b - Week %W'))
+            // }
+            // else {
+            //     x1Axis.ticks(d3v3.time.hours, 4).tickFormat(d3v3.time.format('%I %p'))
+            //     // x1MonthAxis.ticks(d3v3.time.days, 1).tickFormat(d3v3.time.format('%b %e'))
+            // }
 
 
             //x1Offset.range([0, x1(d3v3.time.day.ceil(now) - x1(d3v3.time.day.floor(now)))]);
 
-            // shift the today line
-            main.select('.main.todayLine')
-                .attr('x1', x1(now) + 0.5)
-                .attr('x2', x1(now) + 0.5);
+            // // shift the today line
+            // main.select('.main.todayLine')
+            //     .attr('x1', x1(now) + 0.5)
+            //     .attr('x2', x1(now) + 0.5);
 
             // update the axis
-            main.select('.main.axis.date').call(x1DateAxis);
-            main.select('.main.axis.month').call(x1MonthAxis)
-                .selectAll('text')
-                .attr('dx', 5)
-                .attr('dy', 12);
+            main.select('.main.axis').call(x1);
+            // main.select('.main.axis.month').call(x1MonthAxis)
+            //     .selectAll('text')
+            //     .attr('dx', 5)
+            //     .attr('dy', 12);
 
             // upate the item rects
             rects = itemRects.selectAll('rect')
@@ -278,9 +355,9 @@ class Swimlane extends Component {
         function moveBrush() {
             var origin = d3v3.mouse(this)
                 , point = x.invert(origin[0])
-                , halfExtent = (brush.extent()[1].getTime() - brush.extent()[0].getTime()) / 2
-                , start = new Date(point.getTime() - halfExtent)
-                , end = new Date(point.getTime() + halfExtent);
+                , halfExtent = (brush.extent()[1] - brush.extent()[0]) / 2
+                , start = point - halfExtent
+                , end = point + halfExtent;
 
             brush.extent([start, end]);
             display();
