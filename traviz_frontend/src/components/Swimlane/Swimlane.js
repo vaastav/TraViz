@@ -15,17 +15,11 @@ function createLanes(events) {
     let count = 0
     events.forEach(event => {
         if (!lanes.includes(event.ThreadID)) {
-            lanes.push({id: count, label: "thread" + event.ThreadID})
+            lanes.push({ id: count, label: "thread" + event.ThreadID })
         }
         count++
     });
     return lanes
-}
-
-function createItems(events, lanes) {
-    events.forEach(event => {
-        
-    })
 }
 
 function getStartTime(events) {
@@ -33,7 +27,7 @@ function getStartTime(events) {
     events.forEach(event => {
         if (earliestStart === null) {
             earliestStart = event.HRT
-        } else{
+        } else {
             if (earliestStart > event.HRT) {
                 earliestStart = event.HRT
             }
@@ -47,7 +41,7 @@ function getEndTime(events) {
     events.forEach(event => {
         if (lastEnd === null) {
             lastEnd = event.HRT
-        } else{
+        } else {
             if (lastEnd < event.HRT) {
                 lastEnd = event.HRT
             }
@@ -57,18 +51,27 @@ function getEndTime(events) {
 }
 
 function createSpans(events) {
-    let spans = new Map()
+    let spans = new Array();
     events.forEach(event => {
-        if (spans.has(event.ThreadID)) {
-            let eventsInSpan = spans.get(event.ThreadID)
-            eventsInSpan.push(event)
-            spans.set(event.ThreadID, eventsInSpan)
+        if (spans.find((s) => s.ThreadID === event.ThreadID) !== undefined) {
+            let i = spans.findIndex((s) => s.ThreadID === event.ThreadID);
+            let span = spans[i];
+            span.start = span.start > event.HRT ? event.HRT : span.start;
+            span.end = span.end < event.HRT ? event.HRT : span.end;
+            span.events.push(event);
+            spans[i] = span;
         } else {
-            let newSpan = new Array()
-            newSpan.push(event)
-            spans.set(event.ThreadID, newSpan)
+            let newEventArray = new Array();
+            newEventArray.push(event)
+            let newSpan = {
+                ThreadID: event.ThreadID,
+                start: event.HRT,
+                end: event.HRT,
+                events: newEventArray
+            };
+            spans.push(newSpan);
         }
-    })
+    });
     return spans
 }
 
@@ -76,7 +79,7 @@ class Swimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = {trace: []};
+        this.state = { trace: [] };
         this.traceService = new TraceService();
 
     }
