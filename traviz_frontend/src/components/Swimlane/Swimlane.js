@@ -79,6 +79,14 @@ function createSpans(events) {
     return spans
 }
 
+function mapThreadsIdsToLane(spans) {
+    let threadToLaneMap = new Map()
+    spans.forEach(span => {
+        threadToLaneMap.set(span.ThreadID, span.y_id)
+    });
+    return threadToLaneMap
+}
+
 // function cleanTrace(trace) {
 //     trace.forEach((e) => {
 //         e.ThreadID = e.ThreadID.replace(/-/g, "")
@@ -120,10 +128,14 @@ class Swimlane extends Component {
         var data = parseData(generateRandomWorkItems())
         console.log("Antique lanes")
         console.log(data.lanes)
+
+        let events = this.state.trace
         let lanes = createLanes(this.state.trace)
         let spans = createSpans(this.state.trace)
         let items = data.items
         let now = new Date();
+        console.log("Events")
+        console.log(events)
         console.log("Items");
         console.log(items);
         console.log("Lanes");
@@ -133,6 +145,7 @@ class Swimlane extends Component {
         let start = getStartTime(this.state.trace)
         let end = getEndTime(this.state.trace)
         let duration = end - start
+        let threadToLaneMap = mapThreadsIdsToLane(spans)
         console.log(start)
         console.log(end)
         console.log(duration)
@@ -290,7 +303,7 @@ class Swimlane extends Component {
             .attr('y2', miniHeight)
             .attr('class', 'todayLine');
 
-        // draw the items
+        // draw the spans
         var itemRects = main.append('g')
             .attr('clip-path', 'url(#clip)');
 
@@ -299,6 +312,30 @@ class Swimlane extends Component {
             .enter().append('path')
             .attr('class', function (d) { return 'miniItem ' + d.class; })
             .attr('d', function (d) { return d.path; });
+
+        // draw the event circles
+        var circles = main.append("g").selectAll("circle")
+            .data(events);
+        
+        console.log("Thread to lan MAP")
+        console.log(threadToLaneMap)
+        circles.enter()
+            .append("circle")
+            .attr("r", 2)
+            .attr("cx", function (d) { return x(d.HRT) })
+            .attr("cy", function (d) { return threadToLaneMap.get(d.ThreadID)})
+            .attr("fill", "purple")
+            .attr("stroke", "black");
+
+        console.log("Circles")
+        console.log(circles)
+
+        // circles.enter
+        // main.append("circle")
+        // .attr("cx", 10)
+        // .attr("cy", 10)
+        // .attr("r", 10)
+        // .style("fill", "purple");
 
         // invisible hit area to move around the selection window
         mini.append('rect')
@@ -394,6 +431,18 @@ class Swimlane extends Component {
                 .attr('class', 'itemLabel');
 
             labels.exit().remove();
+
+            // Update the event circles
+            circles.selectAll("circle")
+                .attr("x", function (d) { return x1(d.HRT); })
+            // circles = circle.selectAll("circle")
+            // .data(events, function(d) { return d.id; })
+            // .attr('x', function (d) { return x1(d.HRT); })
+
+            // circles.enter().append('circle')
+            // .attr('x', function (d) { return x1(d.HRT); })
+            // .attr('y', function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .1 * y1(1) + 0.5; })
+            // .attr('class', function (d) { return 'eventItem' })
         }
 
         function moveBrush() {
@@ -406,9 +455,6 @@ class Swimlane extends Component {
             brush.extent([start, end]);
             display();
         }
-
-        console.log("Old get paths")
-        // getPaths(items)
 
         // generates a single path for each item class in the mini display
         // ugly - but draws mini 2x faster than append lines or line generator
