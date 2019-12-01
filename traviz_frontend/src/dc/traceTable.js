@@ -22,7 +22,7 @@ const tableFunc = (divRef, ndx) => {
         {
             label: 'ID',
             format: function(d) {
-                return '<a href=traces/' + d.ID + '>' + d.ID + '</a>'
+                return '<a href=trace/' + d.ID + '>' + d.ID + '</a>'
             }
         },
         {
