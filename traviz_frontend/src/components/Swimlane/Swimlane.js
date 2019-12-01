@@ -374,7 +374,7 @@ class Swimlane extends Component {
 
             rects.enter().append('rect')
                 .attr('x', function (d) { return x1(d.start); })
-                .attr('y', function (d) { return y1(d.lane) + .1 * y1(1) + 0.5; })
+                .attr('y', function (d) { return y1(d.y_id) + .1 * y1(1) + 0.5; })
                 .attr('width', function (d) { return x1(d.end) - x1(d.start); })
                 .attr('height', function (d) { return .8 * y1(1); })
                 .attr('class', function (d) { return 'mainItem ' + d.class; });
