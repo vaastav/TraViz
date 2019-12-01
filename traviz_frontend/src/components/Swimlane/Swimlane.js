@@ -52,6 +52,7 @@ function getEndTime(events) {
 
 function createSpans(events) {
     let spans = new Array();
+    let count = 0
     events.forEach(event => {
         if (spans.find((s) => s.id === event.ThreadID) !== undefined) {
             let i = spans.findIndex((s) => s.id === event.ThreadID);
@@ -68,9 +69,11 @@ function createSpans(events) {
                 start: event.HRT,
                 end: event.HRT,
                 events: newEventArray,
-                class: "past"
+                class: "past",
+                y_id: count
             };
             spans.push(newSpan);
+            count++
         }
     });
     return spans
@@ -405,7 +408,7 @@ class Swimlane extends Component {
         }
 
         console.log("Old get paths")
-        //getPaths(items)
+        // getPaths(items)
 
         // generates a single path for each item class in the mini display
         // ugly - but draws mini 2x faster than append lines or line generator
@@ -418,9 +421,10 @@ class Swimlane extends Component {
             for (var i = 0; i < items.length; i++) {
                 d = items[i];
                 if (!paths[d.class]) paths[d.class] = '';
-                console.log("y2")
-                console.log(d)
-                paths[d.class] += ['M', x(d.start), (y2(d.ThreadID) + offset), 'H', x(d.end)].join(' ');
+                console.log("d")
+                console.log(d.id)
+                console.log(y2(d.id))
+                paths[d.class] += ['M', x(d.start), (y2(d.y_id) + offset), 'H', x(d.end)].join(' ');
             }
 
             for (var className in paths) {
