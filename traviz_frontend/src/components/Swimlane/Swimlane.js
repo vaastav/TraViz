@@ -39,6 +39,7 @@ function getStartTime(events) {
             }
         }
     })
+    return earliestStart
 }
 
 function getEndTime(events) {
@@ -52,11 +53,21 @@ function getEndTime(events) {
             }
         }
     })
+    return lastEnd
 }
 
-function createSpans(events) {
-
-}
+// function createSpans(events) {
+//     let spans = new Map()
+//     events.forEach(event => {
+//         if (spans.has(event.ThreadID)) {
+//             newSpan = spans.get(event.ThreadID).push(event)
+//             spans.set(event.ThreadID, newSpan)
+//         } else {
+//             spans.set(event.ThreadID, [].push(event))
+//         }
+//     })
+//     return spans
+// }
 
 class Swimlane extends Component {
     constructor(props) {
@@ -94,13 +105,16 @@ class Swimlane extends Component {
         let lanes = createLanes(this.state.trace)
         let items = data.items
         let now = new Date();
-        console.log("Items")
-        console.log(items)
-        console.log("Lanes")
-        console.log(lanes)
+        console.log("Items");
+        console.log(items);
+        console.log("Lanes");
+        console.log(lanes);
         let start = getStartTime(this.state.trace)
         let end = getEndTime(this.state.trace)
         let duration = end - start
+        console.log(start)
+        console.log(end)
+        console.log(duration)
 
         var margin = { top: 20, right: 15, bottom: 15, left: 60 }
             , width = 960 - margin.left - margin.right
@@ -108,8 +122,8 @@ class Swimlane extends Component {
             , miniHeight = lanes.length * 12 + 50
             , mainHeight = height - miniHeight - 50;
 
-        var x = d3v3.scale.linear().range([start, end]);
-        var x1 = d3v3.scale.linear().range([start, end]);
+        var x = d3v3.scale.linear().domain([start, end]).range([0, width]);
+        var x1 = d3v3.scale.linear().domain([start, end]).range([0, width]);
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         var y1 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, mainHeight]);
@@ -184,16 +198,22 @@ class Swimlane extends Component {
             .scale(x)
             .orient('bottom')
             // .ticks(d3v3.time.mondays, (x.domain()[1] - x.domain()[0]) > 15552e6 ? 2 : 1)
-            .ticks(start, end)
-            // .tickFormat(d3v3.time.format('%d'))
-            // .tickSize(6, 0, 0);
+            .ticks(5)
+            .tickFormat((d) => {
+                let scaledVals = x(d)
+                return d3v3.round(scaledVals)
+            })
+            .tickSize(6, 0, 0);
 
         var x1Axis = d3v3.svg.axis()
             .scale(x1)
             .orient('bottom')
-            .ticks(start, end)
-            // .tickFormat(d3v3.time.format('%a %d'))
-            // .tickSize(6, 0, 0);
+            .ticks(5)
+            .tickFormat((d) => {
+                let scaledVals = x1(d)
+                return d3v3.round(scaledVals)
+            })
+            .tickSize(6, 0, 0);
 
         // var xMonthAxis = d3v3.svg.axis()
         //     .scale(x)
