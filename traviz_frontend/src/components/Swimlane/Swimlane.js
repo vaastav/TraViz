@@ -56,18 +56,21 @@ function getEndTime(events) {
     return lastEnd
 }
 
-// function createSpans(events) {
-//     let spans = new Map()
-//     events.forEach(event => {
-//         if (spans.has(event.ThreadID)) {
-//             newSpan = spans.get(event.ThreadID).push(event)
-//             spans.set(event.ThreadID, newSpan)
-//         } else {
-//             spans.set(event.ThreadID, [].push(event))
-//         }
-//     })
-//     return spans
-// }
+function createSpans(events) {
+    let spans = new Map()
+    events.forEach(event => {
+        if (spans.has(event.ThreadID)) {
+            let eventsInSpan = spans.get(event.ThreadID)
+            eventsInSpan.push(event)
+            spans.set(event.ThreadID, eventsInSpan)
+        } else {
+            let newSpan = new Array()
+            newSpan.push(event)
+            spans.set(event.ThreadID, newSpan)
+        }
+    })
+    return spans
+}
 
 class Swimlane extends Component {
     constructor(props) {
@@ -103,12 +106,15 @@ class Swimlane extends Component {
         console.log(this.state.trace)
         var data = parseData(generateRandomWorkItems())
         let lanes = createLanes(this.state.trace)
+        let spans = createSpans(this.state.trace)
         let items = data.items
         let now = new Date();
         console.log("Items");
         console.log(items);
         console.log("Lanes");
         console.log(lanes);
+        console.log("Spans")
+        console.log(spans)
         let start = getStartTime(this.state.trace)
         let end = getEndTime(this.state.trace)
         let duration = end - start
