@@ -14,10 +14,10 @@ function createLanes(events) {
     let lanes = []
     let count = 0
     events.forEach(event => {
-        if (!lanes.includes(event.ThreadID)) {
-            lanes.push({ id: count, label: "thread" + event.ThreadID })
+        if (lanes.find((l) => l.ThreadID == event.ThreadID) == undefined) {
+            lanes.push({ id: count, ThreadID: event.ThreadID, label: "thread " + event.ThreadID })
+            count++
         }
-        count++
     });
     return lanes
 }
@@ -53,8 +53,8 @@ function getEndTime(events) {
 function createSpans(events) {
     let spans = new Array();
     events.forEach(event => {
-        if (spans.find((s) => s.ThreadID === event.ThreadID) !== undefined) {
-            let i = spans.findIndex((s) => s.ThreadID === event.ThreadID);
+        if (spans.find((s) => s.id === event.ThreadID) !== undefined) {
+            let i = spans.findIndex((s) => s.id === event.ThreadID);
             let span = spans[i];
             span.start = span.start > event.HRT ? event.HRT : span.start;
             span.end = span.end < event.HRT ? event.HRT : span.end;
@@ -64,16 +64,24 @@ function createSpans(events) {
             let newEventArray = new Array();
             newEventArray.push(event)
             let newSpan = {
-                ThreadID: event.ThreadID,
+                id: event.ThreadID,
                 start: event.HRT,
                 end: event.HRT,
-                events: newEventArray
+                events: newEventArray,
+                class: "past"
             };
             spans.push(newSpan);
         }
     });
     return spans
 }
+
+// function cleanTrace(trace) {
+//     trace.forEach((e) => {
+//         e.ThreadID = e.ThreadID.replace(/-/g, "")
+//     })
+//     return trace
+// }
 
 class Swimlane extends Component {
     constructor(props) {
@@ -88,7 +96,6 @@ class Swimlane extends Component {
         const id = "018F8927E7620E61";
         this.traceService.getTrace(id).then(trace => {
             this.state.trace = trace
-            console.log(trace)
             this.createSwimlane();
         });
         // console.log(trace.Date)
@@ -108,6 +115,8 @@ class Swimlane extends Component {
         console.log("State trace")
         console.log(this.state.trace)
         var data = parseData(generateRandomWorkItems())
+        console.log("Antique lanes")
+        console.log(data.lanes)
         let lanes = createLanes(this.state.trace)
         let spans = createSpans(this.state.trace)
         let items = data.items
@@ -125,7 +134,7 @@ class Swimlane extends Component {
         console.log(end)
         console.log(duration)
 
-        var margin = { top: 20, right: 15, bottom: 15, left: 60 }
+        var margin = { top: 20, right: 15, bottom: 15, left: 150 }
             , width = 960 - margin.left - margin.right
             , height = 500 - margin.top - margin.bottom
             , miniHeight = lanes.length * 12 + 50
@@ -283,7 +292,7 @@ class Swimlane extends Component {
             .attr('clip-path', 'url(#clip)');
 
         mini.append('g').selectAll('miniItems')
-            .data(getPaths(items))
+            .data(getPaths(spans))
             .enter().append('path')
             .attr('class', function (d) { return 'miniItem ' + d.class; })
             .attr('d', function (d) { return d.path; });
@@ -317,7 +326,10 @@ class Swimlane extends Component {
             var rects, labels
                 , minExtent = brush.extent()[0]
                 , maxExtent = brush.extent()[1]
-                , visItems = items.filter(function (d) { return d.start < maxExtent && d.end > minExtent });
+                , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent });
+
+            console.log("Viz Items")
+            console.log(visItems)
 
             mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
 
@@ -392,21 +404,30 @@ class Swimlane extends Component {
             display();
         }
 
+        console.log("Old get paths")
+        //getPaths(items)
+
         // generates a single path for each item class in the mini display
         // ugly - but draws mini 2x faster than append lines or line generator
         // is there a better way to do a bunch of lines as a single path with d3v3?
         function getPaths(items) {
-            var paths = {}, d, offset = .5 * y2(1) + 0.5, result = [];
+            var paths = {}
+            var d
+            var offset = .5 * y2(1) + 0.5
+            var result = [];
             for (var i = 0; i < items.length; i++) {
                 d = items[i];
                 if (!paths[d.class]) paths[d.class] = '';
-                paths[d.class] += ['M', x(d.start), (y2(d.lane) + offset), 'H', x(d.end)].join(' ');
+                console.log("y2")
+                console.log(d)
+                paths[d.class] += ['M', x(d.start), (y2(d.ThreadID) + offset), 'H', x(d.end)].join(' ');
             }
 
             for (var className in paths) {
                 result.push({ class: className, path: paths[className] });
             }
-
+            console.log("Get path results")
+            console.log(result)
             return result;
         }
     }
