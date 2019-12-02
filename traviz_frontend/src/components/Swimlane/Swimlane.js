@@ -82,7 +82,9 @@ function createSpans(events) {
 function mapThreadsIdsToLane(spans) {
     let threadToLaneMap = new Map()
     spans.forEach(span => {
-        threadToLaneMap.set(span.ThreadID, span.y_id)
+        console.log("Inside map threads ids to lane function")
+        console.log(span)
+        threadToLaneMap.set(span.id, span.y_id)
     });
     return threadToLaneMap
 }
@@ -321,10 +323,13 @@ class Swimlane extends Component {
         console.log(threadToLaneMap)
         circles.enter()
             .append("circle")
-            .attr("r", 2)
+            .attr("r", 5)
             .attr("cx", function (d) { return x(d.HRT) })
-            .attr("cy", function (d) { return threadToLaneMap.get(d.ThreadID)})
-            .attr("fill", "purple")
+            .attr("cy", function (d) {  
+                let y1Val = y1(threadToLaneMap.get(d.ThreadID))
+                let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
+                return  y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val ;})
+            .attr("fill", "black")
             .attr("stroke", "black");
 
         console.log("Circles")
@@ -433,8 +438,8 @@ class Swimlane extends Component {
             labels.exit().remove();
 
             // Update the event circles
-            circles.selectAll("circle")
-                .attr("x", function (d) { return x1(d.HRT); })
+            // circles.selectAll("circle")
+            //     .attr("x", function (d) { return x1(d.HRT); })
             // circles = circle.selectAll("circle")
             // .data(events, function(d) { return d.id; })
             // .attr('x', function (d) { return x1(d.HRT); })
