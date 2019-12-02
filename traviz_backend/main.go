@@ -211,6 +211,44 @@ func sort_events(events []Event) []Event {
     return sorted_events
 }
 
+func compare2events(event1 Event, event2 Event) bool {
+    if event1.ProcessName != event2.ProcessName {
+        return false
+    }
+    if event1.Source != event2.Source {
+        return false
+    }
+    return true
+}
+
+func compare2Traces(trace1 XTrace, trace2 XTrace) {
+    log.Println(len(trace1.Events), len(trace2.Events))
+    sortedTrace1 := sort_events(trace1.Events)
+    sortedTrace2 := sort_events(trace2.Events)
+    matches := make(map[int]int)
+    flipped_matches := make(map[int]int)
+    var prevMatch int
+    log.Println(len(sortedTrace1), len(sortedTrace2))
+    for trace1index, t1event := range sortedTrace1 {
+        matchFound := false
+        log.Println("Event", trace1index,":", t1event.ProcessName, t1event.Source)
+        for trace2index := prevMatch; trace2index < len(sortedTrace2); trace2index += 1 {
+            if compare2events(t1event, sortedTrace2[trace2index]) {
+                matches[trace1index] = trace2index
+                flipped_matches[trace2index] = trace1index
+                prevMatch = trace2index
+                matchFound = true
+                break
+            }
+        } 
+        if !matchFound {
+            log.Println(trace1index)
+        }
+    }
+    log.Println("Unmatched events in Trace1", len(sortedTrace1) - len(matches))
+    log.Println("Unmatched events in Trace2", len(sortedTrace2) - len(matches))
+}
+
 //Parses config from a json file and returns the parsed Config struct
 func parseConfig(filename string) (Config, error) {
     jsonFile, err := os.Open(filename)
@@ -455,6 +493,7 @@ func (s * Server) routes() {
     s.Router.HandleFunc("/traces/{id}", s.GetTrace)
     s.Router.HandleFunc("/source", s.SourceCode)
     s.Router.HandleFunc("/dependency", s.Dependency)
+    s.Router.HandleFunc("/compare/{id1}/{id2}", s.CompareOneVsOne)
 }
 
 func setupResponse(w *http.ResponseWriter, r *http.Request) {
@@ -501,9 +540,70 @@ func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(responseRows)
 }
 
+func (s * Server) CompareOneVsOne(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
+    w.Header().Set("Content-Type", "application/json")
+    params := mux.Vars(r)
+    if len(params) != 2 {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Request"})
+        return
+    }
+    traceID1 := params["id1"]
+    traceID2 := params["id2"]
+    var file1 string
+    var file2 string
+    if v, ok := s.Traces[traceID1]; !ok {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID: " + traceID1})
+        return
+    } else {
+        file1 = v
+    }
+    if v, ok := s.Traces[traceID2]; !ok {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID: " + traceID2})
+        return
+    } else {
+        file2 = v
+    }
+    var traces1 []XTrace
+    var traces2 []XTrace
+    var trace1 XTrace
+    var trace2 XTrace
+    f1, err := os.Open(file1)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+    }
+    defer f1.Close()
+    dec := json.NewDecoder(f1)
+    err = dec.Decode(&traces1)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+    }
+    trace1 = traces1[0]
+    f2, err := os.Open(file2)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+    }
+    defer f2.Close()
+    dec = json.NewDecoder(f2)
+    err = dec.Decode(&traces2)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+    }
+    trace2 = traces2[0]
+    compare2Traces(trace1, trace2)
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
+}
+
 func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
     setupResponse(&w, r)
-    log.Println(r)
     w.Header().Set("Content-Type", "application/json")
     params := mux.Vars(r)
     if len(params) != 1 {
