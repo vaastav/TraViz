@@ -329,6 +329,7 @@ class Swimlane extends Component {
                 let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
                 return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
             })
+            .attr("class", function (d) { return 'circle ' + d.class; })
             .attr("fill", "black")
             .attr("stroke", "black");
 
@@ -441,7 +442,10 @@ class Swimlane extends Component {
             // update the event circles
             circs = circles.selectAll('circle')
                 .data(visEvents, function (d) { return d.id })
-                .attr("r", 0.2 * y1(1))
+                .attr('cx', function (d) { return x(d.HRT) });
+
+            circs.enter().append("circle")
+                // .attr("r", 0.2 * y1(1))
                 .attr("cx", function (d) { return x(d.HRT) })
                 .attr("cy", function (d) {
                     let y1Val = y1(threadToLaneMap.get(d.ThreadID))
@@ -449,7 +453,7 @@ class Swimlane extends Component {
                     return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
                 });
 
-            circles.exit().remove();
+            circs.exit().remove();
 
             // Update the event circles
             // circles.selectAll("circle")
