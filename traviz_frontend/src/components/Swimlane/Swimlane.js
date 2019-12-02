@@ -104,7 +104,7 @@ class Swimlane extends Component {
     }
 
     componentDidMount() {
-        const id = "018F8927E7620E61";
+        const id = this.props.id;
         this.traceService.getTrace(id).then(trace => {
             this.state.trace = trace
             this.createSwimlane();
@@ -149,7 +149,7 @@ class Swimlane extends Component {
 
         var margin = { top: 20, right: 15, bottom: 15, left: 150 }
             , width = 960 - margin.left - margin.right
-            , height = 500 - margin.top - margin.bottom
+            , height = 900 - margin.top - margin.bottom
             , miniHeight = lanes.length * 12 + 50
             , mainHeight = height - miniHeight - 50;
 
