@@ -1,4 +1,5 @@
 import React from "react";
+import "./table.css";
 import { CXContext } from "./cxContext";
 import * as dc from "dc";
 

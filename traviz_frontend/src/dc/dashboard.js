@@ -15,9 +15,7 @@ export const Dashboard = (props)=>{
                     <Col md={6} >
                         <TraceTable />
                     </Col>
-                    <Col md={3} >
-                    </Col>
-                    <Col md={3} >
+                    <Col md={6} >
                         <Row>
                             <EventsChart />
                         </Row>
