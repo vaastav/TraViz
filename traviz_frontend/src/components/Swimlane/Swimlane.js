@@ -158,8 +158,9 @@ class Swimlane extends Component {
             , miniHeight = lanes.length * 12 + 50
             , mainHeight = height - miniHeight - 50;
 
-        var x = d3v3.scale.linear().domain([start, end]).range([0, width]);
-        var x1 = d3v3.scale.linear().domain([start, end]).range([0, width]);
+        var x_padding = 0.1 * duration
+        var x = d3v3.scale.linear().domain([start - x_padding, end + x_padding]).range([0, width]);
+        var x1 = d3v3.scale.linear().domain([start - x_padding, end + x_padding]).range([0, width]);
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         var y1 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, mainHeight]);
@@ -318,22 +319,19 @@ class Swimlane extends Component {
         // draw the event circles
         var circles = main.append("g").selectAll("circle")
             .data(events);
-        
-        console.log("Thread to lan MAP")
-        console.log(threadToLaneMap)
+
         circles.enter()
             .append("circle")
-            .attr("r", 5)
+            .attr("r", 0.1 * y1(1))
             .attr("cx", function (d) { return x(d.HRT) })
-            .attr("cy", function (d) {  
+            .attr("cy", function (d) {
                 let y1Val = y1(threadToLaneMap.get(d.ThreadID))
                 let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
-                return  y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val ;})
+                return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
+            })
             .attr("fill", "black")
             .attr("stroke", "black");
 
-        console.log("Circles")
-        console.log(circles)
 
         // circles.enter
         // main.append("circle")
@@ -353,7 +351,7 @@ class Swimlane extends Component {
         // draw the selection area
         var brush = d3v3.svg.brush()
             .x(x)
-            .extent([start, end])
+            .extent([start - x_padding, end + x_padding])
             .on("brush", display);
 
         mini.append('g')
@@ -368,13 +366,16 @@ class Swimlane extends Component {
 
         function display() {
 
-            var rects, labels
+            var rects, labels, circs
                 , minExtent = brush.extent()[0]
                 , maxExtent = brush.extent()[1]
-                , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent });
+                , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent })
+                , visEvents = events.filter(function (d) { return d.HRT <= maxExtent && d.HRT >= minExtent });
 
             console.log("Viz Items")
             console.log(visItems)
+            console.log("Viz Events");
+            console.log(visEvents);
 
             mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
 
@@ -436,6 +437,19 @@ class Swimlane extends Component {
                 .attr('class', 'itemLabel');
 
             labels.exit().remove();
+
+            // update the event circles
+            circs = circles.selectAll('circle')
+                .data(visEvents, function (d) { return d.id })
+                .attr("r", 0.2 * y1(1))
+                .attr("cx", function (d) { return x(d.HRT) })
+                .attr("cy", function (d) {
+                    let y1Val = y1(threadToLaneMap.get(d.ThreadID))
+                    let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
+                    return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
+                });
+
+            circles.exit().remove();
 
             // Update the event circles
             // circles.selectAll("circle")
