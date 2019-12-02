@@ -314,45 +314,6 @@ class Swimlane extends Component {
         // // draw the event circles
         let circles = main.append("g")
 
-        // circles.enter().append("g")
-        //     .attr("r", 0.1 * y1(1))
-        //     .attr("fill", "#ca3e47")
-        //     .attr("stroke", "#ca3e47")
-        //     .attr("class", "circ");
-        // // var circles = main.append("g").selectAll("circle")
-        //     .data(events);
-
-        // this.node.exit().remove();
-        // circles.enter().append("g")
-        //     .attr("r", 0.1 * y1(1))
-        //     .attr("fill", "#ca3e47")
-        //     .attr("stroke", "#ca3e47")
-        //     .attr("class", "circ");
-
-        // console.log("Circles")
-        // console.log(circles)
-
-        // circles.enter()
-        //     .append("circle")
-        //     .attr("r", 0.1 * y1(1))
-        //     .attr("cx", function (d) { return x(d.HRT) })
-        //     .attr("cy", function (d) {
-        //         let y1Val = y1(threadToLaneMap.get(d.ThreadID))
-        //         let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
-        //         return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
-        //     })
-        //     .attr("class", function (d) { return 'circle ' + d.class; })
-        //     .attr("fill", "#ca3e47")
-        //     .attr("stroke", "#ca3e47");
-
-
-        // circles.enter
-        // main.append("circle")
-        // .attr("cx", 10)
-        // .attr("cy", 10)
-        // .attr("r", 10)
-        // .style("fill", "purple");
-
         // invisible hit area to move around the selection window
         mini.append('rect')
             .attr('pointer-events', 'painted')
@@ -451,40 +412,25 @@ class Swimlane extends Component {
 
             // labels.exit().remove();
 
-            // update the event circles
-
-
-            // draw the event circles
-            // var circles = main.append("g").selectAll("circle")
-            //     .data(events)
-            //     .attr("r", 0.1 * y1(1))
-            //     .attr("fill", "#ca3e47")
-            //     .attr("stroke", "#ca3e47");
-
-            // let circs = main.append("g").selectAll(".circ")
-            //     .data(visEvents)
-            //     .attr("r", 0.1 * y1(1))
-            //     .attr("fill", "#ca3e47")
-            //     .attr("stroke", "#ca3e47")
-            //     .attr("class", "circ");
-            // .attr('cx', function (d) { return x(d.HRT) });
-
             // draw the event circles
             console.log("Circles")
             console.log(circles)
             let circs = circles.selectAll(".circ")
                 .data(visEvents)
-                .attr("r", 0.1 * y1(1))
+                .attr("r", 0.05 * y1(1))
                 .attr("fill", "#ca3e47")
                 .attr("stroke", "#ca3e47")
-                .attr("cx", function (d) { return x(d.HRT) })
+                .attr("cx", function (d) { return x1(d.HRT) })
+                .attr("cy", function (d) {
+                    let y1Val = y1(threadToLaneMap.get(d.ThreadID))
+                    let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
+                    return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
+                })
                 .attr("class", "circ")
 
-            console.log("Circs 1")
-            console.log(circs)
             circs.enter().append("circle")
-                .attr("r", 0.1 * y1(1))
-                .attr("cx", function (d) { return x(d.HRT) })
+                .attr("r", 0.05 * y1(1))
+                .attr("cx", function (d) { return x1(d.HRT) })
                 .attr("fill", "#ca3e47")
                 .attr("stroke", "#ca3e47")
                 .attr("cy", function (d) {
@@ -494,11 +440,7 @@ class Swimlane extends Component {
                 })
                 .attr("class", "circ");
 
-            console.log("Circs 2")
-            console.log(circs)
             circs.exit().remove();
-            console.log("Circs 3")
-            console.log(circs)
 
         }
 
