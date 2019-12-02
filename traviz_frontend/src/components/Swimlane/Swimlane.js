@@ -82,8 +82,6 @@ function createSpans(events) {
 function mapThreadsIdsToLane(spans) {
     let threadToLaneMap = new Map()
     spans.forEach(span => {
-        console.log("Inside map threads ids to lane function")
-        console.log(span)
         threadToLaneMap.set(span.id, span.y_id)
     });
     return threadToLaneMap
@@ -148,9 +146,6 @@ class Swimlane extends Component {
         let end = getEndTime(this.state.trace)
         let duration = end - start
         let threadToLaneMap = mapThreadsIdsToLane(spans)
-        console.log(start)
-        console.log(end)
-        console.log(duration)
 
         var margin = { top: 20, right: 15, bottom: 15, left: 150 }
             , width = 960 - margin.left - margin.right
@@ -316,22 +311,39 @@ class Swimlane extends Component {
             .attr('class', function (d) { return 'miniItem ' + d.class; })
             .attr('d', function (d) { return d.path; });
 
-        // draw the event circles
-        var circles = main.append("g").selectAll("circle")
-            .data(events);
+        // // draw the event circles
+        let circles = main.append("g")
 
-        circles.enter()
-            .append("circle")
-            .attr("r", 0.1 * y1(1))
-            .attr("cx", function (d) { return x(d.HRT) })
-            .attr("cy", function (d) {
-                let y1Val = y1(threadToLaneMap.get(d.ThreadID))
-                let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
-                return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
-            })
-            .attr("class", function (d) { return 'circle ' + d.class; })
-            .attr("fill", "black")
-            .attr("stroke", "black");
+        // circles.enter().append("g")
+        //     .attr("r", 0.1 * y1(1))
+        //     .attr("fill", "#ca3e47")
+        //     .attr("stroke", "#ca3e47")
+        //     .attr("class", "circ");
+        // // var circles = main.append("g").selectAll("circle")
+        //     .data(events);
+
+        // this.node.exit().remove();
+        // circles.enter().append("g")
+        //     .attr("r", 0.1 * y1(1))
+        //     .attr("fill", "#ca3e47")
+        //     .attr("stroke", "#ca3e47")
+        //     .attr("class", "circ");
+
+        // console.log("Circles")
+        // console.log(circles)
+
+        // circles.enter()
+        //     .append("circle")
+        //     .attr("r", 0.1 * y1(1))
+        //     .attr("cx", function (d) { return x(d.HRT) })
+        //     .attr("cy", function (d) {
+        //         let y1Val = y1(threadToLaneMap.get(d.ThreadID))
+        //         let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
+        //         return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
+        //     })
+        //     .attr("class", function (d) { return 'circle ' + d.class; })
+        //     .attr("fill", "#ca3e47")
+        //     .attr("stroke", "#ca3e47");
 
 
         // circles.enter
@@ -367,7 +379,7 @@ class Swimlane extends Component {
 
         function display() {
 
-            var rects, labels, circs
+            var rects, labels
                 , minExtent = brush.extent()[0]
                 , maxExtent = brush.extent()[1]
                 , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent })
@@ -426,46 +438,68 @@ class Swimlane extends Component {
             rects.exit().remove();
 
             // update the item labels
-            labels = itemRects.selectAll('text')
-                .data(visItems, function (d) { return d.id; })
-                .attr('x', function (d) { return x1(Math.max(d.start, minExtent)) + 2; });
+            // labels = itemRects.selectAll('text')
+            //     .data(visItems, function (d) { return d.id; })
+            //     .attr('x', function (d) { return x1(Math.max(d.start, minExtent)) + 2; });
 
-            labels.enter().append('text')
-                .text(function (d) { return 'Item\n\n\n\n Id: ' + d.id; })
-                .attr('x', function (d) { return x1(Math.max(d.start, minExtent)) + 2; })
-                .attr('y', function (d) { return y1(d.lane) + .4 * y1(1) + 0.5; })
-                .attr('text-anchor', 'start')
-                .attr('class', 'itemLabel');
+            // labels.enter().append('text')
+            //     .text(function (d) { return 'Item\n\n\n\n Id: ' + d.id; })
+            //     .attr('x', function (d) { return x1(Math.max(d.start, minExtent)) + 2; })
+            //     .attr('y', function (d) { return y1(d.lane) + .4 * y1(1) + 0.5; })
+            //     .attr('text-anchor', 'start')
+            //     .attr('class', 'itemLabel');
 
-            labels.exit().remove();
+            // labels.exit().remove();
 
             // update the event circles
-            circs = circles.selectAll('circle')
-                .data(visEvents, function (d) { return d.id })
-                .attr('cx', function (d) { return x(d.HRT) });
 
-            circs.enter().append("circle")
-                // .attr("r", 0.2 * y1(1))
+
+            // draw the event circles
+            // var circles = main.append("g").selectAll("circle")
+            //     .data(events)
+            //     .attr("r", 0.1 * y1(1))
+            //     .attr("fill", "#ca3e47")
+            //     .attr("stroke", "#ca3e47");
+
+            // let circs = main.append("g").selectAll(".circ")
+            //     .data(visEvents)
+            //     .attr("r", 0.1 * y1(1))
+            //     .attr("fill", "#ca3e47")
+            //     .attr("stroke", "#ca3e47")
+            //     .attr("class", "circ");
+            // .attr('cx', function (d) { return x(d.HRT) });
+
+            // draw the event circles
+            console.log("Circles")
+            console.log(circles)
+            let circs = circles.selectAll(".circ")
+                .data(visEvents)
+                .attr("r", 0.1 * y1(1))
+                .attr("fill", "#ca3e47")
+                .attr("stroke", "#ca3e47")
                 .attr("cx", function (d) { return x(d.HRT) })
+                .attr("class", "circ")
+
+            console.log("Circs 1")
+            console.log(circs)
+            circs.enter().append("circle")
+                .attr("r", 0.1 * y1(1))
+                .attr("cx", function (d) { return x(d.HRT) })
+                .attr("fill", "#ca3e47")
+                .attr("stroke", "#ca3e47")
                 .attr("cy", function (d) {
                     let y1Val = y1(threadToLaneMap.get(d.ThreadID))
                     let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
                     return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
-                });
+                })
+                .attr("class", "circ");
 
+            console.log("Circs 2")
+            console.log(circs)
             circs.exit().remove();
+            console.log("Circs 3")
+            console.log(circs)
 
-            // Update the event circles
-            // circles.selectAll("circle")
-            //     .attr("x", function (d) { return x1(d.HRT); })
-            // circles = circle.selectAll("circle")
-            // .data(events, function(d) { return d.id; })
-            // .attr('x', function (d) { return x1(d.HRT); })
-
-            // circles.enter().append('circle')
-            // .attr('x', function (d) { return x1(d.HRT); })
-            // .attr('y', function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .1 * y1(1) + 0.5; })
-            // .attr('class', function (d) { return 'eventItem' })
         }
 
         function moveBrush() {
@@ -490,17 +524,12 @@ class Swimlane extends Component {
             for (var i = 0; i < items.length; i++) {
                 d = items[i];
                 if (!paths[d.class]) paths[d.class] = '';
-                console.log("d")
-                console.log(d.id)
-                console.log(y2(d.id))
                 paths[d.class] += ['M', x(d.start), (y2(d.y_id) + offset), 'H', x(d.end)].join(' ');
             }
 
             for (var className in paths) {
                 result.push({ class: className, path: paths[className] });
             }
-            console.log("Get path results")
-            console.log(result)
             return result;
         }
     }
