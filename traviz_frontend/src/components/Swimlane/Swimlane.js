@@ -421,23 +421,15 @@ class Swimlane extends Component {
                 .attr("fill", "#ca3e47")
                 .attr("stroke", "#ca3e47")
                 .attr("cx", function (d) { return x1(d.HRT) })
-                .attr("cy", function (d) {
-                    let y1Val = y1(threadToLaneMap.get(d.ThreadID))
-                    let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
-                    return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
-                })
+                .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5;} )
                 .attr("class", "circ")
 
             circs.enter().append("circle")
                 .attr("r", 0.05 * y1(1))
-                .attr("cx", function (d) { return x1(d.HRT) })
                 .attr("fill", "#ca3e47")
                 .attr("stroke", "#ca3e47")
-                .attr("cy", function (d) {
-                    let y1Val = y1(threadToLaneMap.get(d.ThreadID))
-                    let y1ValPlus = y1(threadToLaneMap.get(d.ThreadID) + 1)
-                    return y1Val == 0 ? 0.5 * y1ValPlus : 1.5 * y1Val;
-                })
+                .attr("cx", function (d) { return x1(d.HRT) })
+                .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5;} )
                 .attr("class", "circ");
 
             circs.exit().remove();
