@@ -4,6 +4,7 @@ import { scaleLinear, scaleSymlog } from "d3";
 import { ChartTemplate } from "./chartTemplate";
 import { numberFormat } from "./cxContext";
 import { CXContext } from "./cxContext";
+import "./filechart.css"
 
 const eventsChartFunc = (divRef, ndx) => {
     const eventsChart = dc.barChart(divRef);
