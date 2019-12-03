@@ -50,6 +50,28 @@ function getEndTime(events) {
     return lastEnd
 }
 
+function getConnectingLines(events) {
+    let mapOfEvents = new Map()
+    events.forEach(event => {
+        mapOfEvents.set(event.EventID, event)
+    })
+
+    let connectingLines = new Array()
+    events.forEach(event => {
+        if (event.ParentEventID !== null) {
+            event.ParentEventID.forEach(pid => {
+                let parentEvent = mapOfEvents.get(pid)
+                if (event.ThreadID != parentEvent.ThreadID) {
+                    let line = { origin: parentEvent, destination: event }
+                    connectingLines.push(line)
+                }
+            })
+
+        }
+    })
+    return connectingLines
+}
+
 function createSpans(events) {
     let spans = new Array();
     let count = 0
@@ -133,7 +155,8 @@ class Swimlane extends Component {
         let lanes = createLanes(this.state.trace)
         let spans = createSpans(this.state.trace)
         let items = data.items
-        let now = new Date();
+        let connectingLines = getConnectingLines(events)
+        // let now = new Date();
         console.log("Events")
         console.log(events)
         console.log("Items");
@@ -142,13 +165,15 @@ class Swimlane extends Component {
         console.log(lanes);
         console.log("Spans")
         console.log(spans)
+        console.log("Connecting Lines")
+        console.log(connectingLines)
         let start = getStartTime(this.state.trace)
         let end = getEndTime(this.state.trace)
         let duration = end - start
         let threadToLaneMap = mapThreadsIdsToLane(spans)
 
         var margin = { top: 20, right: 15, bottom: 15, left: 150 }
-            , width = 960 - margin.left - margin.right
+            , width = 1900 - margin.left - margin.right
             , height = 900 - margin.top - margin.bottom
             , miniHeight = lanes.length * 12 + 50
             , mainHeight = height - miniHeight - 50;
@@ -287,19 +312,19 @@ class Swimlane extends Component {
         //     .attr('dx', 5)
         //     .attr('dy', 12);
 
-        // draw a line representing today's date
-        main.append('line')
-            .attr('y1', 0)
-            .attr('y2', mainHeight)
-            .attr('class', 'main todayLine')
-            .attr('clip-path', 'url(#clip)');
+        // // draw a line representing today's date
+        // main.append('line')
+        //     .attr('y1', 0)
+        //     .attr('y2', mainHeight)
+        //     .attr('class', 'main todayLine')
+        //     .attr('clip-path', 'url(#clip)');
 
-        mini.append('line')
-            .attr('x1', x(now) + 0.5)
-            .attr('y1', 0)
-            .attr('x2', x(now) + 0.5)
-            .attr('y2', miniHeight)
-            .attr('class', 'todayLine');
+        // mini.append('line')
+        //     .attr('x1', x(now) + 0.5)
+        //     .attr('y1', 0)
+        //     .attr('x2', x(now) + 0.5)
+        //     .attr('y2', miniHeight)
+        //     .attr('class', 'todayLine');
 
         // draw the spans
         var itemRects = main.append('g')
@@ -311,8 +336,13 @@ class Swimlane extends Component {
             .attr('class', function (d) { return 'miniItem ' + d.class; })
             .attr('d', function (d) { return d.path; });
 
-        // // draw the event circles
+        // Create node for event circles
         let circles = main.append("g")
+
+        // Create node for event lines
+        let lines = main.append("svg")
+            .attr("stroke-width", 2)
+            .attr("stroke", "#4e4e50")
 
         // invisible hit area to move around the selection window
         mini.append('rect')
@@ -344,12 +374,11 @@ class Swimlane extends Component {
                 , minExtent = brush.extent()[0]
                 , maxExtent = brush.extent()[1]
                 , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent })
-                , visEvents = events.filter(function (d) { return d.HRT <= maxExtent && d.HRT >= minExtent });
-
-            console.log("Viz Items")
-            console.log(visItems)
-            console.log("Viz Events");
-            console.log(visEvents);
+                , visEvents = events.filter(function (d) { return d.HRT <= maxExtent && d.HRT >= minExtent })
+                , visLines = connectingLines.filter(function (d) {
+                    return (d.origin.HRT <= maxExtent && d.origin.HRT >= minExtent) ||
+                        (d.destination.HRT <= maxExtent && d.destination.HRT >= minExtent)
+                });
 
             mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
 
@@ -413,26 +442,44 @@ class Swimlane extends Component {
             // labels.exit().remove();
 
             // draw the event circles
-            console.log("Circles")
-            console.log(circles)
             let circs = circles.selectAll(".circ")
                 .data(visEvents)
-                .attr("r", 0.05 * y1(1))
-                .attr("fill", "#ca3e47")
-                .attr("stroke", "#ca3e47")
+                .attr("r", 0.08 * y1(1))
+                .attr("fill", "#950740")
+                .attr("stroke", "#950740")
                 .attr("cx", function (d) { return x1(d.HRT) })
-                .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5;} )
+                .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5; })
                 .attr("class", "circ")
 
             circs.enter().append("circle")
-                .attr("r", 0.05 * y1(1))
-                .attr("fill", "#ca3e47")
-                .attr("stroke", "#ca3e47")
+                .attr("r", 0.08 * y1(1))
+                .attr("fill", "#950740")
+                .attr("stroke", "#950740")
                 .attr("cx", function (d) { return x1(d.HRT) })
-                .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5;} )
+                .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5; })
                 .attr("class", "circ");
 
             circs.exit().remove();
+
+            // draw the lines between parent and child events
+            let lins = lines.selectAll(".lin")
+                .data(visLines)
+                .attr("width", 200)
+                .attr("x1", function (d) { return x1(d.origin.HRT) })
+                .attr("y1", function (d) { return y1(threadToLaneMap.get(d.origin.ThreadID)) + .5 * y1(1) + 0.5; })
+                .attr("x2", function (d) { return x1(d.destination.HRT) })
+                .attr("y2", function (d) { return y1(threadToLaneMap.get(d.destination.ThreadID)) + .5 * y1(1) + 0.5; })
+                .attr("class", "lin");
+
+            lins.enter().append("line")
+                .attr("width", 200)
+                .attr("x1", function (d) { return x1(d.origin.HRT) })
+                .attr("y1", function (d) { return y1(threadToLaneMap.get(d.origin.ThreadID)) + .5 * y1(1) + 0.5; })
+                .attr("x2", function (d) { return x1(d.destination.HRT) })
+                .attr("y2", function (d) { return y1(threadToLaneMap.get(d.destination.ThreadID)) + .5 * y1(1) + 0.5; })
+                .attr("class", "lin");
+
+            lins.exit().remove();
 
         }
 
