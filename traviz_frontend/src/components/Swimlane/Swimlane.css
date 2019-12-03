@@ -4,10 +4,12 @@
 
 .mini text {
 	font: 9px sans-serif;	
+	color: white;
 }
 
 .main text {
 	font: 12px sans-serif;	
+	color: white;
 }
 
 .month text {
@@ -33,8 +35,8 @@
 }
 
 .past {
-	stroke: #1A1A1D;
-	fill: #1A1A1D;
+	stroke: silver;
+	fill: silver;
 }
 
 .brush .extent {

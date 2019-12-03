@@ -26,7 +26,7 @@ const durationChartFunc = (divRef, ndx) => {
     });
 
     durationChart.ordinalColors(['#950740'])
-
+    
     durationChart.xAxis().tickFormat(
         function (v) { return v;}
     );
