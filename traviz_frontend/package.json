@@ -5,10 +5,10 @@
   "private": true,
   "dependencies": {
     "axios": "^0.19.0",
-    "crossfilter2": "^1.4.6",
+    "crossfilter2": "^1.5.0",
     "d3": "^5.14.2",
     "d3-v3": "npm:d3@3.5.17",
-    "dc": "^2.2.2",
+    "dc": "^3.1.8",
     "glamor": "^2.20.40",
     "react": "^16.8.2",
     "react-d3-graph": "^2.3.0",

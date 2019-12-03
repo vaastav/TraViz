@@ -2721,7 +2721,7 @@ cross-spawn@6.0.5, cross-spawn@^6.0.0, cross-spawn@^6.0.5:
     shebang-command "^1.2.0"
     which "^1.2.9"
 
-crossfilter2@^1.4.6:
+crossfilter2@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/crossfilter2/-/crossfilter2-1.5.0.tgz#6dcbd2add9ae3dd6c2be11fcf0b85d458cbade4a"
   integrity sha512-ia2jwcYSqlAg75kCU89QlHKk9dYyxk5ODX5s4Rd09sUkopE99wz0Bzmty8tmKmEX+5RU4guRio/uPKXfDqkj2w==
@@ -3165,7 +3165,7 @@ d3-transition@1:
     d3-selection "^1.1.0"
     d3-timer "1"
 
-"d3-v3@npm:d3@3.5.17", d3@^3:
+"d3-v3@npm:d3@3.5.17":
   version "3.5.17"
   resolved "https://registry.yarnpkg.com/d3/-/d3-3.5.17.tgz#bc46748004378b21a360c9fc7cf5231790762fb8"
   integrity sha1-vEZ0gAQ3iyGjYMn8fPUjF5B2L7g=
@@ -3186,7 +3186,7 @@ d3-zoom@1:
     d3-selection "1"
     d3-transition "1"
 
-d3@^5.14.2:
+d3@^5.12.0, d3@^5.14.2:
   version "5.14.2"
   resolved "https://registry.yarnpkg.com/d3/-/d3-5.14.2.tgz#a3fb3af016d362aaf4dacbe618ae949c1744b8c4"
   integrity sha512-Ccipa9XrYW5N0QkP6u0Qb8kU6WekIXBiDenmZm1zLvuq/9pBBhRCJLCICEOsH5Og4B0Xw02bhqGkK5VN/oPH0w==
@@ -3244,13 +3244,13 @@ data-urls@^1.0.0:
     whatwg-mimetype "^2.2.0"
     whatwg-url "^7.0.0"
 
-dc@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/dc/-/dc-2.2.2.tgz#ad672d2ec59aa2cc76184a8e5d4416b0c05267e5"
-  integrity sha512-WWmnxBaGs6PAZM/ebOHHMABbINYpzXIowKjBmoBmNfNGpyU3xSNOSYqZq81CmvYlNhQNbU9iZpWTvpK7HNPgDw==
+dc@^3.1.8:
+  version "3.1.8"
+  resolved "https://registry.yarnpkg.com/dc/-/dc-3.1.8.tgz#0fa3316eb869fadb8388d566beea348b69298ae2"
+  integrity sha512-BV1LmQjDrx8u5LKQwDo+ieJtB7c9Lj70z6qvqgzwcKMtiISkXG3JsvSzQPfhsSpckBzWAZXRY6Oncq3mcLTsdA==
   dependencies:
-    crossfilter2 "^1.4.6"
-    d3 "^3"
+    d3 "^5.12.0"
+    url-search-params-polyfill "^7.0.0"
 
 debug@2.6.9, debug@^2.2.0, debug@^2.3.3, debug@^2.6.0, debug@^2.6.8, debug@^2.6.9:
   version "2.6.9"
@@ -10264,6 +10264,11 @@ url-parse@^1.4.3:
   dependencies:
     querystringify "^2.1.1"
     requires-port "^1.0.0"
+
+url-search-params-polyfill@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/url-search-params-polyfill/-/url-search-params-polyfill-7.0.0.tgz#98b56ed29e67710588fdc3c361083b0f78303d95"
+  integrity sha512-0SEH3s+wCNbxEE/rWUalN004ICNi23Q74Ksc0gS2kG8EXnbayxGOrV97JdwnIVPKZ75Xk0hvKXvtIC4xReLMgg==
 
 url@^0.11.0:
   version "0.11.0"

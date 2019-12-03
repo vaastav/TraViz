@@ -3,6 +3,7 @@ import * as dc from "dc";
 import { scaleLinear, scaleSymlog } from "d3";
 import { ChartTemplate } from "./chartTemplate";
 import { numberFormat } from "./cxContext";
+import { CXContext } from "./cxContext";
 
 const eventsChartFunc = (divRef, ndx) => {
     const eventsChart = dc.barChart(divRef);
@@ -42,5 +43,5 @@ const eventsChartFunc = (divRef, ndx) => {
 }
 
 export const EventsChart = props => (
-    <ChartTemplate chartFunction={eventsChartFunc} title="Num Events distribution" />
+    <ChartTemplate chartFunction={eventsChartFunc} context={React.useContext(CXContext)} title="Num Events distribution" />
 )

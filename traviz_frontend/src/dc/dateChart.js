@@ -2,6 +2,7 @@ import React from "react";
 import * as dc from "dc";
 import * as d3 from "d3";
 import { ChartTemplate } from "./chartTemplate";
+import { CXContext } from "./cxContext";
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -40,5 +41,5 @@ const dateChartFunc = (divRef, ndx) => {
 }
 
 export const DateChart = props => (
-    <ChartTemplate chartFunction={dateChartFunc} title="Days of Traces" />
+    <ChartTemplate chartFunction={dateChartFunc} context={React.useContext(CXContext)} title="Days of Traces" />
 )

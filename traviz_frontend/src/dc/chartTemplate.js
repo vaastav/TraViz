@@ -1,5 +1,4 @@
 import React from "react";
-import { CXContext } from "./cxContext";
 import * as dc from "dc";
 
 const ResetButton = props => {
@@ -20,7 +19,7 @@ export const ChartTemplate = props => {
     To solve this, we hold a state key and increment it after the effect ran. 
     By passing the key to the parent div, we get a rerender once the chart is defined. 
     */
-  const context = React.useContext(CXContext);
+  const context = props.context;
   const [chart,updateChart] = React.useState(null);
   const ndx = context.ndx;
   const div = React.useRef(null);

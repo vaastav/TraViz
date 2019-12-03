@@ -3,6 +3,7 @@ import * as dc from "dc";
 import { scaleLinear, scaleSymlog } from "d3";
 import { ChartTemplate } from "./chartTemplate";
 import { numberFormat } from "./cxContext";
+import { CXContext } from "./cxContext";
 
 const durationChartFunc = (divRef, ndx) => {
     const durationChart = dc.barChart(divRef);
@@ -41,5 +42,5 @@ const durationChartFunc = (divRef, ndx) => {
 }
 
 export const DurationChart = props => (
-    <ChartTemplate chartFunction={durationChartFunc} title="Latency Distribution" />
+    <ChartTemplate chartFunction={durationChartFunc} context={React.useContext(CXContext)} title="Latency Distribution" />
 )
