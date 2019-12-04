@@ -2721,7 +2721,7 @@ cross-spawn@6.0.5, cross-spawn@^6.0.0, cross-spawn@^6.0.5:
     shebang-command "^1.2.0"
     which "^1.2.9"
 
-crossfilter2@^1.5.0:
+crossfilter2@^1.4.0-alpha.6, crossfilter2@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/crossfilter2/-/crossfilter2-1.5.0.tgz#6dcbd2add9ae3dd6c2be11fcf0b85d458cbade4a"
   integrity sha512-ia2jwcYSqlAg75kCU89QlHKk9dYyxk5ODX5s4Rd09sUkopE99wz0Bzmty8tmKmEX+5RU4guRio/uPKXfDqkj2w==
@@ -8770,6 +8770,13 @@ recursive-readdir@2.2.2:
   integrity sha512-nRCcW9Sj7NuZwa2XvH9co8NPeXUBhZP7CRKJtU+cS6PW9FpCIFoI5ib0NT1ZrbNuPoRy0ylyCaUL8Gih4LSyFg==
   dependencies:
     minimatch "3.0.4"
+
+reductio@^0.6.3:
+  version "0.6.3"
+  resolved "https://registry.yarnpkg.com/reductio/-/reductio-0.6.3.tgz#292b2f66964a08abe0d061fe04d3eae974e41d83"
+  integrity sha1-KSsvZpZKCKvg0GH+BNPq6XTkHYM=
+  dependencies:
+    crossfilter2 "^1.4.0-alpha.6"
 
 regenerate-unicode-properties@^8.1.0:
   version "8.1.0"

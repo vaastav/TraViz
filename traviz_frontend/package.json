@@ -18,6 +18,7 @@
     "react-router-dom": "^5.1.2",
     "react-scripts": "2.1.5",
     "react-typography": "^0.16.18",
+    "reductio": "^0.6.3",
     "typography": "^0.16.18",
     "typography-theme-funston": "^0.16.18"
   },
