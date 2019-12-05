@@ -1,3 +1,16 @@
+# Setting up
+
+To start the frontend run
+``` 
+yarn
+yarn start
+```
+If an error occurs, one of the dependencies might be missing. So try the following:
+
+```
+yarn add d3-v3@npm:d3@3.5.17
+```
+
 # React + DC.JS
 
 This is a POC of using [DC.JS within a React application](https://www.lighttag.io/blog/react-dc-js/). 
