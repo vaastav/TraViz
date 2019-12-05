@@ -1,5 +1,6 @@
 import React from "react";
 import { Graph } from "react-d3-graph"
+import "./depGraph.css"
 
 class DepGraph extends React.Component {
     constructor(props) {
@@ -16,6 +17,8 @@ class DepGraph extends React.Component {
             "linkHighlightBehavior": true,
             "highlightDegree": 1,
             "highlightOpacity": 0.2,
+            "height": 400,
+            "width": 800,
             "node": {
                 "color": "#4e4e50",
                 "fontColor": "#a7adba",
@@ -62,42 +65,68 @@ class DepGraph extends React.Component {
             uischema,
             data,
             nodeIdToRemove: null,
+            selectedNodeId: null,
+            selectedSources: null,
+            selectedTargets: null,
         };
     }
 
     onClickGraph = () => { return; };
     onClickNode = id => {
         // TODO: Show some info here
+        console.log("Clicked node ", id);
+        var targets = [];
+        var sources = [];
+        var i;
+        for (i = 0; i < this.state.data.links.length; i++) {
+            if (this.state.data.links[i].source === id) {
+                targets.push(this.state.data.links[i]);
+            }
+            if (this.state.data.links[i].target === id) {
+                sources.push(this.state.data.links[i]);
+            }
+        }
+        this.setState({selectedNodeId: id, selectedSources: sources, selectedTargets: targets});
+        return;
+    };
+
+    onDoubleClickNode = id => {
         return;
     };
     
     onRightClickNode = (event, id) => {
         event.preventDefault();
-        console.info(`Right clicked node ${id}`);
+        return;
     };
 
     onClickLink = (source, target) => { 
-        console.log(source, target);
-        console.info(`Clicked link between ${source} and ${target}`);
-    }
+        return;
+    };
 
     onRightClickLink = (event, source, target) => {
         event.preventDefault();
-        console.info(`Right clicked link between ${source} and ${target}`);
+        return;
     };
 
-    onMouseOverNode = id => console.info(`Do something when mouse is over node (${id})`);
+    onMouseOverNode = id => {
+        return;
+    };
 
-    onMouseOutNode = id => console.info(`Do something when mouse is out of node (${id})`);
+    onMouseOutNode = id => {
+        return;
+    };
 
-    onMouseOverLink = (source, target) =>
-        console.info(`Do something when mouse is over link between ${source} and ${target}`);
+    onMouseOverLink = (source, target) => {
+        return;
+    };
 
-    onMouseOutLink = (source, target) =>
-        console.info(`Do something when mouse is out of link between ${source} and ${target}`);
+    onMouseOutLink = (source, target) => {
+        return;
+    };
 
-    onNodePositionChange = (nodeId, x, y) =>
-        console.info(`Node ${nodeId} is moved to new position. New position is (${x}, ${y}) (x,y)`);
+    onNodePositionChange = (nodeId, x, y) => {
+        return;
+    };
 
     onClickAddNode = () => {
         return;  
@@ -116,6 +145,56 @@ class DepGraph extends React.Component {
                 <span className="container__graph-info">
                     <b>Nodes: </b> {this.state.data.nodes.length} | <b>Links: </b> {this.state.data.links.length}
                 </span>
+            </div>
+        );
+    };
+
+    buildSelectPanel = () => {
+        if (this.state.selectedNodeId == null) {
+            return (
+                <div></div>
+            );
+        }
+        let sender_rows = [];
+        for (var i = 0; i < this.state.selectedSources.length; i++) {
+            let cells = [];
+            cells.push(<td>{this.state.selectedSources[i].source}</td>);
+            cells.push(<td>{this.state.selectedSources[i].weight}</td>);
+            sender_rows.push(<tr>{cells}</tr>);
+        }
+        let receiver_rows = [];
+        for (var i = 0; i < this.state.selectedTargets.length; i++) {
+            let cells = [];
+            cells.push(<td>{this.state.selectedTargets[i].target}</td>);
+            cells.push(<td>{this.state.selectedTargets[i].weight}</td>);
+            receiver_rows.push(<tr>{cells}</tr>);
+        }
+        return (
+            <div>
+                <div>
+                    <h4>Messages Received</h4>
+                    <table>
+                        <thead>
+                            <th>Service</th>
+                            <th># Messages</th>
+                        </thead>
+                        <tbody>
+                            {sender_rows}
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h4>Messages Sent</h4>
+                    <table>
+                        <thead>
+                            <th>Service</th>
+                            <th># Messages</th>
+                        </thead>
+                        <tbody>
+                            {receiver_rows}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
     };
@@ -152,9 +231,15 @@ class DepGraph extends React.Component {
         });
 
         return (
-            <div>
-                {this.buildCommonInteractionsPanel()}
-                <Graph ref="graph" {...graphProps} />
+            <div className="container">
+                <div className="container__graph">
+                    {this.buildCommonInteractionsPanel()}
+                    <Graph ref="graph" {...graphProps} />
+                </div>
+                <div className="container__form" style={{color: "white"}}>
+                    <h3>Selected Node ID: {this.state.selectedNodeId}</h3>
+                    {this.buildSelectPanel()}
+                </div>
             </div>
         );
     };
