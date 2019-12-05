@@ -5,6 +5,11 @@ class DepGraph extends React.Component {
     constructor(props) {
         super(props);
         const data = props.context.ndx; 
+        var i;
+        const size_min = 500;
+        for (i = 0; i < data.nodes.length; i++) {
+            data.nodes[i].size = data.nodes[i].size * size_min;
+        }
         const config = {
             "collapsible": true,
             "nodeHighlightBehavior": true,
@@ -71,7 +76,10 @@ class DepGraph extends React.Component {
         console.info(`Right clicked node ${id}`);
     };
 
-    onClickLink = (source, target) => console.info(`Clicked link between ${source} and ${target}`);
+    onClickLink = (source, target) => { 
+        console.log(source, target);
+        console.info(`Clicked link between ${source} and ${target}`);
+    }
 
     onRightClickLink = (event, source, target) => {
         event.preventDefault();
@@ -105,12 +113,6 @@ class DepGraph extends React.Component {
         };
         return (
             <div>
-                <button onClick={this.onClickAddNode} className="btn btn-default btn-margin-left">
-                    +
-                </button>
-                <button onClick={this.onClickRemoveNode} className="btn btn-default btn-margin-left">
-                    -
-                </button>
                 <span className="container__graph-info">
                     <b>Nodes: </b> {this.state.data.nodes.length} | <b>Links: </b> {this.state.data.links.length}
                 </span>
@@ -121,6 +123,7 @@ class DepGraph extends React.Component {
     render() {
         // This does not happens in this sandbox scenario running time, but if we set staticGraph config
         // to true in the constructor we will provide nodes with initial positions
+
         const data = {
             nodes: this.state.data.nodes,
             links: this.state.data.links,

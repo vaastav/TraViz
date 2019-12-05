@@ -90,6 +90,7 @@ type OverviewRow struct {
 type D3Node struct {
     ID string `json:"id"`
     Group int `json:"group"`
+    Size int `json:"size"`
 }
 
 type D3Link struct {
@@ -688,6 +689,9 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
         }
         depMap[dep] = num
     }
+
+
+    depCount := make(map[string]int)
     ids := make(map[string]int)
     curr_id := 0
     var nodes []D3Node
@@ -697,7 +701,10 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
             node := D3Node{ID: dep.Source, Group:1}
             ids[dep.Source] = curr_id
             curr_id += 1
+            depCount[dep.Source] = 1
             nodes = append(nodes, node)
+        } else {
+            depCount[dep.Source] += 1
         }
         if _, ok := ids[dep.Destination]; !ok {
             node := D3Node{ID: dep.Destination, Group:1}
@@ -708,8 +715,15 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
         link := D3Link{Source: dep.Source, Target: dep.Destination, Weight: v}
         links = append(links, link)
     }
+
+    var sizedNodes []D3Node
+    for _, node := range nodes {
+        node.Size = depCount[node.ID]
+        sizedNodes = append(sizedNodes, node)
+    }
+
     w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(&DependencyResponse{Nodes: nodes, Links: links})
+    json.NewEncoder(w).Encode(&DependencyResponse{Nodes: sizedNodes, Links: links})
 }
 
 
