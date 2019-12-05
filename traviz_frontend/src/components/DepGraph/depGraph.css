@@ -1,16 +1,16 @@
 * {
     box-sizing: border-box;
 }
-.container {
+.dg_container {
     margin: 4px;
     overflow: hidden;
     position: fixed;
 }
 
-.container > div {
+.dg_container > div {
     padding: 1em;
 }
-.container {
+.dg_container {
     display: grid;
     width: 100%;
     grid-template-columns: 450px 1fr;

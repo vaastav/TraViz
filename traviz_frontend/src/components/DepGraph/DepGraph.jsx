@@ -231,7 +231,7 @@ class DepGraph extends React.Component {
         });
 
         return (
-            <div className="container">
+            <div className="dg_container">
                 <div className="container__graph">
                     {this.buildCommonInteractionsPanel()}
                     <Graph ref="graph" {...graphProps} />
