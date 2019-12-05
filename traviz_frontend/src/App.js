@@ -8,7 +8,7 @@ function App() {
   return (
     <div className="App">
       <Helmet>
-        <style>{"body { background-color: #1a1a1d; color: white }"}</style>
+        <style>{"body { background-color: #353635; color: #bebebe; font-family: 'Andale Mono', sans-serif;  }"}</style>
       </Helmet>
       <Header />
       <Main />

@@ -4,12 +4,12 @@
 
 .mini text {
 	font: 9px sans-serif;	
-	color: white;
+	color: #bebebe;
 }
 
 .main text {
 	font: 12px sans-serif;	
-	color: white;
+	color: #bebebe;
 }
 
 .month text {
@@ -22,7 +22,7 @@
 }
 
 .axis line, .axis path {
-	stroke: black;
+	stroke: #bebebe;
 }
 
 .miniItem {
@@ -30,17 +30,17 @@
 }
 
 .future {
-	stroke: gray;
-	fill: #ddd;
+	stroke: #950740;
+	fill: #950740;
 }
 
 .past {
-	stroke: silver;
-	fill: silver;
+	stroke: #950740;
+	fill: #950740;
 }
 
 .brush .extent {
-	stroke: gray;
+	stroke: #bebebe;
 	fill: blue;
 	fill-opacity: .165;
 }

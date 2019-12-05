@@ -228,6 +228,7 @@ class Swimlane extends Component {
             .attr('y', function (d) { return y1(d.id + .5); })
             .attr('dy', '0.5ex')
             .attr('text-anchor', 'end')
+            .attr('fill', '#bebebe')
             .attr('class', 'laneText');
 
         // draw the lanes for the mini chart
@@ -238,7 +239,7 @@ class Swimlane extends Component {
             .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
             .attr('x2', width)
             .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-            .attr('stroke', function (d) { return d.label === '' ? 'white' : 'lightgray' });
+            .attr('stroke', function (d) { return d.label === '' ? '#bebebe' : '#bebebe' });
 
         mini.append('g').selectAll('.laneText')
             .data(lanes)
@@ -248,6 +249,7 @@ class Swimlane extends Component {
             .attr('y', function (d) { return y2(d.id + .5); })
             .attr('dy', '0.5ex')
             .attr('text-anchor', 'end')
+            .attr('fill', "#bebebe")
             .attr('class', 'laneText');
 
         // draw the x axis
@@ -270,7 +272,7 @@ class Swimlane extends Component {
                 let scaledVals = x1(d)
                 return d3v3.round(scaledVals)
             })
-            .tickSize(6, 0, 0);
+            .tickSize(6, 0, 0)
 
         // var xMonthAxis = d3v3.svg.axis()
         //     .scale(x)
@@ -289,6 +291,7 @@ class Swimlane extends Component {
         main.append('g')
             .attr('transform', 'translate(0,' + mainHeight + ')')
             .attr('class', 'main axis')
+            .attr('fill', '#bebebe')
             .call(x1Axis);
 
         // main.append('g')
@@ -302,6 +305,7 @@ class Swimlane extends Component {
         mini.append('g')
             .attr('transform', 'translate(0,' + miniHeight + ')')
             .attr('class', 'axis')
+            .attr('fill', '#bebebe')
             .call(xAxis);
 
         // mini.append('g')
@@ -445,16 +449,16 @@ class Swimlane extends Component {
             let circs = circles.selectAll(".circ")
                 .data(visEvents)
                 .attr("r", 0.08 * y1(1))
-                .attr("fill", "#950740")
-                .attr("stroke", "#950740")
+                .attr("fill", "#bebebe")
+                .attr("stroke", "#bebebe")
                 .attr("cx", function (d) { return x1(d.HRT) })
                 .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5; })
                 .attr("class", "circ")
 
             circs.enter().append("circle")
                 .attr("r", 0.08 * y1(1))
-                .attr("fill", "#950740")
-                .attr("stroke", "#950740")
+                .attr("fill", "#bebebe")
+                .attr("stroke", "#bebebe")
                 .attr("cx", function (d) { return x1(d.HRT) })
                 .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5; })
                 .attr("class", "circ");

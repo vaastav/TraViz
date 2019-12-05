@@ -236,7 +236,7 @@ class DepGraph extends React.Component {
                     {this.buildCommonInteractionsPanel()}
                     <Graph ref="graph" {...graphProps} />
                 </div>
-                <div className="container__form" style={{color: "white"}}>
+                <div className="container__form" style={{color: "#bebebe"}}>
                     <h3>Selected Node ID: {this.state.selectedNodeId}</h3>
                     {this.buildSelectPanel()}
                 </div>
