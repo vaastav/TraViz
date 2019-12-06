@@ -49,11 +49,9 @@ func NewWLKernel(depth int) WeisfeilerLehmanKernel {
 }
 
 func (k * WeisfeilerLehmanKernel) Relabel(G Graph, direction string) Graph {
-	println("Inside Relabel")
 	next := G.CopyGraph()
 
 	nodes := G.GetNodes()
-	println("Getting labels")
 	for _, node := range nodes {
 		var neighbour_labels []string
 		if direction=="both" {
@@ -66,7 +64,6 @@ func (k * WeisfeilerLehmanKernel) Relabel(G Graph, direction string) Graph {
 		next.Relabel(node.ID, k.generator.Relabel(node.Label, neighbour_labels))
 	}
 
-	println("Deleting nodes")
 	for _, node := range nodes {
 		if direction == "both" {
 			continue

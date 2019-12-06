@@ -77,9 +77,25 @@ type D3Link struct {
     Weight int `json:"weight"`
 }
 
+type D3XTraceNode struct {
+    ID string `json:"id"`
+    Group int `json:"group"`
+    Event xtrace.Event `json:"data"`
+}
+
+type D3XTraceLink struct {
+    Source string `json:"source"`
+    Target string `json:"target"`
+}
+
 type DependencyResponse struct {
     Nodes []D3Node `json:"nodes"`
     Links []D3Link `json:"links"`
+}
+
+type ComparisonResponse struct {
+    Nodes []D3XTraceNode `json:"nodes"`
+    Links []D3XTraceLink `json:"links"`
 }
 
 type ErrorResponse struct {
@@ -137,7 +153,7 @@ func processDependencies(trace xtrace.XTrace) map[Dependency]int {
             if parent_event.ProcessName != e.ProcessName {
                 dep := Dependency{Source: parent_event.ProcessName, Destination: e.ProcessName}
                 if n, ok := depMap[dep]; !ok {
-                    depMap[dep] = 1
+                      depMap[dep] = 1
                 } else {
                     depMap[dep] = n + 1
                 }
@@ -147,16 +163,52 @@ func processDependencies(trace xtrace.XTrace) map[Dependency]int {
     return depMap
 }
 
-func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) {
+func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) ComparisonResponse {
     graph1 := kernel.GraphFromXTrace(trace1)
     graph2 := kernel.GraphFromXTrace(trace2)
 
     wlKernel := kernel.NewWLKernel(5)
     results := wlKernel.CalculateNodeStability(*graph1, *graph2, "both")
-    log.Println(results[0].Scores)
-    log.Println(results[0].Labels)
-    log.Println(results[1].Scores)
-    log.Println(results[1].Labels)
+    var nodes []D3XTraceNode
+    var links []D3XTraceLink
+
+    // Group 1: Only in Graph 1
+    // Group 2: Only in Graph 2
+    // Group 3: Same
+    for id, node := range graph1.Nodes {
+        event := node.Event
+        group := 3
+        if results[0].Scores[id] <= 0.5 {
+            group = 1
+        }
+        d3Node := D3XTraceNode{ID: id, Group: group, Event: event}
+        nodes = append(nodes, d3Node)
+    }
+
+    for id, node := range graph2.Nodes {
+        event := node.Event
+        group := 3
+        if results[1].Scores[id] <= 0.5 {
+            group = 2
+        }
+        d3Node := D3XTraceNode{ID: id, Group: group, Event: event}
+        nodes = append(nodes, d3Node)
+    }
+
+    for id := range graph1.Parents {
+        for _, pid := range graph1.Parents[id] {
+            link := D3XTraceLink{Source: pid, Target: id}
+            links = append(links, link)
+        } 
+    }
+
+    for id := range graph2.Parents {
+        for _, pid := range graph2.Parents[id] {
+            link := D3XTraceLink{Source: pid, Target: id}
+            links = append(links, link)
+        }
+    }
+    return ComparisonResponse{Nodes: nodes, Links: links}
 }
 
 //Parses config from a json file and returns the parsed Config struct
@@ -509,9 +561,9 @@ func (s * Server) CompareOneVsOne(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
     }
     trace2 = traces2[0]
-    compare2Traces(trace1, trace2)
+    response := compare2Traces(trace1, trace2)
     w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
+    json.NewEncoder(w).Encode(response)
 }
 
 func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
