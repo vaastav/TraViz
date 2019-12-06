@@ -496,6 +496,7 @@ func (s * Server) routes() {
     s.Router.HandleFunc("/dependency", s.Dependency)
     s.Router.HandleFunc("/compare/{id1}/{id2}", s.CompareOneVsOne)
     s.Router.HandleFunc("/traces", s.FilterTraces)
+    s.Router.HandleFunc("/tags", s.Tags)
 }
 
 func setupResponse(w *http.ResponseWriter, r *http.Request) {
@@ -734,6 +735,29 @@ func (s * Server) FilterTraces(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
 }
 
+func (s * Server) Tags(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
+    w.Header().Set("Content-Type", "application/json")
+    rows, err := s.DB.Query("SELECT DISTINCT tag FROM tags")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+    }
+    var tags []string
+
+    for rows.Next() {
+        var tag string
+        err = rows.Scan(&tag)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+        }
+        tags = append(tags, tag)
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(tags)
+}
 
 func main() {
     configPtr := flag.String("config", "", "Path to config file")
