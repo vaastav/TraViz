@@ -151,8 +151,12 @@ func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) {
     graph1 := kernel.GraphFromXTrace(trace1)
     graph2 := kernel.GraphFromXTrace(trace2)
 
-    log.Println(graph1.GetNumNodes())
-    log.Println(graph2.GetNumNodes())
+    wlKernel := kernel.NewWLKernel(5)
+    results := wlKernel.CalculateNodeStability(*graph1, *graph2, "both")
+    log.Println(results[0].Scores)
+    log.Println(results[0].Labels)
+    log.Println(results[1].Scores)
+    log.Println(results[1].Labels)
 }
 
 //Parses config from a json file and returns the parsed Config struct

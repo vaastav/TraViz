@@ -16,6 +16,10 @@ type MultiSetLabelGenerator struct {
 	Labels map[string]string
 }
 
+func NewMSLGenerator() MultiSetLabelGenerator {
+	return MultiSetLabelGenerator{Seed: 0, Labels: make(map[string]string)}
+}
+
 func (g * MultiSetLabelGenerator) Next() int {
 	g.Seed += 1
 	return g.Seed
@@ -40,10 +44,16 @@ type WeisfeilerLehmanKernel struct {
 	depth int
 }
 
+func NewWLKernel(depth int) WeisfeilerLehmanKernel {
+    return WeisfeilerLehmanKernel{kernel: NodeCountKernel{}, generator: NewMSLGenerator(), depth: depth}
+}
+
 func (k * WeisfeilerLehmanKernel) Relabel(G Graph, direction string) Graph {
+	println("Inside Relabel")
 	next := G.CopyGraph()
 
 	nodes := G.GetNodes()
+	println("Getting labels")
 	for _, node := range nodes {
 		var neighbour_labels []string
 		if direction=="both" {
@@ -56,6 +66,7 @@ func (k * WeisfeilerLehmanKernel) Relabel(G Graph, direction string) Graph {
 		next.Relabel(node.ID, k.generator.Relabel(node.Label, neighbour_labels))
 	}
 
+	println("Deleting nodes")
 	for _, node := range nodes {
 		if direction == "both" {
 			continue
@@ -139,6 +150,9 @@ func (k * WeisfeilerLehmanKernel) CalculateNodeStability(A Graph, B Graph, direc
 				}
 			}
 		}
+
+		A = k.Relabel(A, direction)
+		B = k.Relabel(B, direction)
 	}
 
 	A_result := Result{Labels: A_labels, Scores: A_scores}
