@@ -495,6 +495,7 @@ func (s * Server) routes() {
     s.Router.HandleFunc("/source", s.SourceCode)
     s.Router.HandleFunc("/dependency", s.Dependency)
     s.Router.HandleFunc("/compare/{id1}/{id2}", s.CompareOneVsOne)
+    s.Router.HandleFunc("/traces", s.FilterTraces)
 }
 
 func setupResponse(w *http.ResponseWriter, r *http.Request) {
@@ -724,6 +725,13 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
 
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(&DependencyResponse{Nodes: sizedNodes, Links: links})
+}
+
+func (s * Server) FilterTraces(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusInternalServerError)
+    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
 }
 
 
