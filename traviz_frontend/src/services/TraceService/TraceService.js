@@ -13,6 +13,20 @@ class TraceService {
         const url = `${API_URL}/traces/${id}`;
         return axios.get(url).then(response => response.data);
     }
+
+    async searchTraces(tid, tg, sdate, edate, minD, maxD) {
+        const url = `${API_URL}/traces`;
+        return axios.get(url, {
+            params: {
+                traceId: tid,
+                tag: tg,
+                startDate: sdate,
+                endDate: edate,
+                minDur: minD,
+                maxDur: maxD
+            }
+        }).then(response => response.data)
+    }
 }
 
 export default TraceService

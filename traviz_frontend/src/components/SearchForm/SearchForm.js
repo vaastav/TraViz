@@ -3,27 +3,37 @@ import "./SearchForm.css"
 import TagService from "../../services/TagService/TagService";
 import Select from 'react-select';
 import { Form, Button } from 'react-bootstrap'
+import TraceService from "../../services/TraceService/TraceService";
 
 
 export class SearchForm extends React.PureComponent {
   constructor(props) {
     super(props);
-    this.state = { tags: [] };
+    this.state = {
+      tags: [],
+      traceId: null,
+      tag: null,
+      startDate: null,
+      endDate: null,
+      minDur: null,
+      maxDur: null
+    };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.tagService = new TagService()
+    this.traceService = new TraceService()
   }
 
   componentWillMount() {
     this.tagService.getAllTags().then(ts => {
-      let tgs = [{label: "None", Value: "None"}];
+      let tgs = [{ label: "None", Value: "None" }];
       let newTags = ts.map(t => ({
         label: t,
         value: t
       }));
       tgs = tgs.concat(newTags);
-      this.setState({tags: tgs})
+      this.setState({ tags: tgs })
     })
   }
 
@@ -32,8 +42,14 @@ export class SearchForm extends React.PureComponent {
   }
 
   handleSubmit(event) {
-    alert('A name was submitted: ' + this.state.value);
-    console.log(event)
+    this.traceService.searchTraces(this.state.traceId, 
+      this.state.tag, 
+      this.state.startDate, 
+      this.state.endDate, 
+      this.state.minDur, 
+      this.state.maxDur).then(traces => {
+        console.log(traces)
+      })
     event.preventDefault();
   }
 
@@ -41,6 +57,11 @@ export class SearchForm extends React.PureComponent {
 
     return (
       <Form onSubmit={this.handleSubmit}>
+
+        <Form.Group controlId="traceId">
+          <Form.Label> Trace Id </Form.Label>
+          <Form.Control type="text" placeholder="e.g. A276C4D06FDB9AE0" onChange={this.handleChange} value={this.state.traceId} />
+        </Form.Group>
 
         <Form.Group controlId="tags">
           <Form.Label> Tags </Form.Label>
