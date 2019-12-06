@@ -200,7 +200,7 @@ class Swimlane extends Component {
             .attr('dy', '0.5ex')
             .attr('text-anchor', 'end')
             .attr('fill', '#bebebe')
-            .attr('font-weight', 'bold')
+            .style('font-weight', 'bold')
             .attr('class', 'laneText');
 
         // draw the lanes for the mini chart
@@ -221,7 +221,7 @@ class Swimlane extends Component {
             .attr('y', function (d) { return y2(d.id + .5); })
             .attr('dy', '0.5ex')
             .attr('text-anchor', 'end')
-            .attr('font-weight', 'bold')
+            .style('font-weight', 'bold')
             .attr('fill', "#bebebe")
             .attr('class', 'laneText');
 
@@ -251,14 +251,12 @@ class Swimlane extends Component {
             .attr('transform', 'translate(0,' + mainHeight + ')')
             .attr('class', 'main axis')
             .attr('fill', '#bebebe')
-            .attr('font-weight', 'bold')
             .call(x1Axis);
 
         mini.append('g')
             .attr('transform', 'translate(0,' + miniHeight + ')')
             .attr('class', 'axis')
             .attr('fill', '#bebebe')
-            .attr('font-weight', 'bold')
             .call(xAxis);
 
         // draw the spans
@@ -277,7 +275,7 @@ class Swimlane extends Component {
         // Create node for event lines
         let lines = main.append("svg")
             .attr("stroke-width", 2)
-            .attr("stroke", "#4e4e50")
+            .attr("stroke", "#d2a665")
 
         // invisible hit area to move around the selection window
         mini.append('rect')
