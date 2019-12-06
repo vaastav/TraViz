@@ -14,13 +14,15 @@ const dateChartFunc = (divRef, ndx) => {
     const dates = dimension.group(d3.timeDay);
     var startDate = dimension.bottom(1)[0].dd;
     startDate.setDate(dimension.bottom(1)[0].dd.getDate() - 1);
+    var endDate = dimension.top(1)[0].dd;
+    endDate.setDate(dimension.top(1)[0].dd.getDate() + 1)
     dateChart
     .dimension(dimension)
     .group(dates)
     .round(d3.timeDay.round)
     .xUnits(function() { return 21; })
     .x(d3.scaleTime()
-        .domain([startDate, dimension.top(1)[0].dd])
+        .domain([startDate, endDate])
         .rangeRound([0, 10 * 10]))
     .y(d3.scaleSymlog().domain([0, 20000]));
 
