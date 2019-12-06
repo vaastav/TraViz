@@ -14,32 +14,10 @@ import (
     "strings"
     "time"
     "github.com/gorilla/mux"
+    "github.com/vaastav/TraViz/traviz_backend/xtrace"
+    "github.com/vaastav/TraViz/traviz_backend/kernel"
     _ "github.com/go-sql-driver/mysql"
 )
-
-// Represents an event in the trace. Currently, only a subset of the fields are parsed
-// which are relevant to TraViz
-type Event struct {
-    ProcessName string `json:"ProcessName"`
-    Label string `json:Label"`
-    Timestamp int64 `json:"Timestamp"`
-    HRT uint64 `json:"HRT"`
-    EventID string `json:"EventID"`
-    Parents []string `json:"ParentEventID"`
-    ThreadID int `json:"ThreadID"`
-    Agent string `json:"Agent"`
-    ProcessID int `json:"ProcessID"`
-    Tags []string `json:"Tag"`
-    Source string `json:"Source"`
-    Host string `json:"Host"`
-    Cycles int `json:"Cycles"`
-}
-
-//Struct that represents an XTrace. This corresponds to XTraceV4
-type XTrace struct {
-    ID string `json:"id"`
-    Events []Event `json:"reports"`
-}
 
 //Struct that represents the statistics to be collected when the trace is
 //processed to be inserted into the sql database
@@ -118,7 +96,7 @@ type Server struct {
 
 //Processes a given XTrace and returns the statistics collected
 //for the given trace
-func processTrace(trace XTrace) TraceStats {
+func processTrace(trace xtrace.XTrace) TraceStats {
     var earliest_timestamp int64
     var earliest_time_hrt uint64
     earliest_time_hrt = math.MaxUint64
@@ -147,9 +125,9 @@ func processTrace(trace XTrace) TraceStats {
     return TraceStats{Duration: duration, DOC: doc, NumEvents: len(trace.Events), Tags: tags, Source: sourceMap}
 }
 
-func processDependencies(trace XTrace) map[Dependency]int {
+func processDependencies(trace xtrace.XTrace) map[Dependency]int {
     depMap := make(map[Dependency]int)
-    events := make(map[string]Event)
+    events := make(map[string]xtrace.Event)
     for _, event := range trace.Events {
         events[event.EventID] = event
     }
@@ -169,85 +147,12 @@ func processDependencies(trace XTrace) map[Dependency]int {
     return depMap
 }
 
-func all_parents_seen(event Event, seen_events map[string]bool) bool {
-    result := true
-    for _, parent := range event.Parents {
-        if _, ok := seen_events[parent]; ok {
-            // This parent is already in the log. We can continue
-            continue
-        } else {
-            // Add the current event to waiting events
-            result = false
-            break
-        }
-    }
-    return result
-}
+func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) {
+    graph1 := kernel.GraphFromXTrace(trace1)
+    graph2 := kernel.GraphFromXTrace(trace2)
 
-func sort_events(events []Event) []Event {
-    var sorted_events []Event
-    seen_events := make(map[string]bool)
-    var waiting_events []Event
-    for _, event := range events {
-        // Check if each parent has been seen before
-        parents_seen := all_parents_seen(event, seen_events)
-        if parents_seen {
-            sorted_events = append(sorted_events, event)
-            seen_events[event.EventID] = true
-            // Check the waiting list
-            for _, waiting_event := range waiting_events {
-                // We have already marked this waiting_event as seen. #LazyRemoval
-                if _, ok := seen_events[waiting_event.EventID]; ok {
-                    continue
-                }
-                if all_parents_seen(waiting_event, seen_events) {
-                    sorted_events = append(sorted_events, waiting_event)
-                    seen_events[waiting_event.EventID] = true
-                }
-            }
-        } else {
-            waiting_events = append(waiting_events, event)
-        }
-    }
-    return sorted_events
-}
-
-func compare2events(event1 Event, event2 Event) bool {
-    if event1.ProcessName != event2.ProcessName {
-        return false
-    }
-    if event1.Source != event2.Source {
-        return false
-    }
-    return true
-}
-
-func compare2Traces(trace1 XTrace, trace2 XTrace) {
-    log.Println(len(trace1.Events), len(trace2.Events))
-    sortedTrace1 := sort_events(trace1.Events)
-    sortedTrace2 := sort_events(trace2.Events)
-    matches := make(map[int]int)
-    flipped_matches := make(map[int]int)
-    var prevMatch int
-    log.Println(len(sortedTrace1), len(sortedTrace2))
-    for trace1index, t1event := range sortedTrace1 {
-        matchFound := false
-        log.Println("Event", trace1index,":", t1event.ProcessName, t1event.Source)
-        for trace2index := prevMatch; trace2index < len(sortedTrace2); trace2index += 1 {
-            if compare2events(t1event, sortedTrace2[trace2index]) {
-                matches[trace1index] = trace2index
-                flipped_matches[trace2index] = trace1index
-                prevMatch = trace2index
-                matchFound = true
-                break
-            }
-        } 
-        if !matchFound {
-            log.Println(trace1index)
-        }
-    }
-    log.Println("Unmatched events in Trace1", len(sortedTrace1) - len(matches))
-    log.Println("Unmatched events in Trace2", len(sortedTrace2) - len(matches))
+    log.Println(graph1.GetNumNodes())
+    log.Println(graph2.GetNumNodes())
 }
 
 //Parses config from a json file and returns the parsed Config struct
@@ -323,7 +228,7 @@ func (s * Server) LoadDependencies() error {
     }
     defer dep_stmtIns.Close()
 
-    var newTraces []XTrace
+    var newTraces []xtrace.XTrace
     err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
         if err != nil {
             return err
@@ -338,7 +243,7 @@ func (s * Server) LoadDependencies() error {
         }
         if matched {
             if _, ok := locations[fp] ; !ok{
-                var traces []XTrace
+                var traces []xtrace.XTrace
                 f, err := os.Open(fp)
                 if err != nil {
                     return err
@@ -410,7 +315,7 @@ func (s * Server) LoadTraces() error {
     defer tags_stmtIns.Close()
     srccode_stmtIns, err := s.DB.Prepare("INSERT INTO sourcecode VALUES( ?, ?, ?, ? )")
 
-    var newTraces []XTrace
+    var newTraces []xtrace.XTrace
     err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
         if err != nil {
             return err
@@ -425,7 +330,7 @@ func (s * Server) LoadTraces() error {
         }
         if matched {
             if _, ok := locations[fp] ; !ok{
-                var traces []XTrace
+                var traces []xtrace.XTrace
                 f, err := os.Open(fp)
                 if err != nil {
                     return err
@@ -570,10 +475,10 @@ func (s * Server) CompareOneVsOne(w http.ResponseWriter, r *http.Request) {
     } else {
         file2 = v
     }
-    var traces1 []XTrace
-    var traces2 []XTrace
-    var trace1 XTrace
-    var trace2 XTrace
+    var traces1 []xtrace.XTrace
+    var traces2 []xtrace.XTrace
+    var trace1 xtrace.XTrace
+    var trace2 xtrace.XTrace
     f1, err := os.Open(file1)
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
@@ -620,7 +525,7 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID"})
         return
     } else {
-        var traces []XTrace
+        var traces []xtrace.XTrace
         f, err := os.Open(v)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
@@ -634,7 +539,7 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
         }
         w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(sort_events(traces[0].Events))
+        json.NewEncoder(w).Encode(xtrace.Sort_events(traces[0].Events))
     }
 }
 
