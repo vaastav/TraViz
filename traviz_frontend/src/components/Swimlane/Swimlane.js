@@ -1,14 +1,7 @@
 import React, { Component } from "react"
 import * as d3v3 from "d3-v3"
 import './Swimlane.css'
-import { parseData, generateRandomWorkItems } from "./randomData"
 import TraceService from "../../services/TraceService/TraceService";
-
-// export const  dateFormatSpecifier = '%Y-%m-%d %H:%M:%S';
-// export const dateFormat = d3v3.time.format(dateFormatSpecifier);
-// export const dateFormatParser = dateFormat.parse
-// export const dateFormatParser = d3v3.time.format('%Y-%m-%d %H:%M:%S').parse
-// export const numberFormat = d3v3.format('.2f');
 
 function createLanes(events) {
     let lanes = []
@@ -109,13 +102,6 @@ function mapThreadsIdsToLane(spans) {
     return threadToLaneMap
 }
 
-// function cleanTrace(trace) {
-//     trace.forEach((e) => {
-//         e.ThreadID = e.ThreadID.replace(/-/g, "")
-//     })
-//     return trace
-// }
-
 class Swimlane extends Component {
     constructor(props) {
         super(props);
@@ -131,13 +117,6 @@ class Swimlane extends Component {
             this.state.trace = trace
             this.createSwimlane();
         });
-        // console.log(trace.Date)
-        // trace.dd = dateFormatParser(trace.Date);
-        // trace.month = d3v3.time.month(trace.dd);
-        // trace.Duration = +trace.Duration / 1000000;x1DateAxis
-        // trace.NumEvents = +trace.NumEvents;
-        // trace.Tags = trace.Tags;
-        // this.createSwimlane();
     }
 
     componentDidUpdate() {
@@ -147,20 +126,12 @@ class Swimlane extends Component {
     createSwimlane() {
         console.log("State trace")
         console.log(this.state.trace)
-        var data = parseData(generateRandomWorkItems())
-        console.log("Antique lanes")
-        console.log(data.lanes)
-
         let events = this.state.trace
         let lanes = createLanes(this.state.trace)
         let spans = createSpans(this.state.trace)
-        let items = data.items
         let connectingLines = getConnectingLines(events)
-        // let now = new Date();
         console.log("Events")
         console.log(events)
-        console.log("Items");
-        console.log(items);
         console.log("Lanes");
         console.log(lanes);
         console.log("Spans")
@@ -229,6 +200,7 @@ class Swimlane extends Component {
             .attr('dy', '0.5ex')
             .attr('text-anchor', 'end')
             .attr('fill', '#bebebe')
+            .attr('font-weight', 'bold')
             .attr('class', 'laneText');
 
         // draw the lanes for the mini chart
@@ -249,6 +221,7 @@ class Swimlane extends Component {
             .attr('y', function (d) { return y2(d.id + .5); })
             .attr('dy', '0.5ex')
             .attr('text-anchor', 'end')
+            .attr('font-weight', 'bold')
             .attr('fill', "#bebebe")
             .attr('class', 'laneText');
 
@@ -274,61 +247,19 @@ class Swimlane extends Component {
             })
             .tickSize(6, 0, 0)
 
-        // var xMonthAxis = d3v3.svg.axis()
-        //     .scale(x)
-        //     .orient('top')
-        //     .ticks(d3v3.time.months, 1)
-        //     .tickFormat(d3v3.time.format('%b %Y'))
-        //     .tickSize(15, 0, 0);
-
-        // var x1MonthAxis = d3v3.svg.axis()
-        //     .scale(x1)
-        //     .orient('top')
-        //     .ticks(d3v3.time.mondays, 1)
-        //     .tickFormat(d3v3.time.format('%b - Week %W'))
-        //     .tickSize(15, 0, 0);
-
         main.append('g')
             .attr('transform', 'translate(0,' + mainHeight + ')')
             .attr('class', 'main axis')
             .attr('fill', '#bebebe')
+            .attr('font-weight', 'bold')
             .call(x1Axis);
-
-        // main.append('g')
-        //     .attr('transform', 'translate(0,0.5)')
-        //     .attr('class', 'main axis month')
-        //     .call(x1MonthAxis)
-        //     .selectAll('text')
-        //     .attr('dx', 5)
-        //     .attr('dy', 12);
 
         mini.append('g')
             .attr('transform', 'translate(0,' + miniHeight + ')')
             .attr('class', 'axis')
             .attr('fill', '#bebebe')
+            .attr('font-weight', 'bold')
             .call(xAxis);
-
-        // mini.append('g')
-        //     .attr('transform', 'translate(0,0.5)')
-        //     .attr('class', 'axis month')
-        //     .call(xMonthAxis)
-        //     .selectAll('text')
-        //     .attr('dx', 5)
-        //     .attr('dy', 12);
-
-        // // draw a line representing today's date
-        // main.append('line')
-        //     .attr('y1', 0)
-        //     .attr('y2', mainHeight)
-        //     .attr('class', 'main todayLine')
-        //     .attr('clip-path', 'url(#clip)');
-
-        // mini.append('line')
-        //     .attr('x1', x(now) + 0.5)
-        //     .attr('y1', 0)
-        //     .attr('x2', x(now) + 0.5)
-        //     .attr('y2', miniHeight)
-        //     .attr('class', 'todayLine');
 
         // draw the spans
         var itemRects = main.append('g')
@@ -388,33 +319,8 @@ class Swimlane extends Component {
 
             x1.domain([minExtent, maxExtent]);
 
-            // if ((maxExtent - minExtent) > 1468800000) {
-            //     x1Axis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%a %d'))
-            //     // x1MonthAxis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%b - Week %W'))
-            // }
-            // else if ((maxExtent - minExtent) > 172800000) {
-            //     x1Axis.ticks(d3v3.time.days, 1).tickFormat(d3v3.time.format('%a %d'))
-            //     // x1MonthAxis.ticks(d3v3.time.mondays, 1).tickFormat(d3v3.time.format('%b - Week %W'))
-            // }
-            // else {
-            //     x1Axis.ticks(d3v3.time.hours, 4).tickFormat(d3v3.time.format('%I %p'))
-            //     // x1MonthAxis.ticks(d3v3.time.days, 1).tickFormat(d3v3.time.format('%b %e'))
-            // }
-
-
-            //x1Offset.range([0, x1(d3v3.time.day.ceil(now) - x1(d3v3.time.day.floor(now)))]);
-
-            // // shift the today line
-            // main.select('.main.todayLine')
-            //     .attr('x1', x1(now) + 0.5)
-            //     .attr('x2', x1(now) + 0.5);
-
             // update the axis
             main.select('.main.axis').call(x1);
-            // main.select('.main.axis.month').call(x1MonthAxis)
-            //     .selectAll('text')
-            //     .attr('dx', 5)
-            //     .attr('dy', 12);
 
             // upate the item rects
             rects = itemRects.selectAll('rect')
@@ -430,20 +336,6 @@ class Swimlane extends Component {
                 .attr('class', function (d) { return 'mainItem ' + d.class; });
 
             rects.exit().remove();
-
-            // update the item labels
-            // labels = itemRects.selectAll('text')
-            //     .data(visItems, function (d) { return d.id; })
-            //     .attr('x', function (d) { return x1(Math.max(d.start, minExtent)) + 2; });
-
-            // labels.enter().append('text')
-            //     .text(function (d) { return 'Item\n\n\n\n Id: ' + d.id; })
-            //     .attr('x', function (d) { return x1(Math.max(d.start, minExtent)) + 2; })
-            //     .attr('y', function (d) { return y1(d.lane) + .4 * y1(1) + 0.5; })
-            //     .attr('text-anchor', 'start')
-            //     .attr('class', 'itemLabel');
-
-            // labels.exit().remove();
 
             // draw the event circles
             let circs = circles.selectAll(".circ")

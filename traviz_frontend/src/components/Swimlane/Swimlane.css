@@ -32,15 +32,16 @@
 .future {
 	stroke: #950740;
 	fill: #950740;
+	opacity: 0.7;
 }
 
 .past {
 	stroke: #950740;
 	fill: #950740;
+	opacity: 0.7;
 }
 
 .brush .extent {
-	stroke: #bebebe;
 	fill: blue;
 	fill-opacity: .165;
 }
