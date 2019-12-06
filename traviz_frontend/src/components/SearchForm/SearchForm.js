@@ -1,4 +1,5 @@
 import React from "react"
+import "./SearchForm.css"
 
 
 export class SearchForm extends React.PureComponent {
@@ -22,13 +23,52 @@ export class SearchForm extends React.PureComponent {
   render() {
 
     return (
-      <div>
+      <div className="form">
         <form onSubmit={this.handleSubmit}>
-          <label>
-            Tags:
+
+          <div className="inputs">
+            <div className="input">
+              <label>
+                Tags:
+                <select default="Tags" onChange={this.handleChange}>
+                  <option value="1">one</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="date">
+              <label>
+                Start Time:
+          <input type="date" value={this.state.value} onChange={this.handleChange} />
+              </label>
+            </div>
+
+            <div className="date">
+              <label>
+                End Time:
+          <input type="date" value={this.state.value} onChange={this.handleChange} />
+              </label>
+            </div>
+
+            <div className="input">
+              <label>
+                Min Duration:
           <input type="text" value={this.state.value} onChange={this.handleChange} />
-          </label>
-          <input type="submit" value="Submit" />
+              </label>
+            </div>
+
+            <div className="input">
+              <label>
+                Max Duration:
+          <input type="text" value={this.state.value} onChange={this.handleChange} />
+              </label>
+            </div>
+          </div>
+
+          <div className="submit">
+            <input type="submit" value="Search" />
+          </div>
+
         </form >
       </div>
 

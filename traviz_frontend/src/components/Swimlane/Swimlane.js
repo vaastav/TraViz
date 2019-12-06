@@ -7,7 +7,7 @@ function createLanes(events) {
     let lanes = []
     let count = 0
     events.forEach(event => {
-        if (lanes.find((l) => l.ThreadID == event.ThreadID) == undefined) {
+        if (lanes.find((l) => l.ThreadID === event.ThreadID) === undefined) {
             lanes.push({ id: count, ThreadID: event.ThreadID, label: "thread " + event.ThreadID })
             count++
         }
@@ -108,7 +108,6 @@ class Swimlane extends Component {
         this.createSwimlane = this.createSwimlane.bind(this);
         this.state = { trace: [] };
         this.traceService = new TraceService();
-
     }
 
     componentDidMount() {
@@ -288,7 +287,7 @@ class Swimlane extends Component {
         // draw the selection area
         var brush = d3v3.svg.brush()
             .x(x)
-            .extent([start - x_padding, end + x_padding])
+            .extent([start, end])
             .on("brush", display);
 
         mini.append('g')

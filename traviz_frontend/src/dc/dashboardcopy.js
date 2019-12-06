@@ -1,37 +1,24 @@
 import React from 'react'
-import {Grid,Row,Col} from 'react-flexbox-grid'
+import { Grid, Row, Col } from 'react-flexbox-grid'
 import { TraceTable } from "./traceTable";
 import { DataContext } from "./cxContext";
 import { EventsChart } from './eventsChart';
 import { DurationChart } from './durationChart';
 import { DateChart } from './dateChart';
 import { SearchForm } from '../components/SearchForm/SearchForm';
+import { Table } from '../components/Table/Table';
 
-export const DashboardCopy = (props)=>{
+export const DashboardCopy = (props) => {
 
-    return(
+    return (
         <div>
-        <DataContext>
+            <DataContext>
                 <Row>
                     <Col >
-                        <SearchForm/>
-                    </Col>
-                    <Col md={6} >
-                        <TraceTable />
-                    </Col>
-                    <Col md={6} >
-                        <Row>
-                            <EventsChart />
-                        </Row>
-                        <Row>
-                            <DurationChart />
-                        </Row>
-                        <Row>
-                            <DateChart />
-                        </Row>
+                        <SearchForm />
                     </Col>
                 </Row>
-        </DataContext>
+            </DataContext>
         </div>
     )
 }
