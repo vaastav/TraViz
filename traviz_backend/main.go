@@ -636,6 +636,45 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
 func (s * Server) FilterTraces(w http.ResponseWriter, r *http.Request) {
     setupResponse(&w, r)
     w.Header().Set("Content-Type", "application/json")
+    log.Println(r)
+    q := r.URL.Query()
+
+    log.Println(q)
+    if (len(q) == 0) {
+
+        rows, err := s.DB.Query("SELECT overview.trace_id, overview.doc, overview.duration, overview.num_events FROM overview")
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            return
+        }
+        var responseRows []OverviewRow
+        for rows.Next() {
+            var responseRow OverviewRow
+            err = rows.Scan(&responseRow.ID, &responseRow.Date, &responseRow.Duration, &responseRow.NumEvents)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+                return
+            }
+            tagRows, err :=  s.DB.Query("SELECT tag FROM tags WHERE trace_id=?", responseRow.ID)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+                return
+            }
+            for tagRows.Next() {
+                var tag string
+                tagRows.Scan(&tag)
+                responseRow.Tags = append(responseRow.Tags, tag)
+            }
+            responseRows = append(responseRows, responseRow)
+        }
+        log.Println("Sending", len(responseRows), "rows")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(responseRows)
+        return
+    }
     w.WriteHeader(http.StatusInternalServerError)
     json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
 }
