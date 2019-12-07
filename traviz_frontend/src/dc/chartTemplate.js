@@ -6,6 +6,9 @@ const ResetButton = props => {
     <input class="btn" type="button" value="Reset"
       onClick={() => {
         props.chart.filterAll();
+        if (typeof props.id !== "undefined") {
+            document.getElementById(props.id).style.visibility="hidden";
+        }
         dc.redrawAll();
       }}
     />
@@ -23,6 +26,9 @@ export const ChartTemplate = props => {
   const [chart,updateChart] = React.useState(null);
   const ndx = context.ndx;
   const div = React.useRef(null);
+  const style = props.style;
+  const id = props.id;
+  const idToHide = props.idToHide;
   React.useEffect(() => {
     const newChart = props.chartFunction(div.current, ndx); // chartfunction takes the ref and does something with it
 
@@ -32,10 +38,12 @@ export const ChartTemplate = props => {
 
   return (
     <div
+      id={id}
       ref={div}
+      style={style}
     >
      <label>{props.title}</label>
-     <ResetButton chart={chart} /> 
+     <ResetButton chart={chart} id={idToHide}/> 
     </div>
   );
 };

@@ -56,9 +56,16 @@ const fileChartFunc = (divRef, ndx) => {
         return filters;
     });
 
+    var oldClick = fileChart.onClick;
+    fileChart.onClick = function(d) {
+        document.getElementById("linechart").style.visibility="visible";
+        var chart = this;
+        return oldClick.call(chart, d);
+    };
+
     return fileChart;
 }
 
 export const FileChart = props => (
-    <ChartTemplate chartFunction={fileChartFunc} context={React.useContext(SrcContext)} title="Distribution of Events across files" />
+    <ChartTemplate chartFunction={fileChartFunc} context={React.useContext(SrcContext)} title="Distribution of Events across files"  idToHide={"linechart"} />
 )

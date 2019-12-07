@@ -45,7 +45,6 @@ const lineChartFunc = (divRef, ndx) => {
 
     var oldClick = lineChart.onClick;
     lineChart.onClick = function(d) {
-        console.log("inside onClick", d);
         window.location.href=links[d.key];
         return;
     };
@@ -54,5 +53,5 @@ const lineChartFunc = (divRef, ndx) => {
 }
 
 export const LineChart = props => (
-    <ChartTemplate chartFunction={lineChartFunc} context={React.useContext(SrcContext)} title="Distribution of Events across lines" />
+    <ChartTemplate chartFunction={lineChartFunc} context={React.useContext(SrcContext)} title="Distribution of Events across lines"  style={{visibility : 'hidden'}} id={"linechart"} />
 )
