@@ -19,6 +19,17 @@ class DepGraph extends React.Component {
             "highlightOpacity": 0.2,
             "height": 400,
             "width": 800,
+            "panAndZoom": false,
+            "staticGraph": false,
+            "focusZoom": 1,
+            "maxZoom": 8,
+            "minZoom": 0.1,
+            "staticGraphWithDragAndDrop": false,
+            "d3": {
+                "gravity": -400,
+                "linkStrength": 1,
+                "linkLength": 300
+            },
             "node": {
                 "color": "#4e4e50",
                 "fontColor": "white",

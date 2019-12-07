@@ -25,6 +25,11 @@
     width: 1200px;
 }
 
+.svg-container-graph {
+    height: 750px;
+    width: 1100px;
+}
+
 .container__graph-info {
     margin-left: 12px;
 }
