@@ -6,8 +6,6 @@ import { SrcContext } from "./srcContext";
 import * as reductio from "reductio";
 
 const fileChartFunc = (divRef, ndx) => {
-    console.log("Inside fileChart func")
-    console.log(ndx);
     const fileChart = dc.rowChart(divRef);
 
     const dimension = ndx.dimension(d=> d.Fname);
@@ -44,7 +42,7 @@ const fileChartFunc = (divRef, ndx) => {
             return 4;
         }
     })
-    .ordering(function(d) { console.log(d); return d.value; });
+    .ordering(function(d) { return d.value; });
 
     fileChart.xAxis().tickValues([1, 10, 100, 1000, 10000, 100000, 1000000]).tickFormat(
         function (v) {

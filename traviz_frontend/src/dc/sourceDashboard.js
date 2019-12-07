@@ -3,6 +3,7 @@ import {Row, Col} from "react-flexbox-grid";
 import { SourceTable } from "./sourceTable";
 import { SourceContext } from "./srcContext";
 import { FileChart } from "./fileChart";
+import { LineChart } from "./lineChart";
 
 export const SourceDashboard = (props)=> {
     return (
@@ -13,7 +14,7 @@ export const SourceDashboard = (props)=> {
                     <FileChart />
                 </Col>
                 <Col md={4} >
-                    <SourceTable />
+                    <LineChart />
                 </Col>
             </Row>
             </SourceContext>
