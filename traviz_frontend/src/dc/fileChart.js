@@ -17,12 +17,12 @@ const fileChartFunc = (divRef, ndx) => {
     const group = dimension.group().reduceSum(function(d) {return d.Count;});
     const xscale = scaleSymlog().domain([0, 1000000]).range([0, 750]);
     fileChart
-    .width(800)
+    .width(750)
     .height(600)
     .dimension(dimension)
     .group(group)
     .x(xscale)
-    .linearColors(["#fa9ec3", "#f86da5", "#f63c86" , "#db0a5e" , "#950740" ])
+    .linearColors(["#80ff80", "#4dff4d", "#1aff1a" , "#00e600" , "#00b300" ])
     .colorAccessor(function(d) { 
         var i;
         var val;
@@ -43,13 +43,20 @@ const fileChartFunc = (divRef, ndx) => {
         } else {
             return 4;
         }
-    });
+    })
+    .ordering(function(d) { console.log(d); return d.value; });
 
     fileChart.xAxis().tickValues([1, 10, 100, 1000, 10000, 100000, 1000000]).tickFormat(
         function (v) {
             return v;
         }
     );
+
+    fileChart.addFilterHandler(function (filters, filter) {
+        filters.length = 0;
+        filters.push(filter);
+        return filters;
+    });
 
     return fileChart;
 }

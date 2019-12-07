@@ -8,7 +8,7 @@ const tableFunc = (divRef, ndx)=> {
     const srcTable = dc.dataTable(divRef);
     const dimension=ndx.dimension(d=> d.Count);
     var ofs=0;
-    var pag=50;
+    var pag=20;
     srcTable.dimension(dimension)
     .group(d=>{return null;} )
     .columns([

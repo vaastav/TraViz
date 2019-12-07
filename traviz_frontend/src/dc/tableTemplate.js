@@ -7,7 +7,7 @@ const NextButton = props => {
             onClick={() => {
                 var totFilteredRecs = props.ndx.groupAll().value();
                 var ofs = props.table.beginSlice();
-                var pag = 50;
+                var pag = 20;
                 var ofs = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
                 props.table.beginSlice(ofs);
                 props.table.endSlice(ofs+pag);
@@ -21,7 +21,7 @@ const LastButton = props => {
         <input id="last" class="btn" type="button" value="Last"
             onClick={() => {
                 var ofs = props.table.beginSlice();
-                var pag = 50;
+                var pag = 20;
                 var ofs = ofs - pag < 0 ? 0 : ofs - pag;
                 props.table.beginSlice(ofs);
                 props.table.endSlice(ofs+pag);

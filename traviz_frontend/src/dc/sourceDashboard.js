@@ -9,11 +9,11 @@ export const SourceDashboard = (props)=> {
         <div>
             <SourceContext>
             <Row>
-                <Col md={6} >
-                    <SourceTable />
-                </Col>
-                <Col md={6}>
+                <Col md={8}>
                     <FileChart />
+                </Col>
+                <Col md={4} >
+                    <SourceTable />
                 </Col>
             </Row>
             </SourceContext>

@@ -12,7 +12,7 @@ const tableFunc = (divRef, ndx) => {
 
     const dimension = ndx.dimension(d => d.dd);
     var ofs = 0;
-    var pag = 50;
+    var pag = 20;
     traceTable.dimension(dimension)
         .group(d => {
             var format = d3Format('02d');
