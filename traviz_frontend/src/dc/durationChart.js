@@ -23,7 +23,9 @@ const durationChartFunc = (divRef, ndx) => {
         var filter = filters[0], s= '';
         s += numberFormat(filter[0]) + 'ms -> ' + numberFormat(filter[1]) + 'ms';
         return s;
-    });
+    })
+    .width(450)
+    .height(200);
 
     durationChart.ordinalColors(['#b1de00'])
     

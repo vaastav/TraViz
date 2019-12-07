@@ -25,7 +25,9 @@ const eventsChartFunc = (divRef, ndx) => {
         var filter = filters[0], s = '';
         s += numberFormat(filter[0]) + ' -> ' + numberFormat(filter[1]);
         return s;
-    });
+    })
+    .width(450)
+    .height(200);
 
     eventsChart.ordinalColors(['#b1de00'])
 

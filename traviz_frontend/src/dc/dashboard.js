@@ -13,9 +13,6 @@ export const Dashboard = (props)=>{
         <DataContext>
                 <Row>
                     <Col md={6} >
-                        <TraceTable />
-                    </Col>
-                    <Col md={6} >
                         <Row>
                             <EventsChart />
                         </Row>
@@ -25,6 +22,9 @@ export const Dashboard = (props)=>{
                         <Row>
                             <DateChart />
                         </Row>
+                    </Col>
+                    <Col md={6} >
+                        <TraceTable />
                     </Col>
                 </Row>
         </DataContext>

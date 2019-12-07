@@ -24,7 +24,9 @@ const dateChartFunc = (divRef, ndx) => {
     .x(d3.scaleTime()
         .domain([startDate, endDate])
         .rangeRound([0, 10 * 10]))
-    .y(d3.scaleSymlog().domain([0, 20000]));
+    .y(d3.scaleSymlog().domain([0, 20000]))
+    .width(450)
+    .height(200);
 
     dateChart.ordinalColors(['#b1de00'])
 
