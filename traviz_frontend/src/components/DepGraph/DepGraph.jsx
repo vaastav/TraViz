@@ -17,8 +17,8 @@ class DepGraph extends React.Component {
             "linkHighlightBehavior": true,
             "highlightDegree": 1,
             "highlightOpacity": 0.2,
-            "height": 400,
-            "width": 800,
+            "height": 770,
+            "width": 1100,
             "panAndZoom": false,
             "staticGraph": false,
             "focusZoom": 1,
@@ -235,11 +235,6 @@ class DepGraph extends React.Component {
             onMouseOutLink: this.onMouseOutLink,
             onNodePositionChange: this.onNodePositionChange,
         };
-
-        graphProps.config = Object.assign({}, graphProps.config, {
-            height: window.innerHeight,
-            width: window.innerWidth,
-        });
 
         return (
             <div className="dg_container">
