@@ -9,8 +9,8 @@ div#paging {
     padding: 5px 4px;
   }
   tbody td {
-    font-size: 13px;
-    color: #bebebe;
+    font-size: 14px;
+    color: white;
     background-color: #353635;
     border-color: #353635;
   }
@@ -25,7 +25,7 @@ div#paging {
   thead th {
     font-size: 15px;
     font-weight: bold;
-    color: #bebebe;
+    color: white;
     text-align: left;
   }
   tfoot td {
@@ -33,5 +33,6 @@ div#paging {
   }
 
   a {
-    color: #bebebe
+    color: white;
+    font-size: 14px;
   }

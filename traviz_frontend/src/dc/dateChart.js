@@ -26,7 +26,7 @@ const dateChartFunc = (divRef, ndx) => {
         .rangeRound([0, 10 * 10]))
     .y(d3.scaleSymlog().domain([0, 20000]));
 
-    dateChart.ordinalColors(['#950740'])
+    dateChart.ordinalColors(['#b1de00'])
 
     dateChart.xAxis().ticks(2).tickFormat(
         function (v) { return monthNames[v.getMonth()] + " " + v.getDate(); }

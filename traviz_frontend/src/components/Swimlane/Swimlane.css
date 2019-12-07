@@ -30,18 +30,18 @@
 }
 
 .future {
-	stroke: #950740;
-	fill: #950740;
+	stroke: #b1de00;
+	fill: #b1de00;
 	opacity: 0.7;
 }
 
 .past {
-	stroke: #950740;
-	fill: #950740;
+	stroke: #b1de00;
+	fill: #b1de00;
 	opacity: 0.7;
 }
 
 .brush .extent {
-	fill: #d2a665;
+	fill: blue;
 	fill-opacity: .165;
 }

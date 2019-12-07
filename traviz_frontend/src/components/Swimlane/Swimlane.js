@@ -188,7 +188,7 @@ class Swimlane extends Component {
             .attr('y1', function (d) { return d3v3.round(y1(d.id)) + 0.5; })
             .attr('x2', width)
             .attr('y2', function (d) { return d3v3.round(y1(d.id)) + 0.5; })
-            .attr('stroke', function (d) { return d.label === '' ? 'white' : 'lightgray' });
+            .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
 
         main.append('g').selectAll('.laneText')
             .data(lanes)
@@ -198,7 +198,7 @@ class Swimlane extends Component {
             .attr('y', function (d) { return y1(d.id + .5); })
             .attr('dy', '0.5ex')
             .attr('text-anchor', 'end')
-            .attr('fill', '#bebebe')
+            .attr('fill', 'white')
             .style('font-weight', 'bold')
             .attr('class', 'laneText');
 
@@ -210,7 +210,7 @@ class Swimlane extends Component {
             .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
             .attr('x2', width)
             .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-            .attr('stroke', function (d) { return d.label === '' ? '#bebebe' : '#bebebe' });
+            .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
 
         mini.append('g').selectAll('.laneText')
             .data(lanes)
@@ -221,7 +221,7 @@ class Swimlane extends Component {
             .attr('dy', '0.5ex')
             .attr('text-anchor', 'end')
             .style('font-weight', 'bold')
-            .attr('fill', "#bebebe")
+            .attr('fill', "white")
             .attr('class', 'laneText');
 
         // draw the x axis
@@ -249,13 +249,13 @@ class Swimlane extends Component {
         main.append('g')
             .attr('transform', 'translate(0,' + mainHeight + ')')
             .attr('class', 'main axis')
-            .attr('fill', '#bebebe')
+            .attr('fill', 'white')
             .call(x1Axis);
 
         mini.append('g')
             .attr('transform', 'translate(0,' + miniHeight + ')')
             .attr('class', 'axis')
-            .attr('fill', '#bebebe')
+            .attr('fill', 'white')
             .call(xAxis);
 
         // draw the spans
@@ -274,7 +274,7 @@ class Swimlane extends Component {
         // Create node for event lines
         let lines = main.append("svg")
             .attr("stroke-width", 2)
-            .attr("stroke", "#d2a665")
+            .attr("stroke", "#950740")
 
         // invisible hit area to move around the selection window
         mini.append('rect')
@@ -337,17 +337,17 @@ class Swimlane extends Component {
             // draw the event circles
             let circs = circles.selectAll(".circ")
                 .data(visEvents)
-                .attr("r", 0.08 * y1(1))
-                .attr("fill", "#bebebe")
-                .attr("stroke", "#bebebe")
+                .attr("r", 0.1 * y1(1))
+                .attr("fill", "white")
+                .attr("stroke", "black")
                 .attr("cx", function (d) { return x1(d.HRT) })
                 .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5; })
                 .attr("class", "circ")
 
             circs.enter().append("circle")
-                .attr("r", 0.08 * y1(1))
-                .attr("fill", "#bebebe")
-                .attr("stroke", "#bebebe")
+                .attr("r", 0.1 * y1(1))
+                .attr("fill", "white")
+                .attr("stroke", "black")
                 .attr("cx", function (d) { return x1(d.HRT) })
                 .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5; })
                 .attr("class", "circ");

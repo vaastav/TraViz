@@ -1,5 +1,5 @@
 header {
-    color: #bebebe;
+    color: white;
     background-color: #353635;
     height: 100%;
 }
@@ -22,6 +22,6 @@ li {
 }
 
 a.navbar {
-    color: #bebebe;
+    color: white;
     text-decoration: none;
 }
