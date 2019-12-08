@@ -53,7 +53,7 @@ const CompareButton = props => {
     return (
         <input id="comp" class="btn" type="button" value="Compare"
             onClick={() => {
-
+                props.compare()
             }} />
     );
 };
@@ -62,7 +62,7 @@ const AggregateButton = props => {
     return (
         <input id="agg" class="btn" type="button" value="Aggregate"
             onClick={() => {
-
+                props.agg()
             }} />
     );
 };
@@ -75,8 +75,8 @@ export const Pagination = props => {
             <NextButton table={props.table} ndx={props.ndx} />
             <SelectAllButton selAll={props.selAll} table={props.table} ndx={props.ndx} />
             <ResetButton reset={props.reset} table={props.table} ndx={props.ndx} />
-            <CompareButton compare={props.compare} table={props.table} ndx={props.ndx} />
-            <AggregateButton agg={props.agg} table={props.table} ndx={props.ndx} />
+            <CompareButton compare={props.compare} ndx={props.ndx} />
+            <AggregateButton agg={props.agg} ndx={props.ndx} />
         </div>
     )
 }
@@ -86,8 +86,6 @@ export const TableTemplate = props => {
     const [table, updateTable] = React.useState(null);
     const ndx = context.ndx;
     const div = React.useRef(null);
-    console.log("Checking props inside table template")
-    console.log(props)
     React.useEffect(() => {
         const newTable = props.tableFunction(div.current, ndx);
         newTable.render();

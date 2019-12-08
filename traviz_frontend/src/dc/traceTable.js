@@ -180,12 +180,26 @@ const selectAll = (table) => {
         .attr('disabled', selectedRows.length != 2 ? 'true' : null);
 }
 
-const compare = (table) => {
-    // Add whatever the comparison has to do here
+const compare = () => {
+    let traceId1 = selectedRows[0].ID;
+    let traceId2 = selectedRows[1].ID;
+    window.location.href='/compare/onevsone/' + traceId1 + "/" + traceId2;
+
 }
 
-const agg = (table) => {
-    // Add whatever the aggregation has to do here
+const agg = () => {
+    let selectedTraceIds = selectedRows.map((t) => {
+        return t.ID
+    });
+    var params = {
+        tid_list: selectedTraceIds,
+    };
+    
+    var esc = encodeURIComponent;
+    var query = Object.keys(params)
+        .map(k => esc(k) + '=' + esc(params[k]))
+        .join('&');
+    window.location.href='/aggregate?' + query
 }
 
 export const TraceTable = props => (
