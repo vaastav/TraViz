@@ -14,9 +14,10 @@ class CompareGraph extends React.Component {
             "highlightOpacity": 0.2,
             "height": 770,
             "width": 1100,
-            "panAndZoom": false,
+            "panAndZoom": true,
+            "directed": true,
             "staticGraph": false,
-            "focusZoom": 1,
+            "focusZoom": 0.1,
             "maxZoom": 8,
             "minZoom": 0.1,
             "staticGraphWithDragAndDrop": false,
@@ -39,7 +40,7 @@ class CompareGraph extends React.Component {
                 "symbolType": "circle"
             },
             "link": {
-                "color": "#d6d8da",
+                "color": "#999999",
                 "fontColor": "red",
                 "fontSize": 10,
                 "fontWeight": "normal",
@@ -74,6 +75,17 @@ class CompareGraph extends React.Component {
         const t1id = this.state.trace1;
         const t2id = this.state.trace2;
         this.compareService.compareTraces(t1id, t2id).then(graph => {
+            for (var i=0; i < graph.nodes.length; i++){
+                var group = graph.nodes[i].group;
+                console.log(group);
+                if (group === 1) {
+                    graph.nodes[i].color = "#cc66ff";
+                } else if (group === 2) {
+                    graph.nodes[i].color = "#66ff33";
+                } else {
+                    graph.nodes[i].color = "#999999";
+                }
+            }
             this.state.data = graph;
             this.setState({data: graph, loading: false, hasData: true})
         });
