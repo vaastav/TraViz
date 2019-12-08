@@ -10,7 +10,7 @@ const NextButton = props => {
                 var pag = 20;
                 var ofs = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
                 props.table.beginSlice(ofs);
-                props.table.endSlice(ofs+pag);
+                props.table.endSlice(ofs + pag);
                 props.table.redraw();
             }} />
     );
@@ -24,7 +24,7 @@ const LastButton = props => {
                 var pag = 20;
                 var ofs = ofs - pag < 0 ? 0 : ofs - pag;
                 props.table.beginSlice(ofs);
-                props.table.endSlice(ofs+pag);
+                props.table.endSlice(ofs + pag);
                 props.table.redraw();
             }} />
     );
@@ -54,21 +54,41 @@ const ResetButton = props => {
     );
 };
 
+const CompareButton = props => {
+    return (
+        <input id="comp" class="btn" type="button" value="Compare"
+            onClick={() => {
+
+            }} />
+    );
+};
+
+const AggregateButton = props => {
+    return (
+        <input id="agg" class="btn" type="button" value="Aggregate"
+            onClick={() => {
+
+            }} />
+    );
+};
+
 export const Pagination = props => {
     return (
         <div id="paging">
             Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span> <span id="totalsize"></span>
-            <LastButton table={props.table} ndx={props.ndx}/>
-            <NextButton table={props.table} ndx={props.ndx}/>
+            <LastButton table={props.table} ndx={props.ndx} />
+            <NextButton table={props.table} ndx={props.ndx} />
             <SelectAllButton selAll={props.selAll} table={props.table} ndx={props.ndx} />
             <ResetButton reset={props.reset} table={props.table} ndx={props.ndx} />
+            <CompareButton compare={props.compare} table={props.table} ndx={props.ndx} />
+            <AggregateButton agg={props.agg} table={props.table} ndx={props.ndx} />
         </div>
     )
 }
 
 export const TableTemplate = props => {
     const context = props.context;
-    const [table,updateTable] = React.useState(null);
+    const [table, updateTable] = React.useState(null);
     const ndx = context.ndx;
     const div = React.useRef(null);
     console.log("Checking props inside table template")
@@ -77,12 +97,12 @@ export const TableTemplate = props => {
         const newTable = props.tableFunction(div.current, ndx);
         newTable.render();
         updateTable(newTable);
-    },1); {/*Run this exactly once */}
+    }, 1); {/*Run this exactly once */ }
 
     return (
         <div ref={div}>
             <label>{props.title}</label>
-            <Pagination reset={props.reset} selAll={props.selAll} table={table} ndx={ndx}/>
+            <Pagination compare={props.compare} agg={props.agg} reset={props.reset} selAll={props.selAll} table={table} ndx={ndx} />
         </div>
     );
 }

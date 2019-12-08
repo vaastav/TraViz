@@ -155,16 +155,31 @@ const selectAll = (table) => {
     table.selectAll('tr.dc-table-row').each(function (d) {
         selectedRows.push(d);
     })
-    
+
     table.selectAll('tr.dc-table-row').classed('sel-rows', d => {
         console.log(selectedRows.includes(d))
         return selectedRows.includes(d);
     })
 }
 
+const compare = (table) => {
+    // Add whatever the comparison has to do here
+}
+
+const agg = (table) => {
+    // Add whatever the aggregation has to do here
+}
+
 export const TraceTable = props => (
     <div className="fullTable">
-        <TableTemplate reset={resetHighlight} selAll={selectAll} tableFunction={tableFunc} context={React.useContext(CXContext)} title="Summary Table" />
+        <TableTemplate
+            compare={compare}
+            agg={agg}
+            reset={resetHighlight}
+            selAll={selectAll}
+            tableFunction={tableFunc}
+            context={React.useContext(CXContext)}
+            title="Summary Table" />
     </div>
 
 )
