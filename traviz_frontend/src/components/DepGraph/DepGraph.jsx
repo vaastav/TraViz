@@ -31,8 +31,8 @@ class DepGraph extends React.Component {
                 "linkLength": 300
             },
             "node": {
-                "color": "#4e4e50",
-                "fontColor": "white",
+                "color": "#d6d8da",
+                "fontColor": "#ff4500",
                 "fontSize": 12,
                 "fontWeight": "normal",
                 "highlightColor": "#b1de00",
@@ -50,7 +50,7 @@ class DepGraph extends React.Component {
                 "symbolType": "circle"
             },
             "link": {
-                "color": "#4e4e50",
+                "color": "#d6d8da",
                 "fontColor": "red",
                 "fontSize": 10,
                 "fontWeight": "normal",
