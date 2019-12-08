@@ -1,8 +1,9 @@
 .outer-div
 {
     display: flex;
-    align-items: center;
+    /* align-items: center; */
     justify-content: center;
     height: 100vh;
     margin-right: 20%;
+    margin-top: 1.5%;
 }
