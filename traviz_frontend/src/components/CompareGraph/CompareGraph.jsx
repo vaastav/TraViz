@@ -80,10 +80,16 @@ class CompareGraph extends React.Component {
                 console.log(group);
                 if (group === 1) {
                     graph.nodes[i].color = "#cc66ff";
+                    graph.nodes[i].clickType = "detail";
+                    graph.nodes[i].collapsible = false;
                 } else if (group === 2) {
                     graph.nodes[i].color = "#66ff33";
+                    graph.nodes[i].clickType = "detail";
+                    graph.nodes[i].collapsible = false;
                 } else {
                     graph.nodes[i].color = "#999999";
+                    graph.nodes[i].clickType = "detail";
+                    graph.nodes[i].collapsible = true;
                 }
             }
             this.state.data = graph;
@@ -93,7 +99,16 @@ class CompareGraph extends React.Component {
 
     onClickGraph = () => { return; };
     onClickNode = id => {
-        this.setState({selectedNode: id});
+        var chosenNode;
+        for (var i = 0; i < this.state.data.nodes.length; i++) {
+            if (this.state.data.nodes[i].id == id) {
+                chosenNode = this.state.data.nodes[i];
+            }
+        }
+        console.log(chosenNode);
+        if (chosenNode.clickType == "detail") {
+            this.setState({selectedNode: id});
+        }
     };
 
     onDoubleClickNode = id => {
@@ -142,6 +157,12 @@ class CompareGraph extends React.Component {
         return;
     };
 
+    buildEventPanel = () => {
+        return (
+            <div></div>
+        );
+    };
+
     render() {
         console.log(this.state.hasData);
         if (!this.state.hasData) {
@@ -175,7 +196,8 @@ class CompareGraph extends React.Component {
                     <Graph ref="graph" {...graphProps} />
                 </div>
                 <div className="container__form">
-                    <h3> Selected Event </h3>
+                    <h3> Selected Event : {this.state.selectedNode}</h3>
+                    {this.buildEventPanel()}
                 </div>
             </div>
         );
