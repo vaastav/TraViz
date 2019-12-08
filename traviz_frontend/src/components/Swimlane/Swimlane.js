@@ -274,7 +274,8 @@ class Swimlane extends Component {
         // Create node for event lines
         let lines = main.append("svg")
             .attr("stroke-width", 2)
-            .attr("stroke", "#950740")
+
+            .attr("stroke", "#ffd800")
 
         // invisible hit area to move around the selection window
         mini.append('rect')
@@ -317,7 +318,7 @@ class Swimlane extends Component {
             x1.domain([minExtent, maxExtent]);
 
             // update the axis
-            main.select('.main.axis').call(x1);
+            main.select('.main.axis').call(x1Axis);
 
             // upate the item rects
             rects = itemRects.selectAll('rect')
