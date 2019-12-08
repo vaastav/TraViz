@@ -13,6 +13,12 @@ const tableFunc = (divRef, ndx) => {
     const dimension = ndx.dimension(d => d.dd);
     var ofs = 0;
     var pag = 20;
+    var tableHeaderCallback = function(table, d) {
+        d.sort_state = d.sort_state === "ascending" ? "descending" : "ascending";
+        var isAscendingOrder = d.sort_state === "ascending";
+        table.order(isAscendingOrder ? d3.ascending : d3.descending).sortBy(function (datum) {return datum[d.field_name];});
+        table.redraw();
+    }
     traceTable.dimension(dimension)
         .group(d => {
             var format = d3Format('02d');
@@ -23,17 +29,42 @@ const tableFunc = (divRef, ndx) => {
                 label: 'ID',
                 format: function (d) {
                     return '<a href=trace/' + d.ID + '>' + d.ID + '</a>'
-                }
+                },
+                sort_state: 'ascending',
+                field_name: 'ID'
             },
             {
                 label: 'Date',
                 format: function (d) {
                     return d.dd.getUTCFullYear() + "/" + (d.dd.getUTCMonth() + 1) + "/" + d.dd.getUTCDate()
-                }
+                },
+                sort_state: 'ascending',
+                field_name: 'dd'
             },
-            'Duration',
-            'NumEvents',
-            'Tags'
+            {
+                label: 'Duration',
+                format: function (d) {
+                    return d.Duration;
+                },
+                sort_state: 'ascending',
+                field_name: 'Duration'
+            },
+            {
+                label: 'NumEvents',
+                format: function (d) {
+                    return d.NumEvents;
+                },
+                sort_state: 'ascending',
+                field_name: 'NumEvents'
+            },
+            {
+                label: 'Tags',
+                format: function (d) {
+                    return d.Tags;
+                },
+                sort_state: 'ascending',
+                field_name: 'Tags'
+            }
         ])
         .sortBy(function (d) {
             return d.dd;
@@ -60,6 +91,9 @@ const tableFunc = (divRef, ndx) => {
             table.endSlice(ofs + pag);
         })
         .on('pretransition', function (table) {
+            table.selectAll("th.dc-table-head").on("click", function(d) {
+                tableHeaderCallback(table, d);
+            });
             var totFilteredRecs = ndx.groupAll().value();
             var end = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
             d3.select('#begin')
