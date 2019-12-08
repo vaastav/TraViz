@@ -84,8 +84,6 @@ class DepGraph extends React.Component {
 
     onClickGraph = () => { return; };
     onClickNode = id => {
-        // TODO: Show some info here
-        console.log("Clicked node ", id);
         var targets = [];
         var sources = [];
         var i;

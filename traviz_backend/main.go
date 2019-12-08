@@ -175,6 +175,7 @@ func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) ComparisonRespon
     // Group 1: Only in Graph 1
     // Group 2: Only in Graph 2
     // Group 3: Same
+    seenNodes := make(map[string]bool)
     for id, node := range graph1.Nodes {
         event := node.Event
         group := 3
@@ -183,6 +184,7 @@ func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) ComparisonRespon
         }
         d3Node := D3XTraceNode{ID: id, Group: group, Event: event}
         nodes = append(nodes, d3Node)
+        seenNodes[id] = true
     }
 
     for id, node := range graph2.Nodes {
@@ -193,18 +195,29 @@ func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) ComparisonRespon
         }
         d3Node := D3XTraceNode{ID: id, Group: group, Event: event}
         nodes = append(nodes, d3Node)
+        seenNodes[id] = true
     }
 
     for id := range graph1.Parents {
         for _, pid := range graph1.Parents[id] {
             link := D3XTraceLink{Source: pid, Target: id}
+            if _, ok := seenNodes[pid]; !ok {
+                log.Println("Unseen nodeID :", pid)
+                newNode := D3XTraceNode{ID: pid, Group: 1, Event: xtrace.Event{}}
+                nodes = append(nodes, newNode)
+            }
             links = append(links, link)
-        } 
+        }
     }
 
     for id := range graph2.Parents {
         for _, pid := range graph2.Parents[id] {
             link := D3XTraceLink{Source: pid, Target: id}
+            if _, ok := seenNodes[pid]; !ok {
+                log.Println("Unseen nodeID :", pid)
+                newNode := D3XTraceNode{ID: pid, Group: 2, Event: xtrace.Event{}}
+                nodes = append(nodes, newNode)
+            }
             links = append(links, link)
         }
     }
@@ -505,6 +518,7 @@ func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s * Server) CompareOneVsOne(w http.ResponseWriter, r *http.Request) {
+    log.Println(r)
     setupResponse(&w, r)
     w.Header().Set("Content-Type", "application/json")
     params := mux.Vars(r)
