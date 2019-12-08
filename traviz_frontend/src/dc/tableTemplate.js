@@ -34,11 +34,9 @@ const SelectAllButton = props => {
     return (
         <input id="selectall" class="btn" type="button" value="Select All"
             onClick={() => {
-                var ofs = props.table.beginSlice();
-                var pag = 20;
-                var ofs = ofs - pag < 0 ? 0 : ofs - pag;
-                props.table.beginSlice(ofs);
-                props.table.endSlice(ofs+pag);
+                console.log("Select All")
+                console.log(props)
+                props.selAll(props.table)
                 props.table.redraw();
             }} />
     );
@@ -48,11 +46,9 @@ const ResetButton = props => {
     return (
         <input id="reset" class="btn" type="button" value="Reset"
             onClick={() => {
-                var ofs = props.table.beginSlice();
-                var pag = 20;
-                var ofs = ofs - pag < 0 ? 0 : ofs - pag;
-                props.table.beginSlice(ofs);
-                props.table.endSlice(ofs+pag);
+                console.log("Reset")
+                console.log(props)
+                props.reset(props.table)
                 props.table.redraw();
             }} />
     );
@@ -64,8 +60,8 @@ export const Pagination = props => {
             Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span> <span id="totalsize"></span>
             <LastButton table={props.table} ndx={props.ndx}/>
             <NextButton table={props.table} ndx={props.ndx}/>
-            <SelectAllButton table={props.table} ndx={props.ndx} />
-            <ResetButton table={props.table} ndx={props.ndx} />
+            <SelectAllButton selAll={props.selAll} table={props.table} ndx={props.ndx} />
+            <ResetButton reset={props.reset} table={props.table} ndx={props.ndx} />
         </div>
     )
 }
@@ -75,6 +71,8 @@ export const TableTemplate = props => {
     const [table,updateTable] = React.useState(null);
     const ndx = context.ndx;
     const div = React.useRef(null);
+    console.log("Checking props inside table template")
+    console.log(props)
     React.useEffect(() => {
         const newTable = props.tableFunction(div.current, ndx);
         newTable.render();
@@ -84,7 +82,7 @@ export const TableTemplate = props => {
     return (
         <div ref={div}>
             <label>{props.title}</label>
-            <Pagination table={table} ndx={ndx}/>
+            <Pagination reset={props.reset} selAll={props.selAll} table={table} ndx={ndx}/>
         </div>
     );
 }

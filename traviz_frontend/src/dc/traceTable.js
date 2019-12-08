@@ -8,13 +8,14 @@ import { TableTemplate } from "./tableTemplate";
 import { numberFormat, CXContext } from "./cxContext";
 
 
+var selectedRows = [];
+
 const tableFunc = (divRef, ndx) => {
     const traceTable = dc.dataTable(divRef);
 
     const dimension = ndx.dimension(d => d.dd);
     var ofs = 0;
     var pag = 20;
-    var selectedRows = [];
     var tableHeaderCallback = function (table, d) {
         d.sort_state = d.sort_state === "ascending" ? "descending" : "ascending";
         var isAscendingOrder = d.sort_state === "ascending";
@@ -84,11 +85,9 @@ const tableFunc = (divRef, ndx) => {
         .on('preRedraw', function (table) {
             var totFilteredRecs = ndx.groupAll().value();
             ofs = table.beginSlice();
-            console.log(ofs);
             var end = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
             ofs = ofs >= totFilteredRecs ? Math.floor((totFilteredRecs - 1) / pag) * pag : ofs;
             ofs = ofs < 0 ? 0 : ofs;
-            console.log(ofs);
             table.beginSlice(ofs);
             table.endSlice(ofs + pag);
         })
@@ -111,17 +110,14 @@ const tableFunc = (divRef, ndx) => {
                 table.selectAll('tr.dc-table-row').classed('', d => {
                     return !selectedRows.includes(d)
                 });
-                // table.selectAll('a').style('color', d => {
-                //     return "red"
+                // table.selectAll('a').style('background-color', (d) => {
+                //     console.log(d)
+                //     return !selectedRows.includes(d)
                 // });
-                // // table.selectAll('a').classed('', d => {
-                // //     console.log(d)
-                // //     return !selectedRows.includes(d)
-                // // });
                 // console.log(table.selectAll("a").showGroups())
 
-                
-                //table.redraw()
+
+                // table.redraw()
             });
 
 
@@ -147,9 +143,28 @@ const tableFunc = (divRef, ndx) => {
 
 }
 
+const resetHighlight = (table) => {
+    selectedRows = [];
+    table.selectAll('tr.dc-table-row').classed('', d => {
+        return !selectedRows.includes(d);
+    })
+}
+
+const selectAll = (table) => {
+    selectedRows = [];
+    table.selectAll('tr.dc-table-row').each(function (d) {
+        selectedRows.push(d);
+    })
+    
+    table.selectAll('tr.dc-table-row').classed('sel-rows', d => {
+        console.log(selectedRows.includes(d))
+        return selectedRows.includes(d);
+    })
+}
+
 export const TraceTable = props => (
     <div className="fullTable">
-        <TableTemplate tableFunction={tableFunc} context={React.useContext(CXContext)} title="Summary Table" />
+        <TableTemplate reset={resetHighlight} selAll={selectAll} tableFunction={tableFunc} context={React.useContext(CXContext)} title="Summary Table" />
     </div>
 
 )
