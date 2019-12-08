@@ -34,10 +34,7 @@ const SelectAllButton = props => {
     return (
         <input id="selectall" class="btn" type="button" value="Select All"
             onClick={() => {
-                console.log("Select All")
-                console.log(props)
                 props.selAll(props.table)
-                props.table.redraw();
             }} />
     );
 };
@@ -46,8 +43,6 @@ const ResetButton = props => {
     return (
         <input id="reset" class="btn" type="button" value="Reset"
             onClick={() => {
-                console.log("Reset")
-                console.log(props)
                 props.reset(props.table)
                 props.table.redraw();
             }} />

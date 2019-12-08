@@ -160,6 +160,7 @@ const selectAll = (table) => {
         console.log(selectedRows.includes(d))
         return selectedRows.includes(d);
     })
+
 }
 
 const compare = (table) => {
