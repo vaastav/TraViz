@@ -7,6 +7,7 @@ import * as d3 from "d3";
 import { TableTemplate } from "./tableTemplate";
 import { numberFormat, CXContext } from "./cxContext";
 
+
 const tableFunc = (divRef, ndx) => {
     const traceTable = dc.dataTable(divRef);
 
@@ -14,10 +15,10 @@ const tableFunc = (divRef, ndx) => {
     var ofs = 0;
     var pag = 20;
     var selectedRows = [];
-    var tableHeaderCallback = function(table, d) {
+    var tableHeaderCallback = function (table, d) {
         d.sort_state = d.sort_state === "ascending" ? "descending" : "ascending";
         var isAscendingOrder = d.sort_state === "ascending";
-        table.order(isAscendingOrder ? d3.ascending : d3.descending).sortBy(function (datum) {return datum[d.field_name];});
+        table.order(isAscendingOrder ? d3.ascending : d3.descending).sortBy(function (datum) { return datum[d.field_name]; });
         table.redraw();
     }
     traceTable.dimension(dimension)
@@ -92,13 +93,38 @@ const tableFunc = (divRef, ndx) => {
             table.endSlice(ofs + pag);
         })
         .on('pretransition', function (table) {
-            table.selectAll("th.dc-table-head").on("click", function(d) {
+            table.selectAll("th.dc-table-head").on("click", function (d) {
                 tableHeaderCallback(table, d);
             });
-            table.selectAll("tr.dc-table-row").on("click", function(d) {
-                selectedRows.push(d);
-                console.log(selectedRows.length);
+            table.selectAll("tr.dc-table-row").on("click", function (d) {
+                if (selectedRows.includes(d)) {
+                    // Remove highlight and remove from selected rows
+                    selectedRows.splice(selectedRows.indexOf(d), 1);
+                } else {
+                    // Add highlight and add to selected rows
+                    selectedRows.push(d);
+                }
+
+                table.selectAll('tr.dc-table-row').classed('sel-rows', d => {
+                    return selectedRows.includes(d)
+                });
+                table.selectAll('tr.dc-table-row').classed('', d => {
+                    return !selectedRows.includes(d)
+                });
+                // table.selectAll('a').style('color', d => {
+                //     return "red"
+                // });
+                // // table.selectAll('a').classed('', d => {
+                // //     console.log(d)
+                // //     return !selectedRows.includes(d)
+                // // });
+                // console.log(table.selectAll("a").showGroups())
+
+                
+                //table.redraw()
             });
+
+
             var totFilteredRecs = ndx.groupAll().value();
             var end = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
             d3.select('#begin')

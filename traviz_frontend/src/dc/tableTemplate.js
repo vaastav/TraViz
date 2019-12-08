@@ -30,12 +30,42 @@ const LastButton = props => {
     );
 };
 
+const SelectAllButton = props => {
+    return (
+        <input id="selectall" class="btn" type="button" value="Select All"
+            onClick={() => {
+                var ofs = props.table.beginSlice();
+                var pag = 20;
+                var ofs = ofs - pag < 0 ? 0 : ofs - pag;
+                props.table.beginSlice(ofs);
+                props.table.endSlice(ofs+pag);
+                props.table.redraw();
+            }} />
+    );
+};
+
+const ResetButton = props => {
+    return (
+        <input id="reset" class="btn" type="button" value="Reset"
+            onClick={() => {
+                var ofs = props.table.beginSlice();
+                var pag = 20;
+                var ofs = ofs - pag < 0 ? 0 : ofs - pag;
+                props.table.beginSlice(ofs);
+                props.table.endSlice(ofs+pag);
+                props.table.redraw();
+            }} />
+    );
+};
+
 export const Pagination = props => {
     return (
         <div id="paging">
             Showing <span id="begin"></span>-<span id="end"></span> of <span id="size"></span> <span id="totalsize"></span>
             <LastButton table={props.table} ndx={props.ndx}/>
             <NextButton table={props.table} ndx={props.ndx}/>
+            <SelectAllButton table={props.table} ndx={props.ndx} />
+            <ResetButton table={props.table} ndx={props.ndx} />
         </div>
     )
 }
