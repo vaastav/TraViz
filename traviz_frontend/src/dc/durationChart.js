@@ -13,7 +13,7 @@ const durationChartFunc = (divRef, ndx) => {
     .dimension(dimension)
     .group(group)
     .gap(1)
-    .x(scaleLinear().domain([0,1000]).rangeRound([0, 10 * 40]))
+    .x(scaleLinear().domain([0,dimension.top(1)[0].Duration]).rangeRound([0, 10 * 40]))
     .y(scaleSymlog().domain([0, dimension.top(1)[0].Duration]))
     .valueAccessor(x=>x.value)
     .centerBar(false)
@@ -24,6 +24,7 @@ const durationChartFunc = (divRef, ndx) => {
         s += numberFormat(filter[0]) + 'ms -> ' + numberFormat(filter[1]) + 'ms';
         return s;
     })
+    .renderHorizontalGridLines(true)
     .width(450)
     .height(200);
 
