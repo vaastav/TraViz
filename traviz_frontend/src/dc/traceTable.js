@@ -133,7 +133,7 @@ const tableFunc = (divRef, ndx) => {
                 .attr('disabled', ofs + pag >= totFilteredRecs ? 'true' : null);
             d3.select('#size').text(totFilteredRecs);
             if (totFilteredRecs != ndx.size()) {
-                d3.select('#totalsize').text("(filtered Total: " + ndx.size() + " )");
+                d3.select('#totalsize').text("(filtered: " + ndx.size() + " )");
             } else {
                 d3.select('#totalsize').text('');
             }

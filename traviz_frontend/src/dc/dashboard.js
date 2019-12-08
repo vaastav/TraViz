@@ -1,18 +1,18 @@
 import React from 'react'
-import {Grid,Row,Col} from 'react-flexbox-grid'
+import { Grid, Row, Col } from 'react-flexbox-grid'
 import { TraceTable } from "./traceTable";
 import { DataContext } from "./cxContext";
 import { EventsChart } from './eventsChart';
 import { DurationChart } from './durationChart';
 import { DateChart } from './dateChart';
 
-export const Dashboard = (props)=>{
+export const Dashboard = (props) => {
 
-    return(
+    return (
         <div>
-        <DataContext>
+            <DataContext>
                 <Row>
-                    <Col md={6} >
+                    <Col md={5} >
                         <Row>
                             <EventsChart />
                         </Row>
@@ -23,11 +23,11 @@ export const Dashboard = (props)=>{
                             <DateChart />
                         </Row>
                     </Col>
-                    <Col md={6} >
+                    <Col md={7} >
                         <TraceTable />
                     </Col>
                 </Row>
-        </DataContext>
+            </DataContext>
         </div>
     )
 }

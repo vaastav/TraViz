@@ -5,13 +5,17 @@ div#paging {
   border-collapse: collapse;
 }
 
+.fullTable {
+  width: 1000px;
+}
+
 td, th {
   border: 1px solid #353635;
   padding: 5px 4px;
 }
 
 tbody td {
-  font-size: 14px;
+  font-size: 18px;
   border-color: #353635;
 }
 
@@ -25,7 +29,7 @@ thead {
 }
 
 thead th {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: bold;
   text-align: left;
 }
@@ -36,7 +40,7 @@ tfoot td {
 
 a {
   color: white;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 tr.dc-table-row.sel-rows {
