@@ -13,6 +13,7 @@ const tableFunc = (divRef, ndx) => {
     const dimension = ndx.dimension(d => d.dd);
     var ofs = 0;
     var pag = 20;
+    var selectedRows = [];
     var tableHeaderCallback = function(table, d) {
         d.sort_state = d.sort_state === "ascending" ? "descending" : "ascending";
         var isAscendingOrder = d.sort_state === "ascending";
@@ -93,6 +94,10 @@ const tableFunc = (divRef, ndx) => {
         .on('pretransition', function (table) {
             table.selectAll("th.dc-table-head").on("click", function(d) {
                 tableHeaderCallback(table, d);
+            });
+            table.selectAll("tr.dc-table-row").on("click", function(d) {
+                selectedRows.push(d);
+                console.log(selectedRows.length);
             });
             var totFilteredRecs = ndx.groupAll().value();
             var end = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
