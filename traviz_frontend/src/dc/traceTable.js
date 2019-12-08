@@ -110,14 +110,17 @@ const tableFunc = (divRef, ndx) => {
                 table.selectAll('tr.dc-table-row').classed('', d => {
                     return !selectedRows.includes(d)
                 });
+
+                d3.select('#agg')
+                    .attr('disabled', selectedRows.length <= 1 ? 'true' : null);
+                d3.select('#comp')
+                    .attr('disabled', selectedRows.length != 2 ? 'true' : null);
                 // table.selectAll('a').style('background-color', (d) => {
                 //     console.log(d)
                 //     return !selectedRows.includes(d)
                 // });
                 // console.log(table.selectAll("a").showGroups())
 
-
-                // table.redraw()
             });
 
 
@@ -131,7 +134,12 @@ const tableFunc = (divRef, ndx) => {
                 .attr('disabled', ofs - pag < 0 ? 'true' : null);
             d3.select('#next')
                 .attr('disabled', ofs + pag >= totFilteredRecs ? 'true' : null);
+            d3.select('#agg')
+                .attr('disabled', selectedRows.length <= 1 ? 'true' : null);
+            d3.select('#comp')
+                .attr('disabled', selectedRows.length != 2 ? 'true' : null);
             d3.select('#size').text(totFilteredRecs);
+
             if (totFilteredRecs != ndx.size()) {
                 d3.select('#totalsize').text("(filtered: " + ndx.size() + " )");
             } else {
@@ -148,6 +156,11 @@ const resetHighlight = (table) => {
     table.selectAll('tr.dc-table-row').classed('', d => {
         return !selectedRows.includes(d);
     })
+
+    d3.select('#agg')
+        .attr('disabled', selectedRows.length <= 1 ? 'true' : null);
+    d3.select('#comp')
+        .attr('disabled', selectedRows.length != 2 ? 'true' : null);
 }
 
 const selectAll = (table) => {
@@ -161,6 +174,10 @@ const selectAll = (table) => {
         return selectedRows.includes(d);
     })
 
+    d3.select('#agg')
+        .attr('disabled', selectedRows.length <= 1 ? 'true' : null);
+    d3.select('#comp')
+        .attr('disabled', selectedRows.length != 2 ? 'true' : null);
 }
 
 const compare = (table) => {
