@@ -12,8 +12,8 @@ class CompareGraph extends React.Component {
             "linkHighlightBehavior": false,
             "highlightDegree": 1,
             "highlightOpacity": 0.2,
-            "height": 770,
-            "width": 1100,
+            "height": 600,
+            "width": 800,
             "panAndZoom": true,
             "directed": true,
             "staticGraph": false,
@@ -60,7 +60,7 @@ class CompareGraph extends React.Component {
             height: { "ui:readonly": "true" },
             width: { "ui:readonly": "true" },
         };
-        this.state = { trace1: props.trace1, trace2: props.trace2, data: {}, selectedNode: null, config: config, uischema: uischema, loading: false, hasData: false};
+        this.state = { trace1: props.trace1, trace2: props.trace2, data: {}, selectedNode: null, config: config, uischema: uischema, loading: false, hasData: false, selNode: null};
         this.compareService = new CompareService();
     }
 
@@ -105,9 +105,8 @@ class CompareGraph extends React.Component {
                 chosenNode = this.state.data.nodes[i];
             }
         }
-        console.log(chosenNode);
         if (chosenNode.clickType == "detail") {
-            this.setState({selectedNode: id});
+            this.setState({selectedNode: id, selNode: chosenNode});
         }
     };
 
@@ -158,13 +157,43 @@ class CompareGraph extends React.Component {
     };
 
     buildEventPanel = () => {
+        if (this.state.selectedNode === null) {
+            return (
+                <div></div>
+            );
+        }
+        if (this.state.selNode.clickType !== "detail") {
+            return (
+                <div></div>
+            );
+        }
+        var nodeData = this.state.selNode.data
+        let rows = [];
+        for (var prop in nodeData) {
+            if (Object.prototype.hasOwnProperty.call(nodeData,prop)) {
+                console.log(prop, " : ", nodeData[prop]);
+                let cells = [];
+                cells.push(<td>{prop}</td>);
+                if (Array.isArray(nodeData[prop])) {
+                    cells.push(<td>{nodeData[prop].join()}</td>);
+                } else {
+                    cells.push(<td>{nodeData[prop]}</td>);
+                }
+                rows.push(<tr>{cells}</tr>);
+            }
+        }
         return (
-            <div></div>
+            <div>
+                <table>
+                    <tbody style={{"overflowX": "hidden"}}>
+                        {rows}
+                    </tbody>
+                </table>
+            </div>
         );
     };
 
     render() {
-        console.log(this.state.hasData);
         if (!this.state.hasData) {
             return null;
         }
