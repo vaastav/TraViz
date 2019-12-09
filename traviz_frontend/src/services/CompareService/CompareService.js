@@ -1,5 +1,9 @@
 import axios from "axios"
-const API_URL = "http://198.162.52.119:9000"
+
+let config = require("../../config.json")
+let ipPort = config.ipPortBackend
+let protocol = config.protocol
+const API_URL = protocol + "://" + ipPort
 
 class CompareService {
     async compareTraces(trace1ID, trace2ID) {
