@@ -469,6 +469,9 @@ func (s * Server) routes() {
     s.Router.HandleFunc("/source", s.SourceCode)
     s.Router.HandleFunc("/dependency", s.Dependency)
     s.Router.HandleFunc("/compare/{id1}/{id2}", s.CompareOneVsOne)
+    s.Router.HandleFunc("/compare/1vmany", s.CompareOneVsMany)
+    s.Router.HandleFunc("/compare/manyvmany", s.CompareManyVsMany)
+    s.Router.HandleFunc("/aggregate", s.Aggregate)
     s.Router.HandleFunc("/traces", s.FilterTraces)
     s.Router.HandleFunc("/tags", s.Tags)
 }
@@ -515,6 +518,23 @@ func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
     log.Println("Sending", len(responseRows), "rows")
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(responseRows)
+}
+
+func (s * Server) CompareOneVsMany(w http.ResponseWriter, r *http.Request) {
+    log.Println(r)
+    setupResponse(&w, r)
+    w.Header().Set("Content-Type", "application/json")
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
+}
+
+func (s * Server) CompareManyVsMany(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
+    w.Header().Set("Content-Type", "application/json")
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
 }
 
 func (s * Server) CompareOneVsOne(w http.ResponseWriter, r *http.Request) {
@@ -701,6 +721,16 @@ func (s * Server) Dependency(w http.ResponseWriter, r *http.Request) {
 
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(&DependencyResponse{Nodes: sizedNodes, Links: links})
+}
+
+func (s * Server) Aggregate(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
+    w.Header().Set("Content-Type", "application/json")
+    q := r.URL.Query()
+    log.Println(q)
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
 }
 
 func (s * Server) FilterTraces(w http.ResponseWriter, r *http.Request) {

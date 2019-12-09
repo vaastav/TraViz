@@ -1,5 +1,6 @@
 import React from "react";
 import { Graph } from "react-d3-graph"
+import AggregateService from "../../services/AggregateService/AggregateService";
 
 class AggregateGraph extends React.Component {
     constructor(props) {
@@ -11,6 +12,7 @@ class AggregateGraph extends React.Component {
             hasData: false,
             data: null
         };
+        this.aggregateService = new AggregateService();
     }
 
     componentDidMount() {
@@ -21,8 +23,11 @@ class AggregateGraph extends React.Component {
             return
         }
         this.setState({loading:true});
-        //TODO Use the Aggregate Service to get data
-        this.setState({loading:false, hasData: true});
+        const traces = this.state.traces;
+        this.aggregateService.getAggregate(traces).then(graph => {
+            console.log(graph)
+            this.setState({loading:false, hasData: true});
+        });
     }
 
     render() {
