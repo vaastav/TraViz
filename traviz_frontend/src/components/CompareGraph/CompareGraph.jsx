@@ -23,9 +23,9 @@ class CompareGraph extends React.Component {
             "minZoom": 0.1,
             "staticGraphWithDragAndDrop": false,
             "d3": {
-                "gravity": -400,
+                "gravity": -600,
                 "linkStrength": 1,
-                "linkLength": 300
+                "linkLength": 600
             },
             "node": {
                 "fontColor": "#ff4500",
@@ -123,6 +123,7 @@ class CompareGraph extends React.Component {
             }
             this.state.data = graph;
             this.setState({data: graph, loading: false, hasData: true, originalData: graph, group1or2nodes: group1or2nodes, childrenData: childrenData, parentData: parentData})
+            this.collapseAll();
         });
     }
 
@@ -207,9 +208,11 @@ class CompareGraph extends React.Component {
         // Keep track of what nodes have been visited for not doing extra work.
         // Step 3: Merge all the found nodes and form new links.
         var nodeID = 0;
+        var visited = {};
         for (var prop in group1or2s) {
             var parents = this.state.parentData[prop];
             for (var i = 0; i < parents.length; i++) {
+                visited[prop] = true;
                 if (Object.prototype.hasOwnProperty.call(group1or2s, parents[i])) {
                     var newLink = {};
                     newLink["source"] = parents[i];
@@ -218,28 +221,90 @@ class CompareGraph extends React.Component {
                 } else {
                     var earliest_collapsible_ancestor = parents[i]
                     var ancestors = this.state.parentData[parents[i]];
-                    if (ancestors.length === 0) {
-                        console.log("No ancestor");
-                        var newNode = {};
-                        newNode["id"] = nodeID;
-                        nodeID++;
-                        newNode.color = "#999999";
-                        newNode.clickType = "expand";
-                        newNode.collapsible = false;
-                        newNode.type = "square";
-                        newNode.earliest_child = parents[i];
-                        newNode.contained = [parents[i]];
-                        nodes.push(newNode);
-                        var newLink = {};
-                        newLink.source = newNode.id;
-                        newLink.target = prop;
-                        links.push(newLink);
-                    } else {
-
+                    var contained = {};
+                    var current = parents[i];
+                    contained[current] = true;
+                    visited[current] = true;
+                    var oneortwoancestor = null;
+                    var multibranchancestor = null;
+                    while (ancestors.length === 1) {
+                        var ancestor = ancestors[0];
+                        if (Object.prototype.hasOwnProperty.call(group1or2s, ancestor)) {
+                            oneortwoancestor = ancestor;
+                            break;
+                        }
+                        ancestors = this.state.parentData[current];
+                        current = ancestor;
+                        visited[current] = true;
+                        contained[current] = true;
+                        if (ancestors.length >= 2) {
+                            multibranchancestor = current;
+                        }
+                    }
+                    var newNode = {};
+                    newNode["id"] = nodeID;
+                    nodeID++;
+                    newNode.color = "#999999";
+                    newNode.clickType = "expand";
+                    newNode.collapsible = false;
+                    newNode.symbolType = "square";
+                    newNode.earliest_child = parents[i];
+                    newNode.contained = contained;
+                    nodes.push(newNode);
+                    var newLink = {};
+                    newLink.source = newNode.id;
+                    newLink.target = prop;
+                    links.push(newLink);
+                    if (oneortwoancestor !== null) {
+                        var link = {};
+                        link.source = oneortwoancestor;
+                        link.target = newNode.id;
+                    }
+                    if (multibranchancestor !== null) {
+                        console.log("Found multi branch ancestor")
                     }
                 }
             }
         }
+        for (var prop in group1or2s) {
+            var children = this.state.childrenData[prop];
+            for (var i = 0; i < children.length; i++) {
+                if (Object.prototype.hasOwnProperty.call(visited, children[i])) {
+                    continue;
+                }
+                var current = children[i];
+                var successors = this.state.childrenData[current];
+                var contained = {};
+                contained[current] = true;
+                visited[current] = true;
+                while (successors.length !== 0) {
+                    //TODO: Handle multiple children
+                    if (successors.length > 1) {
+                        console.log("More successors");
+                    }
+                    var successor = successors[0];
+                    successors = this.state.childrenData[successor];
+                    current = successor;
+                    contained[current] = true;
+                    visited[current] = true;
+                }
+                var newNode = {};
+                newNode["id"] = nodeID;
+                nodeID++;
+                newNode.color = "#999999";
+                newNode.clickType = "expand";
+                newNode.collapsible = false;
+                newNode.symbolType = "square";
+                newNode.earliest_child = children[i];
+                newNode.contained = contained;
+                nodes.push(newNode);
+                var newLink = {};
+                newLink.source = prop;
+                newLink.target = newNode.id;
+                links.push(newLink);
+            }
+        }
+        console.log(Object.keys(visited).length, this.state.data.nodes.length);
         // Step 4: Set the state's data to the new graph.
         var newData = {};
         newData["nodes"] = nodes
