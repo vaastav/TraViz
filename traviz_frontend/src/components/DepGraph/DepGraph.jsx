@@ -31,8 +31,8 @@ class DepGraph extends React.Component {
                 "linkLength": 300
             },
             "node": {
-                "color": "#d6d8da",
-                "fontColor": "#ff4500",
+                "color": "#bcbfc2",
+                "fontColor": "#ff66ff",
                 "fontSize": 12,
                 "fontWeight": "normal",
                 "highlightColor": "#b1de00",
@@ -50,8 +50,8 @@ class DepGraph extends React.Component {
                 "symbolType": "circle"
             },
             "link": {
-                "color": "#d6d8da",
-                "fontColor": "red",
+                "color": "#bcbfc2",
+                "fontColor": "#ff66ff",
                 "fontSize": 10,
                 "fontWeight": "normal",
                 "highlightColor": "#ffd800",
@@ -236,7 +236,7 @@ class DepGraph extends React.Component {
 
         return (
             <div className="dg_container">
-                <div className="container__graph">
+                <div className="dg_container__graph">
                     {this.buildCommonInteractionsPanel()}
                     <Graph ref="graph" {...graphProps} />
                 </div>
