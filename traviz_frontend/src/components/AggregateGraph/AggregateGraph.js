@@ -1,68 +1,79 @@
 import React from "react";
 import { Graph } from "react-d3-graph";
+import * as d3 from "d3";
 import AggregateService from "../../services/AggregateService/AggregateService";
-import Cytoscape from 'cytoscape'
-import CytoscapeComponent from 'react-cytoscapejs';
 import "./AggregateGraph.css"
-import COSEBilkent from 'cytoscape-cose-bilkent';
-
-let elements = [
-    { data: { id: 'one', label: 'Node 1' } },
-    { data: { id: 'two', label: 'Node 2' } },
-    { data: { source: 'one', target: 'two', label: 'Edge from Node1 to Node2' } }
-];
-
-Cytoscape.use(COSEBilkent);
 
 class AggregateGraph extends React.Component {
     constructor(props) {
         super(props);
+        const config = {
+            "collapsible": false,
+            "nodeHighlightBehavior": false,
+            "linkHighlightBehavior": false,
+            "highlightDegree": 1,
+            "highlightOpacity": 0.2,
+            "height": 600,
+            "width": 800,
+            "panAndZoom": true,
+            "directed": true,
+            "staticGraph": false,
+            "focusZoom": 0.1,
+            "maxZoom": 8,
+            "minZoom": 0.1,
+            "staticGraphWithDragAndDrop": false,
+            "d3": {
+                "gravity": -600,
+                "linkStrength": 1,
+                "linkLength": 600
+            },
+            "node": {
+                "fontColor": "#ff4500",
+                "fontSize": 12,
+                "fontWeight": "normal",
+                "mouseCursor": "pointer",
+                "opacity": 1,
+                "renderLabel": false,
+                "size": 450,
+                "strokeColor": "none",
+                "strokeWidth": 1.5,
+                "svg": "",
+                "symbolType": "circle"
+            },
+            "link": {
+                "color": "#999999",
+                "fontColor": "red",
+                "fontSize": 10,
+                "fontWeight": "normal",
+                "highlightColor": "#ffd800",
+                "highlightFontSize": 8,
+                "highlightFontWeight": "bold",
+                "mouseCursor": "pointer",
+                "opacity": 1,
+                "renderLabel": true,
+                "semanticStrokeWidth": false,
+                "strokeWidth": 4,
+                "markerHeight": 6,
+                "markerWidth": 6
+            },
+        };
+        const uischema = {
+            height: { "ui:readonly": "true" },
+            width: { "ui:readonly": "true" },
+        };
         console.log(props.tid_list);
         this.state = {
             traces: props.tid_list,
             loading: false,
             hasData: false,
-            data: null
+            data: null,
+            selectedNode: null,
+            selNode: null,
+            config: config,
+            uischema: uischema
         };
         this.aggregateService = new AggregateService();
     }
-
-    buildEventPanel = () => {
-        if (this.state.selectedNode === null) {
-            return (
-                <div></div>
-            );
-        }
-        // if (this.state.selNode.clickType !== "detail") {
-        //     return (
-        //         <div></div>
-        //     );
-        // }
-        // var nodeData = this.state.selNode.data
-        // let rows = [];
-        // for (var prop in nodeData) {
-        //     if (Object.prototype.hasOwnProperty.call(nodeData, prop)) {
-        //         console.log(prop, " : ", nodeData[prop]);
-        //         let cells = [];
-        //         cells.push(<td>{prop}</td>);
-        //         if (Array.isArray(nodeData[prop])) {
-        //             cells.push(<td>{nodeData[prop].join()}</td>);
-        //         } else {
-        //             cells.push(<td>{nodeData[prop]}</td>);
-        //         }
-        //         rows.push(<tr>{cells}</tr>);
-        //     }
-        // }
-        // return (
-        //     <div>
-        //         <table>
-        //             <tbody style={{ "overflowX": "hidden" }}>
-        //                 {rows}
-        //             </tbody>
-        //         </table>
-        //     </div>
-        // );
-    };
 
     componentDidMount() {
         if (this.state.hasData) {
@@ -71,85 +82,152 @@ class AggregateGraph extends React.Component {
         if (this.state.loading) {
             return
         }
-        this.setUpListeners();
         this.setState({ loading: true });
         const traces = this.state.traces;
         this.aggregateService.getAggregate(traces).then(graph => {
-            console.log(graph)
-            this.setState({ loading: false, hasData: true });
+            var color_scale = d3.scaleLinear()
+                                .domain([0, 1])
+                                .range(["#ffffff", "#999900"])
+            for (var i=0; i < graph.nodes.length; i++){
+                graph.nodes[i].color = color_scale(graph.nodes[i].value);
+            }
+            this.setState({ loading: false, hasData: true, data: graph });
         });
     }
 
+    onClickGraph = () => { return; };
+    onClickNode = id => {
+        var chosenNode;
+        for (var i = 0; i < this.state.data.nodes.length; i++) {
+            if (this.state.data.nodes[i].id == id) {
+                chosenNode = this.state.data.nodes[i];
+            }
+        }
+        this.setState({selectedNode: id, selNode: chosenNode});
+    };
 
-    setUpListeners = () => {
-        this.cy.on('click', 'node', (event) => {
-            console.log(event.target)
-        })
+    onDoubleClickNode = id => {
+        return;
+    };
+    
+    onRightClickNode = (event, id) => {
+        event.preventDefault();
+        return;
+    };
 
-        this.cy.on('mouseover', 'node', (event) => {
-            console.log("mouseover");
-            let node = event.target;
-            node.addClass('highlight');
-        });
+    onClickLink = (source, target) => { 
+        return;
+    };
 
-        this.cy.on('mouseout', 'node', (event) => {
-            console.log("mouseout");
-            let node = event.target;
-            node.removeClass('highlight');
-        });
-        
-    }
+    onRightClickLink = (event, source, target) => {
+        event.preventDefault();
+        return;
+    };
+
+    onMouseOverNode = id => {
+        return;
+    };
+
+    onMouseOutNode = id => {
+        return;
+    };
+
+    onMouseOverLink = (source, target) => {
+        return;
+    };
+
+    onMouseOutLink = (source, target) => {
+        return;
+    };
+
+    onNodePositionChange = (nodeId, x, y) => {
+        return;
+    };
+
+    onClickAddNode = () => {
+        return;  
+    };
+
+    onClickRemoveNode = () => {
+        return;
+    };
+
+    buildCommonInteractionsPanel = () => {
+        return (
+            <div>
+                <span className="container__graph-info">
+                    <b>Nodes: </b> {this.state.data.nodes.length} | <b>Links: </b> {this.state.data.links.length}
+                </span>
+            </div>
+        );
+    };
+
+    buildEventPanel = () => {
+        if (this.state.selectedNode === null) {
+            return (
+                <div></div>
+            );
+        }
+        var nodeData = this.state.selNode.data
+        let rows = [];
+        for (var prop in nodeData) {
+            if (Object.prototype.hasOwnProperty.call(nodeData,prop)) {
+                let cells = [];
+                cells.push(<td>{prop}</td>);
+                if (Array.isArray(nodeData[prop])) {
+                    cells.push(<td>{nodeData[prop].join()}</td>);
+                } else {
+                    cells.push(<td>{nodeData[prop]}</td>);
+                }
+                rows.push(<tr>{cells}</tr>);
+            }
+        }
+        return (
+            <div>
+                <table>
+                    <tbody style={{"overflowX": "hidden"}}>
+                        {rows}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
 
     render() {
-        let layout = { name: "cose-bilkent" }
 
-        let style = {
-            width: '100%',
-            height: '100%',
+        if (!this.state.hasData) {
+            return null;
         }
+        const data = {
+            nodes: this.state.data.nodes,
+            links: this.state.data.links
+        };
 
-        let stylesheet = [
-            {
-                selector: '*',
-                style: {
-                    "width": "100%",
-                    "height": "100%",
-                }
-            },
-            {
-                selector: 'node',
-                style: {
-                    "background-color": "#d6d8da",
-                    "size": 450,
-                    "label": 'data(label)',
-                    "color": "#d6d8da",
-                }
-            },
-            {
-                selector: 'node.highlight',
-                style: {
-                    "background-color": "#b1de00",
-                    "size": 450,
-                    "label": 'data(label)',
-                    "color": "#d6d8da",
-                }
-            },
-            {
-                selector: 'edge',
-                style: {
-                    width: 4,
-                    'line-color': '#d6d8da',
-                }
-            }
-        ];
+        const graphProps = {
+            id: "graph",
+            data,
+            config: this.state.config,
+            onClickNode: this.onClickNode,
+            onDoubleClickNode: this.onDoubleClickNode,
+            onRightClickNode: this.onRightClickNode,
+            onClickGraph: this.onClickGraph,
+            onClickLink: this.onClickLink,
+            onRightClickLink: this.onRightClickLink,
+            onMouseOverNode: this.onMouseOverNode,
+            onMouseOutNode: this.onMouseOutNode,
+            onMouseOverLink: this.onMouseOverLink,
+            onMouseOutLink: this.onMouseOutLink,
+            onNodePositionChange: this.onNodePositionChange,
+        };
 
         return (
             <div className="cg_container">
                 <div className="container__graph">
-                    <CytoscapeComponent elements={elements} layout={layout} style={style} stylesheet={stylesheet} cy={(cy) => { this.cy = cy }} />
+                    {this.buildCommonInteractionsPanel()}
+                    <Graph ref="graph" {...graphProps} />
                 </div>
                 <div className="container__form">
-                    <h3> Selected Event : Bleh</h3>
+                    <h3> Selected Event : {this.state.selectedNode}</h3>
                     {this.buildEventPanel()}
                 </div>
             </div>
