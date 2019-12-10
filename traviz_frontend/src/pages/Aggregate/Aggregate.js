@@ -6,7 +6,7 @@ class Aggregate extends React.Component {
     constructor(props) {
         super(props);
         var rawTracesList = this.props.location.search.split("=")[1];
-        var tid_list = rawTracesList.split("%");
+        var tid_list = rawTracesList.split("%2C");
         this.state = {
             tid_list: tid_list  
         };

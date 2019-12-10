@@ -88,6 +88,17 @@ type D3XTraceLink struct {
     Target string `json:"target"`
 }
 
+type D3AggNode struct {
+    ID string `json:"id"`
+    Value float64 `json:value`
+    Event xtrace.Event `json:"data"`
+}
+
+type D3AggLink struct {
+    Source string `json:"source"`
+    Target string `json:"target"`
+}
+
 type DependencyResponse struct {
     Nodes []D3Node `json:"nodes"`
     Links []D3Link `json:"links"`
@@ -96,6 +107,11 @@ type DependencyResponse struct {
 type ComparisonResponse struct {
     Nodes []D3XTraceNode `json:"nodes"`
     Links []D3XTraceLink `json:"links"`
+}
+
+type AggregationResponse struct {
+    Nodes []D3AggNode `json:"nodes"`
+    Links []D3Link `json:"links"`
 }
 
 type ErrorResponse struct {
@@ -222,6 +238,10 @@ func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) ComparisonRespon
         }
     }
     return ComparisonResponse{Nodes: nodes, Links: links}
+}
+
+func aggregate(traces []xtrace.XTrace) AggregationResponse {
+    return AggregationResponse{}
 }
 
 //Parses config from a json file and returns the parsed Config struct
@@ -729,8 +749,51 @@ func (s * Server) Aggregate(w http.ResponseWriter, r *http.Request) {
     q := r.URL.Query()
     log.Println(q)
 
+    var xtraces []xtrace.XTrace
+
+    if traces_resp, ok := q["traces"]; !ok {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Request"})
+        return
+    } else {
+        traces := strings.Split(traces_resp[0], ",")
+        if (len(traces)) < 2 {
+            w.WriteHeader(http.StatusBadRequest)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Too few traces selected"})
+            return
+        }
+        for _, traceID := range traces {
+            var file1 string
+            if v, ok := s.Traces[traceID]; !ok {
+                w.WriteHeader(http.StatusBadRequest)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID: " + traceID})
+                return
+            } else {
+                file1 = v
+            }
+            var traces1 []xtrace.XTrace
+            var trace1 xtrace.XTrace
+            f1, err := os.Open(file1)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            }
+            defer f1.Close()
+            dec := json.NewDecoder(f1)
+            err = dec.Decode(&traces1)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            }
+            trace1 = traces1[0]
+            xtraces = append(xtraces, trace1)
+        }
+    }
+
+    response := aggregate(xtraces)
+
     w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(&ErrorResponse{Error: "Not Implemented"})
+    json.NewEncoder(w).Encode(&response)
 }
 
 func (s * Server) FilterTraces(w http.ResponseWriter, r *http.Request) {
