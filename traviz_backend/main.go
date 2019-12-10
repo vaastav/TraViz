@@ -111,7 +111,7 @@ type ComparisonResponse struct {
 
 type AggregationResponse struct {
     Nodes []D3AggNode `json:"nodes"`
-    Links []D3Link `json:"links"`
+    Links []D3AggLink `json:"links"`
 }
 
 type ErrorResponse struct {
@@ -241,7 +241,53 @@ func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) ComparisonRespon
 }
 
 func aggregate(traces []xtrace.XTrace) AggregationResponse {
-    return AggregationResponse{}
+    nodesChildren := make(map[string][]string)
+    nodeCount := make(map[string]int)
+    total_traces := len(traces)
+    allNodes := make(map[string]xtrace.Event)
+    hashes := make(map[string]string)
+    revHashes := make(map[string]string)
+    for _, trace := range traces {
+        for _, event := range trace.Events {
+            allNodes[event.EventID] = event
+            hash := event.GetHashString()
+            if v, ok := nodeCount[hash]; !ok {
+                nodeCount[hash] = 1
+            } else {
+                nodeCount[hash] = v + 1
+            }
+            hashes[event.EventID] = hash
+            hashes[hash] = event.EventID
+        }
+    }
+
+    for node, event := range allNodes {
+        hash := hashes[node]
+        for _, parent := range event.Parents {
+            parentHash := hashes[parent]
+            if v, ok := nodesChildren[parentHash]; !ok {
+                nodesChildren[parentHash] = []string{hash}
+            } else {
+                nodesChildren[parentHash] = append(v, hash)
+            }
+        }
+    }
+
+    var nodes []D3AggNode
+    var links []D3AggLink
+    for nodeID, count := range nodeCount {
+        value := float64(count) / float64(total_traces)
+        event := allNodes[revHashes[nodeID]]
+        node := D3AggNode{ID: nodeID, Value: value, Event: event}
+        nodes = append(nodes, node)
+        if children, ok := nodesChildren[nodeID]; ok {
+            for _, child := range children {
+                link := D3AggLink{Source: nodeID, Target: child}
+                links = append(links, link)
+            }
+        }
+    }
+    return AggregationResponse{Nodes: nodes, Links: links}
 }
 
 //Parses config from a json file and returns the parsed Config struct
