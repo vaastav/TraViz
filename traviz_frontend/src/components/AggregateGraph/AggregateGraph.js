@@ -85,10 +85,25 @@ class AggregateGraph extends React.Component {
         this.setState({ loading: true });
         const traces = this.state.traces;
         this.aggregateService.getAggregate(traces).then(graph => {
+            var min = Infinity;
+            var max = 0;
+            for (var i = 0; i < graph.nodes.length; i++) {
+                if (graph.nodes[i].value < min) {
+                    min = graph.nodes[i].value;
+                }
+                console.log(graph.nodes[i].value, graph.nodes[i].value > max, graph.nodes[i].value < min);
+                if (graph.nodes[i].value > max) {
+                    max = graph.nodes[i].value;
+                }
+            }
+            console.log(min);
+            console.log(max);
             var color_scale = d3.scaleLinear()
-                                .domain([0, 1])
-                                .range(["#ffffff", "#999900"])
+                                .domain([min, max])
+                                .interpolate(d3.interpolateHcl)
+                                .range([d3.rgb("#ffffff"), d3.rgb("#999900")])
             for (var i=0; i < graph.nodes.length; i++){
+                console.log(color_scale(graph.nodes[i].value));
                 graph.nodes[i].color = color_scale(graph.nodes[i].value);
             }
             this.setState({ loading: false, hasData: true, data: graph });

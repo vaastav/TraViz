@@ -90,7 +90,7 @@ type D3XTraceLink struct {
 
 type D3AggNode struct {
     ID string `json:"id"`
-    Value float64 `json:value`
+    Value float64 `json:"value"`
     Event xtrace.Event `json:"data"`
 }
 
@@ -275,6 +275,7 @@ func aggregate(traces []xtrace.XTrace) AggregationResponse {
 
     var nodes []D3AggNode
     var links []D3AggLink
+    seenLinks := make(map[string]bool)
     for nodeID, count := range nodeCount {
         value := float64(count) / float64(total_traces)
         event := allNodes[revHashes[nodeID]]
@@ -282,8 +283,12 @@ func aggregate(traces []xtrace.XTrace) AggregationResponse {
         nodes = append(nodes, node)
         if children, ok := nodesChildren[nodeID]; ok {
             for _, child := range children {
-                link := D3AggLink{Source: nodeID, Target: child}
-                links = append(links, link)
+                linkID := nodeID + "+" + child
+                if _, ok := seenLinks[linkID]; !ok {
+                    link := D3AggLink{Source: nodeID, Target: child}
+                    links = append(links, link)
+                    seenLinks[linkID] = true;
+                }
             }
         }
     }
