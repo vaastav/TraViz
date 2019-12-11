@@ -236,7 +236,7 @@ class AggregateGraph extends React.Component {
         };
 
         return (
-            <div className="cg_container">
+            <div className="ag_container">
                 <div className="container__graph">
                     {this.buildCommonInteractionsPanel()}
                     <Graph ref="graph" {...graphProps} />

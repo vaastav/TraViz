@@ -257,7 +257,7 @@ func aggregate(traces []xtrace.XTrace) AggregationResponse {
                 nodeCount[hash] = v + 1
             }
             hashes[event.EventID] = hash
-            hashes[hash] = event.EventID
+            revHashes[hash] = event.EventID
         }
     }
 
