@@ -1,0 +1,29 @@
+\section{Related Work}
+
+Jaeger ~\cite{Jaeger} is an open-source distributed tracing project
+that provides libraries for instrumenting distributed systems
+in different languages as well as a frontend for viewing the traces
+produced from these systems. Jaeger has vis idioms for visualizing
+a single trace, for visualizing the dependencies between services
+of the system, as well as an idiom for comparing 2 different traces.
+However, it doesn't have any idiom for viewing an aggregate form of
+multiple traces or for comparing groups of traces.
+
+LightStep ~\cite{LightStep} is a start-up company that
+creates solutions for real-time tracking of requests and metrics
+in large-scale distributed systems. LightStep has vis idioms
+for visualizing the structure of a single trace, for visualizing
+the critical path of a single trace, and 
+for visualizing various metrics collected for multiple traces.
+Like Jaeger, LightStep also lacks a viz idiom for viewing aggregate
+traces and for comparing groups of traces.
+
+ShiViz ~\cite{ShiViz} is an interactive visualization tool
+that visualizes communication graphs from distributed system execution
+logs. As ShiViz is designed for visualizing logs and not individual traces,
+ShiViz does not support comparisons of multiple traces.
+
+With TraViz, we want to address some of the shortcomings of existing tools
+by providing a way for the users to compare the structure of a group of traces
+as well as integrate the traces with source code to provide more context
+for debugging.

@@ -1,0 +1,26 @@
+\section{Scenario}
+
+\begin{itemize}
+\item \textbf{Scenario 1}: A developer wants to find out why two similar requests have very different 
+completion times. The developer will select the two traces corresponding to the requests. After the traces are selected, our tool will
+use the events of these traces to generate a view showing the differences between the traces as well as showing the
+context and timing of the original requests. This will allow the developer to analyze and identify why 2 similar requests have 
+different completion times.
+
+\item \textbf{Scenario 2}: A developer wants to find out why requests on Monday are
+slower than the requests on Tuesday. The developer will make 2 different selections - selection of traces from Monday and selection
+of traces from Tuesday. Our tool will aggregate the 2 selections into representative graphs and then show the difference of these
+two aggregate traces. This will allow the developer to possibly figure out a high-level change between the request execution from
+Monday to Tuesday.
+
+\item \textbf{Scenario 3}: A developer wants to analyze why a given trace is anomalous as compared to some of the previous
+traces. To do this, the developer will first create a selection of traces that will be aggregated down into 1 trace. The developer
+will then select the anomalous trace and create a comparison between the anomalous and the representative trace.
+Our tool will show the difference between the 2 traces and allow the developer to figure out why a particular trace is anomalous.
+
+\item \textbf{Scenario 4}: A developer wants to understand the communication load between different services of the system.
+Our tool will show the developer an overview graph that shows how often 2 services in the distributed system communicate
+with each other. This will allow the developer to figure out how an addition of a new service would increase the load on each
+service.
+
+\end{itemize}

@@ -1,0 +1,89 @@
+\section{Data}
+
+We have 2 datasets that we will be visualizing using TraViz.
+The first dataset is called HDFS and contains the \textbf{collection of traces} and \textbf{collection of processes}
+from a Hadoop file system used for distributed storage 
+and big data processing and the \textbf{corresponding source code}.
+The second dataset is called socialNetwork and was obtained from the DeathStarBench open-source benchmark for cloud microservices~\cite{gan2019open}.
+It contains the \textbf{collection of traces}, \textbf{collection of processes} as well as the corresponding \textbf{source code}.
+Each distributed system comprises of multiple services that run on machines as different processes.
+The HDFS dataset has a total of 71,001 traces and 18 processes.
+The socialNetwork dataset has a total of 22,286 traces and 20 processes.
+
+We discuss the attributes of each \textbf{trace}, \textbf{process}, and \textbf{source code} in detail below.
+
+\subsection{Process}
+
+\begin{table*}[]
+  \centering
+  \begin{adjustbox}{width=1\textwidth}
+  \begin{tabular}{|l|l|l|l|l|}
+  \hline
+  Attribute & Type        & Description                                & HDFS Range/Cardinality & socialNetwork Range/Cardinality \\ \hline
+  id        & Categorical & Unique identifier of a process             & 18                     & 20                              \\ \hline
+  name      & Categorical & Name of the service the process is running & 4                      & 13                              \\ \hline
+  host      & Categorical & Name of the machine on which the process is running & 9 & 13 \\ \hline
+  \end{tabular}
+\end{adjustbox}
+
+\label{tab:process}
+\caption{Attributes of a Process}
+\end{table*}
+
+The process entity represents a service running in the distributed system.
+The attributes for Process are shown in Table ~\ref{tab:process}.
+In addition to the attributes listed, each process also comprises of
+multiple threads which corresponds to an OS or Language Runtime level thread.
+
+\subsubsection{Thread}
+
+Each thread has a categorical attribute ~\textbf{tid}, which is a unique identifier
+for a thread within a process.
+
+\subsection{Trace}
+
+A trace represents a request from a client to a service and shows the path of the
+request through the distributed system.
+A trace has five attributes: \textit{id}, \textit{duration}, \textit{start\_stamp}, \textit{list\_of\_tags}, and \textit{list\_of\_events}.
+
+\begin{itemize}
+  \item \textit{id} of the trace is a categorical attribute used to identify a trace. 
+  \item \textit{duration} of the trace is the total time taken to service a request.
+  \item \textit{start\_stamp} is the unix timestamp of the time when the trace was started.
+  \item \textit{list\_of\_tags} is a list of human defined keywords that serve as
+the metadata for the trace. There are on average two tags per trace in both datasets, but the socialNetwork
+dataset has a total of 8 different tags and the HDFS dataset has a total of 22285 different tags. 
+  \item \textit{list\_of\_events} attribute is a list of the events that happened in a trace. The events in the list
+are partially ordered ~\cite{lamport1978time}, with events that caused another event preceding the caused event in the list. 
+Such a partial causal relationship between the events forms a DAG.
+\end{itemize}
+
+For the socialNetwork dataset, the number of events per trace range from 3 to 398 with a mean of 99 events.
+For the HDFS dataset, the number of events per trace range from 0 to 9697 with a mean of 1427 events.
+
+\subsubsection{Event}
+
+\begin{table*}[]
+  \centering
+  \begin{adjustbox}{width=1\textwidth}
+  \begin{tabular}{|l|l|l|}
+  \hline
+  Attribute    & Type           & Description                                                                                                                                 \\ \hline
+  id           & Categorical    & Unique identifier of an event                                                                                                               \\ \hline
+  trace\_id    & Categorical    & Unique identifier of the trace to which the event belongs                                                                                   \\ \hline
+  process\_id  & Categorical    & Unique identifier of the process on which the event occured                                                                                 \\ \hline
+  thread\_id   & Categorical    & Identifier of the thread in a process on which the event occured                                                                            \\ \hline
+  hrt          & Quantitative   & High Resolution (ns) Unix Timestamp                                                                                                         \\ \hline
+  label        & Free-Form Text & Developer-added annotation for the event                                                                                                    \\ \hline
+  full\_path   & Categorical    & Full path of the file in the source code where the event was logged.                                                                        \\ \hline
+  source\_line & Categorical    & \begin{tabular}[c]{@{}l@{}}Line in the source code where the event was logged. Takes the format of \\ Full\_path:Line\_number.\end{tabular} \\ \hline
+  \end{tabular}
+\end{adjustbox}
+\caption{Attributes of an event}
+\label{tab:event}
+\end{table*}
+
+Events are important things that happen in a system, such as acquiring a lock, sending a request to another server,
+or performing an update. These events are defined by the developer as instrumentation in the source code.
+Events can be considered as anything a developer thinks is useful enough to log. The attributes of an event are shown
+in Table ~\ref{tab:event}.

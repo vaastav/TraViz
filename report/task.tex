@@ -1,0 +1,30 @@
+\section{Task}
+
+We have identified a total of 4 tasks that we want to support with our viz tool.
+2 of these tasks are the main tasks for the project whereas the other 2 are stretch tasks
+which we will only implement if we have already completed the implementation of the main tasks.
+
+The first main task for this project is comparison. Namely, we want to compare the path and performance of different
+requests. Each one of our traces represents a request and the collection of events in one trace forms a directed acyclic graph. Our
+comparison tasks are meant to compare the structure of the DAGs created by the events and the duration of different requests. 
+We want to support three different comparison tasks: one trace against one trace, one trace against many traces, and many traces
+against many traces. In more abstract terms, we will compare the DAGs formed by the events in different traces by partitioning them
+into side-by-side views or by showing some sort of a graph diff.
+
+The second major task we are proposing is summarizing data. Many of the traces in our datasets are similar, so we want to
+aggregate traces with the same tags and events. We believe aggregating traces with the same tags or events will give the user
+a more generalized understanding of the traces. The user will be able to analyze the average duration of a group of traces, instead
+of relying on the data from one single trace. This task will take the DAGs formed by the events of different traces and will summarize
+them by aggregating traces with the same tags or events, so that we can better understand the topology and paths of these graphs.
+
+There are two more tasks we want to support, but may be out of scope for the project so we are leaving these tasks as stretch goals.
+The first task is creating a dependency graph using
+the processes in a trace and the second task is adding source code integration to our tool. The \textit{process\_name} attribute in 
+our dataset gives the name of a service in a microservice.
+Developers building distributed systems are interested in understanding the structure of the microservice
+architecture they are building. We want to consume the list of events in a trace and use the \textit{process\_name} attribute in an 
+event to build a graph that links processes that trigger other processes. This information will be presented to developers so that 
+they can discover the dependencies that build their microservices. 
+The second task consists of using the \textit{src\_line} and \textit{file\_path}
+attributes to locate the line in the source code that triggered an event. We will do this by providing a hyperlink to the file and line
+in the github repository. 
