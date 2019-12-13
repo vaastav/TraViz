@@ -14,8 +14,27 @@ A trace represents the path of one request through the system and contains infor
 the events executed, and the nodes where these events were executed. Moreover, traces can be used
 to identify slow requests and understand the difference between request executions. 
 
-In this project, we propose to create a visualization tool that uses data from traces to succinctly represent the structure 
-and performance of a distributed system. Our tool will allow users to compare the path taken by a group
-of requests to the path taken by other requests. We believe that a visualization tool that can represent the
-structure of a group of traces, while also visually encoding relevant performance information, will make
-it easier for the developers to triage root causes of performance bugs.
+Although distributed traces carry vital information for debugging and for general system understanding,
+there have been question marks against the usability of distributed tracing ~\cite{sridharandisttracing,kleindisttracing}. This has been primarily
+due to the lack of good analysis tools for analysing the datasets. Specifically, existing visualization
+tools don't provide an interface for exploring the dataset of traces and finding potential outliers.
+Additionally the tools don't have a way of showing structural differences between traces and 
+structural similarities across a group of traces. Distributed Traces are such a rich source
+of data that can be useful for debugging and even resource allocation but existing tools
+have limited the usability of distributed tracing as these tools have barely scratched the surface
+of the plethora of analysis tasks that can be carried with the data available
+in distributed traces.
+
+To rectify the shortcomings of existing analysis tools and to make distributed tracing more useful,
+in this paper, we present a new visualization tool called TraViz to analyze
+and explore datasets of distributed traces. TraViz exposes an exploration dashboard which
+allows the users to find outlier traces by filtering across distributions of multiple
+dimensions of the trace dataset. TraViz also integrates the performance information with
+the source code information of the distributed system, highlighting files and lines in the
+source code that appear the most across traces. TraViz also provides idioms for comparing
+two different traces as well as aggregating multiple traces into a single super-trace.
+To provide the users with a sense of familiarity, TraViz also provides popular single-trace visualizations
+that are prevalent in state-of-the-art distributed tracing visualization tools.
+With the use of a tiny informal user study, we show that TraViz achieves our goals of improving
+the usability of distributed tracing through enriching the analytical power of the users tasked
+with analyzing the distributed trace datasets.
