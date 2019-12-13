@@ -2,3 +2,26 @@
 
 The Implementation of our solution consists of 3 parts: (i) MySQL database, (ii) Backend REST API
 server implemented in Go, and (iii) Frontend React WebApp that implements our visualization idioms.
+
+The MySQL database contains 4 different tables. The 4 tables are the overview, sourcecode, tags,
+and dependencies table. These tables contain values for various derived attributes
+that we make use of in our idioms. The database setup code is 39 lines of MySQL.
+
+The Go Backend is responsible for processing the raw JSON format of distributed traces
+and populating the tables created in the MySQL database. The backend also
+hosts a REST API server to service requests from the frontend which queries over the database
+to obtain information about the traces. The backend implementation also contains
+a minimal graph kernel library for computing the similarities between 2 graphs.
+Specifically, we implemented the Weisfeiler-Lehman graph kernel ~\cite{shervashidze2011weisfeiler}.
+The Go Backend, including the graph kernel library, is implemented in 1600 lines of code.
+
+The frontend is a React web application where we implement our visualization idioms.
+We use d3 to implement our viz idioms. We make use of the dc and crossfilter libraries
+to implement our overview and source code dashboard to provide linked views. We use
+the react-d3-graph library to implement our graph-based visualization idioms.
+Our swimlane visualization idiom for showing a detailed view of a single distributed trace
+is based on the visualization idiom used by
+X-Trace server ~\cite{fonseca2007x, xtraceserver} as we believe it is very effective
+and very useful in providing detailed performance hints to the developers.
+Our frontend implementation is 3000 lines of javascript and css on top of
+the libraries we used.
