@@ -1,1 +1,34 @@
 \section{Future Work}
+
+Although, we believe that TraViz already provides better visualization
+idioms for analysing distributed traces, TraViz is far from ready from
+being deployed in a real world setting.
+
+The main goal for our future work is to improve upon our graph comparison
+and aggregation idioms so as to remove the "hairball effect". This requires
+using better layout algorithms for visually laying out graphs on the screen.
+We have identified potential libraries like cytoscape and d3-dag that provide
+better layout algorithms but we haven't been able to get those to work yet.
+
+Based on the feedback received from the target users, there are some minor
+improvements that we would like to make in our existing visualization idioms.
+Specifically, for the swimlane view of the trace, we would like to further
+encode the ID of the process as the color of the swimlane for the thread.
+This would help users identify which process a thread belongs to and
+understand when the request crosses process boundaries. Additionally, we would
+like to add a small detail window to the swimlane idiom that shows the details
+of an event when the corresponding node is clicked on the main visualization.
+We would also like to switch the dependency graph to be a directed graph
+as that is what our target users are more accustomed to a directed dependency
+graph.
+
+Additionally, we want to design idioms for two more tasks. The first task
+is the comparison between a single trace and an aggregation of traces
+that would help users understand how a single, anomalous trace is
+different from a set of normal looking traces. The second task is the comparison
+between two different aggregations of traces. This would help understand
+developers to understand the differences in between clusters of traces.
+
+Lastly, we believe that conducting a formal user study or at least an informal
+user study with more users would help in gauging the efficacy and usability
+of TraViz as a distributed tracing analysis tool.

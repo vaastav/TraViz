@@ -1,1 +1,21 @@
 \section{Discussion}
+
+We consider TraViz to be partially successful at the time of writing.
+We believe that TraViz's exploration dashboard is a very good starting
+point for the users to find potentially outlier traces and then select
+such traces for further analysis. Additionally, as far as we know, TraViz
+is the first visualization tool to integrate the static source code
+information with dynamic performance information captured in the traces.
+The current source code integration idiom is just a starting point
+and we believe there are other interesting ways of visualizing and integrating
+source code information with distributed traces.
+
+We consider TraViz to only be partially successful as we believe
+that the current graph comparison and aggregation tools are easily
+usable or understandable. This is primarily due to the fact that
+our current graph idioms don't have a good layout strategy for laying
+out the nodes and edges on the screen causing our idioms to suffer from
+the dreaded "hairball effect".
+Finding a good layout strategy
+is akin to finding a needle in the haystack but we believe
+that we will eventually find one that fits our use case.
