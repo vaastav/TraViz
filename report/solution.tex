@@ -1,34 +1,67 @@
 \section{Proposed Solution}
 
-The events of a trace will be transformed into a node-link graph. One possible idiom for trace comparison, is to compare the graphs formed by the events of different traces
-by partitioning them into side-by-side views. Another possible idiom is showing the diff of the 2 graphs whilst still preserving
-the original graphs to provide some sort of context.
-Because of the limited screen space of a computer monitor, we will allow at most two
-graphs to be compared at one time. Even though our tool will only allow two graphs to be compared at once, users will still be able
-to compare multiple traces by aggregating traces that go through the exact same nodes into one graph. In other words, traces that have
-the same structure can be aggregated into one graph. This aggregation procedure will allow us to make comparisons that involve many
-traces while only using two DAGs. The links of the graph will be saturated according to the average time it takes for the event in
-the end of the link to complete. We will also use colour hue to identify the \textit{process\_name} of each event. A preliminary sketch of
-this visualization can be seen in Figure \ref{fig:comparison}.
+Traviz accomplishes six tasks. These tasks are, finding outliers and overviewing the dataset, 
+integrating source code and tracing data, extracting a detailed view of an individual trace, analyzing the
+dependencies between the services in a distrbuted system, comparing two traces, and aggregating multiple traces
+in a single visualization. Our solution to each one of these tasks is described in the subsections below.
 
-We will use a similar approach to create the service dependency graph. To create the dependency graph for one trace, we will transform the list
-of events into a DAG represented by a node-link graph. All the events with the same \textit{process\_name} will be aggregated into the same
-node. In this representation, the aggreated node will represent a service in a microservice. The links to the node will be saturated according
-to the amount of time it takes for all the events in a service to complete. A preliminary sketch of this visualization can be seen in Figure \ref{fig:aggregation}.
+\subsection{Outliers and Overview}
 
-At the moment, our proposed solution for source code integration does not have a specific visualization in mind. We are thinking about
-providing a link to the file and line in the github repo corresponding to the selected event in a trace. At least initially, we are not
-going to do any complicated visualization to accomplish the source code integration task.
+For this task we consume a set of traces, so that users can identify outliers and understand patterns
+in their tracing dataset. This entails visualizing the distributions for the number of events, duration, 
+and dates from a set of traces. We achieve this by
+using crossfilter to display the distributions mentioned above in a bar chart and displaying the data in a table. 
 
-\begin{figure}
-    \includegraphics[width=\linewidth]{comparison.jpg}
-    \caption{Example of a comparison task where we compare one task that calls Postgres and another that calls Redis. The trace that
-    called Postgres triggers slow events (represented by the red links) and triggers more events in general.}
-    \label{fig:comparison}
-\end{figure}
+To reduce the cognitive load on the user, we reduce the number of items on display by using crossfilter
+to select areas in the distribution charts, which causes the data table to be filtered accordingly. For example,
+if a user selects the area between 1000ms and 2000ms in the latency distribution chart, the table will only display
+traces that have a duration between 1000ms and 2000ms. The table can also be sorted to help users quickly find traces. 
+Visually representing the distributions in bar charts and filtering the data from these distributions allows users to swiftly
+find outliers. For example, traces with more events than usual can be quickly identified from the bar chart and selected using our
+filtering functionality.
 
-\begin{figure}
-    \includegraphics[width=\linewidth]{agg.jpg}
-    \caption{Example of an aggregation task where events with the same \textit{process\_name} get aggregated into the same node.}
-    \label{fig:aggregation}
-\end{figure}
+\subsection{Source Code Integration}
+
+Our source code integration tool consumes traces from our datasets and derives the number of events
+triggered by a line in the source code. This tool is useful in helping users identify what files are producing events
+and what lines in the source code of a file are producing the most or least events. This is a useful tool for developers because
+they can identify the specific points in their code that are heavily utilized. 
+
+Our source code integration tool uses two bar charts to encode this information. One of them aggregates the total number of events in a
+file. If a user clicks on the bar for one of the files, Traviz displays another bar chart next to it that
+reveals the number of events in each source code line of the file. In both charts we encode the number of events with the lenth and luminance
+of the bar, where higher luminance means that more events spawned from that file or source code line. To complete the
+source code integration, Traviz allows users to click on a bar in the source code line chart to jump to that line in a Github repo, creating a
+useful link between our visualization and the code that models our data. 
+
+\subsection{Individual Trace Analysis}
+
+Our overview tool helps the user identify interesting traces, and the individual trace analysis tool allows these interesting traces to be further analyzed.
+The individual trace analysis tool takes one trace and visually represents the timestamp of the events in a trace,
+the thread where an event was executed, and the events that originated events in other threads. This tool is useful for a distributed systems
+developer because it allows a trace to be dissected so that the communication patterns and path of a request can be analyzed. In this tool we
+encoded each thread as a a lane, the time of an event as the position on the x-axis, and the thread of an event as the position on the y-axis. Furtermore,
+if an event caused an event in another thread, we show this relationship with a connecting line.
+
+\subsection{Service Dependency Analysis}
+
+The service dependency analysis consumes an attribute derived from the original dataset, which is the total number of messages issued by
+a service. This tool is important for comprehending distributed systems because it allows developers to understand the
+dependency relationship between services. For example, in a micro-service architecture, the dependency graph helps understand what services
+talk to each other and what services talk to the most services. To visualize the dependencies, we arranged the services into
+a node-link graph, where each service is a node, and the dependency is a link between the nodes. We also encoded the degree of a node with the area of
+a circle, so that services that talk to many services can be easily recognized. 
+
+\subsection{Trace Comparison}
+
+In this tool we take two traces and merge them in a way that the user can indentify the
+differences and similarities between the traces. Understanding the differences and similarities
+between a trace can help developers identify why some requests take longer than others. 
+
+To build this tool we assigned each event in both traces a group between 1 and 3. The events are arranged into a node-link graph,
+where each event is a node and the link encodes the parent-child relationship between events. We encode group 3 nodes as squares and groups 1 and 2 as circles.
+We also encode the group a node belongs to using hue. Group 3 nodes are grey, group 1 nodes are ----, and group 2 nodes are -----. We aggregate
+group three nodes to reduce the total number of nodes in the graph, with the intent of reducing cognitive load, but users can disaggreagate them if
+they wish to look at a complete view of the comparison graph.
+
+\subsection{Trace Aggreagation}
