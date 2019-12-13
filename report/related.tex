@@ -23,10 +23,16 @@ that visualizes communication graphs from distributed system execution
 logs. As ShiViz is designed for visualizing logs and not individual traces,
 ShiViz does not support comparisons of multiple traces.
 
-The current state-of-the-art visualization tools don't provide a idiom for finding
+The current state-of-the-art visualization tools for distributed tracing
+have historically focused more on visualizing the structure and performance
+characteristics of the traces using a waterfall idiom where
+each process in the trace is modeled as a separate level in the waterfall.
+However, these tools don't provide a idiom for finding
 outlier traces and have very rudimentary visualizations for comparing
-different traces. 
+different traces which are tasks that target users actively wish to accomplish.
 With TraViz, we address some of the shortcomings of existing tools
-by providing a way for the users to compare the structure of a group of traces
-as well as integrate the traces with source code to provide more context
-for debugging.
+by providing a way for the users to compare the structure of two traces,
+aggregate a group of traces, and integrate the traces with source code to provide more context
+for debugging. We also provide an outlier exploration dashboard that allows
+the users to filter along multiple dimensions of the dataset to quickly explore
+the dataset and find possible outlier and erroneous traces.
