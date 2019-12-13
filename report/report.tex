@@ -1,4 +1,4 @@
-\documentclass[10pt,twocolumn]{article}
+\documentclass[journal]{vgtc}
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \usepackage{fullpage}
@@ -9,9 +9,37 @@
 \usepackage{url}
 
 \title{TraViz: Visualization of Traces in Distributed Systems}
-\author{Vaastav Anand \\ vaastav.anand05@gmail.com  \and Matheus Stolet \\ stolet@cs.ubc.ca}
+\author{Vaastav Anand and Matheus Stolet}
+
+\abstract{
+    In this work we present TraViz, an interactive visualization tool for exploring and analysing 
+    distributed traces to troubleshoot and debug performance problems in distributed systems.
+    Through the use of composite filtering of multiple dimensions of the dataset, TraViz
+    provides developers an easy to use way to find outlier traces. With TraViz's traceview
+    swimlane idiom, the users can drill down into a single trace to analyze the trace
+    for performance issues at the detail level of an operating system thread. TraViz's
+    comparison idiom allows users to compare the Graphical structure of 2 traces of interest
+    to highlight the key differences between the traces.
+    The aggregation idiom allows users to find uncommon occuring events across traces by
+    constructing a luminance coded super graph of all the distributed traces.
+    Additionally, TraViz is the first visualization tool that provides an integrated view
+    of the static source code of the system with dynamic information collected about the
+    system via distributed traces which can help the users in identifying locations in the
+    source code that would be ideal for performance optimizations.
+}
+
+\keywords{Distributed Tracing, Graph Comaprison, Graph Aggregation, Source Code Integration}
+
+\teaser{
+    \centering
+    \includegraphics[width=\linewidth]{fig/crossfilter}
+    \caption{TraViz overview layout, showing a filtered selection of distributed traces using filters on distributions of multiple dimensions of the distributed traces dataset.}
+      \label{fig:teaser}
+}
 
 \date{}
+
+\vgtcinsertpkg
 
 \begin{document}
 
