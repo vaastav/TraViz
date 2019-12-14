@@ -7,11 +7,11 @@ comparing two traces, and aggregating multiple traces. Each task is clarified th
 
 \textbf{Scenario 1: Overview and finding outliers}
 
-A developer wants to find requests that are slower than usual in a distributed system. This information should be consumed by the developer,
-so that a detailed analysis of the system can be conducted. For example, identifying unsually slow requests is useful at selecting what traces
-should be further analyzed.
+A developer wants to find requests that are slower than usual in a distributed system. This information should be consumed by the developer in a way
+that helps identify what traces are worthy of a detailed analysis. For example, identifying unsually slow requests is useful at selecting what traces
+should be inspected to understand the path of their requests.
 
-\textbf{Scenario 2: Integrating traces with the source code}
+\textbf{Scenario 2: Integrating with the source code}
 
 A developer wants to locate files that are highly active. This information can be used to understand what areas of the source code are responsible
 for the activity in the system, and thus require more attention. These insights can be used to alert developers that new code to those files should
@@ -21,14 +21,23 @@ interest is identified.
 \textbf{Scenario 3: Analyzing one trace}
 
 A developer wants to have detailed information on a request. Tracing data can be consumed to reveal information such as the path of the request, the 
-time the events in a request where triggered, and what threads executed a request. This information can reveal detailed system information that can be
+time the events in a request were triggered, and what threads executed a request. This information can reveal detailed system information that can be
 used to optimize the code.
 
 \textbf{Scenario 4: Finding service dependencies}
 
-A developer wants to find how many services communicate with a specified service. This task entails locating the node in a graph representing the service of interest,
+A developer wants to find how many services communicate with a specific service. This task entails locating the node in a graph representing the service of interest,
 and following the links from that service to other services. This information can be used to identify the services in a microservice that are dependent in many other
-services, which can be useful at helping developers what services should be refactored to minimize dependencies.
+services, which can be useful in helping developers find the services that should be refactored to minimize dependencies.
 
-\textbf{Scenario 5: Aggregating traces}
+\textbf{Scenario 5: Comparing traces}
 
+A developer wants to compare two requests to understand why one is faster than the other. This task takes the shape of deriving metrics to highlight
+similarities and differences between the events in both traces. This information can then be presented to the user in a way that the differneces are discovered,
+while still maintaining enough contextual information from both traces to understand the path of the request.
+
+\textbf{Scenario 6: Aggregating traces}
+
+A developer wants to summarize the information on multiple traces with the intent of revealing trends in the data. This task takes the form of aggreagating similar
+traces into a graph, so the topology of these aggregated traces can be visualized. Aggreagating traces is a useful task for distributed systems developers because it helps condense the
+information of multiple requests into a summarized format that can be consumed for analysis.
