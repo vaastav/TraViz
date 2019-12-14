@@ -1,8 +1,44 @@
 \section{Results}
 
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{fig/outlier}
+    \caption{Example of filtering along the Num Events and Duration dimension to look at one specific set of outliers}
+    \label{fig:outlier}
+\end{figure*}
+
 \subsection{Use Case 1: Outlier detection}
 
+The user has received multiple bug reports from different customers
+about some requests taking tens of seconds to complete when they
+usually take fewer than a second to complete. To investigate, the
+user opens up TraViz and sees the distribution of the traces. The
+user can quickly see that there are a small number of traces
+that have indeed taken unusually long as compared to other traces.
+The user selects a specific duration range to filter so that
+they can only see the list of traces that have their duration
+within that range. To further narrow down, the user selects
+an events range to further reduce the number of traces as shown
+in Figure ~\ref{fig:outlier}. The user can now start performing
+root cause analysis.
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{fig/swimlane}
+    \caption{Swimlane view of trace ID AB2EC0A5C798E809 from the DeathStarBench dataset}
+    \label{fig:outlier}
+\end{figure*}
+
 \subsection{Use Case 2: Performance Analysis on a single trace}
+
+Now that the user has a picked a filtered set of traces, the user
+can take a look at an individual trace to figure out the root
+cause of the performance issue. The user clicks on one of the
+traces from the filtered list to see the detailed view
+of the trace ~\ref{fig:swimlane}. From a cursory look,
+the user can identify which thread takes the longest time to complete
+its execution and correctly identify the set of events that caused delay
+on the trace.
 
 \subsection{Use Case 3: Finding differences in pair of traces}
 
