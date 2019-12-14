@@ -1,67 +1,215 @@
 \section{Solution}
 
-Traviz accomplishes six tasks. These tasks are, finding outliers and overviewing the dataset, 
+Traviz accomplishes six tasks. These tasks are finding outliers and overviewing the dataset,
 integrating source code and tracing data, extracting a detailed view of an individual trace, analyzing the
 dependencies between the services in a distrbuted system, comparing two traces, and aggregating multiple traces
-in a single visualization. Our solution to each one of these tasks is described in the subsections below.
+into a single visualization. Our solution to each one of these tasks is described in the subsections below.
 
 \subsection{Outliers and Overview}
 
-For this task we consume a set of traces, so that users can identify outliers and understand patterns
-in their tracing dataset. This entails visualizing the distributions for the number of events, duration, 
-and dates from a set of traces. We achieve this by
-using crossfilter to display the distributions mentioned above in a bar chart and displaying the data in a table. 
+For this task we consume a set of traces and identify outliers and patterns.
+We provide a visual representation of the distribution of the number of events in a trace, trace duration,
+and date of a trace. We achieve this by
+using crossfilter to display the distributions in a bar chart and arranging the tracing data in a table.
 
 To reduce the cognitive load on the user, we reduce the number of items on display by using crossfilter
 to select areas in the distribution charts, which causes the data table to be filtered accordingly. For example,
 if a user selects the area between 1000ms and 2000ms in the latency distribution chart, the table will only display
-traces that have a duration between 1000ms and 2000ms. The table can also be sorted to help users quickly find traces. 
+traces that have a duration between 1000ms and 2000ms. The table can also be sorted to help users quickly find traces.
 Visually representing the distributions in bar charts and filtering the data from these distributions allows users to swiftly
 find outliers. For example, traces with more events than usual can be quickly identified from the bar chart and selected using our
 filtering functionality.
 
+\begin{center}
+    \begin{tabular}{ |c| }
+        \hline
+        Outliers and Overview  \\
+        \hline
+        What: data \\
+         - A collection of traces \\
+        \hline
+        Why: tasks \\
+         - Find outliers \\
+         - Identify patterns \\
+        \hline
+        How: reduce \\
+         - Filter items using attributes such as number of events, duration,
+        and date of a trace. \\
+        How: show \\
+         - Display traces on table that can be sorted and filtered.
+        \end{tabular}
+\end{center}
+
+
+
 \subsection{Source Code Integration}
 
-Our source code integration tool consumes traces from our datasets and derives the number of events
-triggered by a line in the source code. This tool is useful in helping users identify what files are producing events
-and what lines in the source code of a file are producing the most or least events. This is a useful tool for developers because
-they can identify the specific points in their code that are heavily utilized. 
+Our source code integration tool consumes traces and derives the number of events
+triggered by a line in the source code. This tool is useful at identifying what files - and lines in the source code of that file -
+produce the most events. Developers can use the source code integration tool to identify what areas of their code are heavily utilized.
 
-Our source code integration tool uses two bar charts to encode this information. One of them aggregates the total number of events in a
-file. If a user clicks on the bar for one of the files, Traviz displays another bar chart next to it that
-reveals the number of events in each source code line of the file. In both charts we encode the number of events with the lenth and luminance
+Our source code integration tool uses two bar charts to encode the relevant information. One of the charts aggregates the total number of events in a
+file and displays one bar per file. If a user clicks on the bar for one of the files, Traviz displays another bar chart adjacent to it that
+reveals the number of events in each source code line of the file. In both charts, we encode the number of events with the lenth and luminance
 of the bar, where higher luminance means that more events spawned from that file or source code line. To complete the
-source code integration, Traviz allows users to click on a bar in the source code line chart to jump to that line in a Github repo, creating a
-useful link between our visualization and the code that models our data. 
+source code integration, Traviz allows users to click on a bar in the source code line chart. A mouse click causes the application to
+redirect the user to the line in a Github repo hosting the project being visualized.
+
+\begin{center}
+    \begin{tabular}{ |c| }
+        \hline
+        Source Code Integration  \\
+        \hline
+        What: data \\
+         - A collection of traces \\
+        \hline
+        Why: tasks \\
+         - Identify what files produce events \\
+         - Identify what lines in a file produce the most or least events \\
+        \hline
+        How: display \\ 
+         - Display number of events in a file and number of events originating from a 
+        line in the source code using bar charts\\
+        How : encode\\
+         - Encode number of events in a file and number of events originating from a line in the source code using the
+        size of the bar. \\
+         - Encode number of events in a file and number of events originating from a line in the source code using the
+         luminance of the bar.
+    \end{tabular}
+\end{center}
+
 
 \subsection{Individual Trace Analysis}
 
-Our overview tool helps the user identify interesting traces, and the individual trace analysis tool allows these interesting traces to be further analyzed.
-The individual trace analysis tool takes one trace and visually represents the timestamp of the events in a trace,
+The individual trace analysis tool complements the overview tool and allows the details of a specific trace to be analysed.
+This tool displays the timestamp of the events in a trace,
 the thread where an event was executed, and the events that originated events in other threads. This tool is useful for a distributed systems
-developer because it allows a trace to be dissected so that the communication patterns and path of a request can be analyzed. In this tool we
-encoded each thread as a a lane, the time of an event as the position on the x-axis, and the thread of an event as the position on the y-axis. Furtermore,
-if an event caused an event in another thread, we show this relationship with a connecting line.
+developer because it allows a trace to be dissected, so that the path of a request can be observed. The individual trace analysis tool
+encodes each thread as a a lane, the time of an event as the position on the x-axis, and the thread of an event as the position on the y-axis. Furtermore,
+if an event triggered an event in another thread, we show this relationship with a connecting line.
+
+\begin{center}
+    \begin{tabular}{ |c| }
+        \hline
+        Individual Trace Analysis  \\
+        \hline
+        What: data \\
+         - One trace \\
+        \hline
+        Why: tasks \\
+         - Observe the timing of events in a trace \\
+         - Identify events that triggered events in other threads \\
+        \hline
+        How: encode \\
+         - Encode each thread as a lane \\
+         - Encode the time of an event as the position of a point on the x-axis \\
+         - Encode the thread of an event as the position of a point on the y-axis \\
+         - Identify events that triggered events in other threads with a connecting line \\
+    \end{tabular}
+\end{center}
+
 
 \subsection{Service Dependency Analysis}
 
-The service dependency analysis consumes an attribute derived from the original dataset, which is the total number of messages issued by
-a service. This tool is important for comprehending distributed systems because it allows developers to understand the
+
+The service dependency analysis derives the total number of messages issued by a service. 
+This tool is important for comprehending distributed systems because it allows developers to understand the
 dependency relationship between services. For example, in a micro-service architecture, the dependency graph helps understand what services
 talk to each other and what services talk to the most services. To visualize the dependencies, we arranged the services into
-a node-link graph, where each service is a node, and the dependency is a link between the nodes. We also encoded the degree of a node with the area of
-a circle, so that services that talk to many services can be easily recognized. 
+a node-link graph, where each service is a node, and the dependency is a link between the nodes. We also encoded the degree of each node as the area of
+a circle, so that services that talk to many services can be easily recognized.
+
+\begin{center}
+    \begin{tabular}{ |c| }
+        \hline
+        Service Dependency Analysis  \\
+        \hline
+        What: derived data \\
+         - Total messages issued by a service \\
+        \hline
+        Why: task \\
+         - Understand the dependency between services \\
+        \hline
+        How: arrange\\
+         - Arrange services into a node-link graph \\
+         - Services are represented as nodes \\
+         - Dependencies between services are represented as links between nodes \\
+        How: encode \\
+         - Encode the amount of dependencies in a service with the area
+         of the node 
+    \end{tabular}
+\end{center}
+
 
 \subsection{Trace Comparison}
 
 In this tool we take two traces and merge them in a way that the user can indentify the
 differences and similarities between the traces. Understanding the differences and similarities
-between a trace can help developers identify why some requests take longer than others. 
+between a trace can help developers identify why some requests take longer than others.
 
 To build this tool we assigned each event in both traces a group between 1 and 3. The events are arranged into a node-link graph,
 where each event is a node and the link encodes the parent-child relationship between events. We encode group 3 nodes as squares and groups 1 and 2 as circles.
-We also encode the group a node belongs to using hue. Group 3 nodes are grey, group 1 nodes are ----, and group 2 nodes are -----. We aggregate
-group three nodes to reduce the total number of nodes in the graph, with the intent of reducing cognitive load, but users can disaggreagate them if
-they wish to look at a complete view of the comparison graph.
+We also encode the group a node belongs to using hue. Group three nodes are grey, group one nodes are ----, and group two nodes are -----. We aggregate
+group three nodes, with the intent of reducing the total number of nodes in the graph and reduce cognitive load. Users can disaggregate group three nodes if they
+want to take a look at the full graph. If users want to look at the details of an event, they can click on a node, which causes the attributes of the selected event
+to be displayed on the side.
 
-\subsection{Trace Aggreagation}
+\begin{center}
+    \begin{tabular}{ |c| }
+        \hline
+        Trace Comparison  \\
+        \hline
+        What: data \\
+         - Two traces \\
+        \hline
+        Why: tasks \\
+         - Identify differences between traces \\
+         - Observe patterns \\
+        \hline
+        How: arrange \\
+         - Arrange events into a node-link graph \\
+         - Events are represented as nodes \\
+         - Parent-child relattionships between events are represented as links between nodes
+        How: encode \\
+         - Encode nodes in group 3 as squares and nodes in groups 1 and 2 as circles \\
+         - Encode the group of an event using hue \\
+        How: aggregate \\
+         - Aggregate group 3 nodes to reduce the size of the graph
+    \end{tabular}
+\end{center}
+
+
+\subsection{Trace Aggregation}
+
+The trace aggregation tool helps users see the big picture. It consumes a collection of traces and arranges
+them into a node-link graph, where nodes represent events and links represent the parent-child relationships between
+the events. To condense the information from multiple traces into a more manageable graph, we aggregate the events
+from the same source code line into one node. We also visualize the number of events in a node by using luminance, where high
+luminance means a node is responsible for many events, and low luminance means that a node is responsible for few events. A node can
+be selected by clicking, which results in detailed information about that event - such as the event id, timestamp, and thread id - to be displayed.
+The aggreagation tool also allows the structure from multiple traces to be analysed, while reducing the amount of nodes on display.
+
+\begin{center}
+    \begin{tabular}{ |c| }
+        \hline
+        Trace Aggregation  \\
+        \hline
+        What: data \\
+         - A collection of traces \\
+        \hline
+        Why: tasks \\
+         - Visualizing the big picture \\
+         - Analyzing multiple traces \\
+        \hline
+        How: arrange \\
+         - Arrange avents into a node-link graph \\
+         - Events are represented as nodes \\
+         - Parent-child relattionships between events are represented as links between nodes
+         How: aggreagate \\
+         - Aggregate events from the same source code line as one node
+         How: encode \\
+          - Encode number of events in a node with luminance \\
+          - High luminance means a node is aggregating many events
+          - Low luminance means a node is aggregating few events
+    \end{tabular}
+\end{center}
