@@ -1,0 +1,44 @@
+\section{Results}
+
+\subsection{Use Case 1: Outlier detection}
+
+\subsection{Use Case 2: Source Code Optimization}
+
+\subsection{Use Case 3: Service Dependency Analysis}
+
+\subsection{Use Case 4: Finding differences in pair of traces}
+
+\subsection{Use Case 5: Finding similarities in groups of traces}
+
+\subsection{Use Case 6: Performance Analysis on a single trace}
+
+\subsection{Informal User Study}
+
+To evaluate the efficacy of TraViz, we conducted a very Informal user study
+with 2 target users. One of the target users is one of the leading experts in distributed
+tracing whereas the other user is an engineer at a large internet company where part of
+their job is to analyze distributed traces. Due to geographical and time constraints,
+the user study had to be done asynchronously where the target users were given
+a deployed link of our tool and were asked to provide feedback regarding the user
+experience.
+
+Both of the target users liked the overview dashboard. Specifically, the leading expert
+stated "Incorporating high-level metrics side-by-side with trace search and selection is a good idea and I like the dashboard you came 
+up with". The source code view also garnered positive reviews as both the users thought
+this is something that they would like to use with their data. The source code view
+piqued the interest of the expert user as they thought it had the potential of getting
+very deep as it was combining the static source code of the system with dynamic information
+about actual executions. The other user thought the most useful visualization was the individual
+trace view as it allowed them to view time spent by each thread individually.
+The expert user thought that the dependency graph was useful but commented that
+the graph should be directed as that is what users expect to see.
+
+For the trace comparison and aggregation idioms, there was a general sense of confusion
+across both the users. One of the users was particularly confused as to what each
+of the nodes meant in the graph - whether the nodes were showing performance information
+or structural differences or both. The expert user commented that the comparison and aggregation
+graphs have some underlying ordering which wasn't being visualized. Although, they did acknowledge
+that getting the ordering right for comparisons and aggregations is a hard task.
+
+Given the feedback from the users, we believe that TraViz is partially successful in its endeavor of
+being the most usable distributed tracing visual analysis tool.

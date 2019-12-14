@@ -1,8 +1,7 @@
-\section{Task}
+\section{Task Abstraction}
 
-We have identified a total of 4 tasks that we want to support with our viz tool.
-2 of these tasks are the main tasks for the project whereas the other 2 are stretch tasks
-which we will only implement if we have already completed the implementation of the main tasks.
+We have identified a total of six tasks that we want to support with our viz tool.
+We discuss each task in detail with an example scenario below.
 
 The first main task for this project is comparison. Namely, we want to compare the path and performance of different
 requests. Each one of our traces represents a request and the collection of events in one trace forms a directed acyclic graph. Our
@@ -28,3 +27,25 @@ they can discover the dependencies that build their microservices.
 The second task consists of using the \textit{src\_line} and \textit{file\_path}
 attributes to locate the line in the source code that triggered an event. We will do this by providing a hyperlink to the file and line
 in the github repository. 
+
+\textbf{Scenario 1}: A developer wants to find out why two similar requests have very different 
+completion times. The developer will select the two traces corresponding to the requests. After the traces are selected, our tool will
+use the events of these traces to generate a view showing the differences between the traces as well as showing the
+context and timing of the original requests. This will allow the developer to analyze and identify why 2 similar requests have 
+different completion times.
+
+ \textbf{Scenario 2}: A developer wants to find out why requests on Monday are
+slower than the requests on Tuesday. The developer will make 2 different selections - selection of traces from Monday and selection
+of traces from Tuesday. Our tool will aggregate the 2 selections into representative graphs and then show the difference of these
+two aggregate traces. This will allow the developer to possibly figure out a high-level change between the request execution from
+Monday to Tuesday.
+
+ \textbf{Scenario 3}: A developer wants to analyze why a given trace is anomalous as compared to some of the previous
+traces. To do this, the developer will first create a selection of traces that will be aggregated down into 1 trace. The developer
+will then select the anomalous trace and create a comparison between the anomalous and the representative trace.
+Our tool will show the difference between the 2 traces and allow the developer to figure out why a particular trace is anomalous.
+
+ \textbf{Scenario 4}: A developer wants to understand the communication load between different services of the system.
+Our tool will show the developer an overview graph that shows how often 2 services in the distributed system communicate
+with each other. This will allow the developer to figure out how an addition of a new service would increase the load on each
+service.
