@@ -2,15 +2,64 @@
 
 \subsection{Use Case 1: Outlier detection}
 
-\subsection{Use Case 2: Source Code Optimization}
+\subsection{Use Case 2: Performance Analysis on a single trace}
 
-\subsection{Use Case 3: Service Dependency Analysis}
+\subsection{Use Case 3: Finding differences in pair of traces}
 
-\subsection{Use Case 4: Finding differences in pair of traces}
+\subsection{Use Case 4: Finding similarities in groups of traces}
 
-\subsection{Use Case 5: Finding similarities in groups of traces}
+\subsection{Use Case 5: Source Code Optimization}
 
-\subsection{Use Case 6: Performance Analysis on a single trace}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{fig/sourcecode1}
+    \caption{The distribution of the events across the files for the DeathStarBench dataset, with colour showing the number of lines from the
+    file that produced these events.}
+    \label{fig:source1}
+\end{figure*}
+
+\begin{figure*}
+    \centering
+        \includegraphics[width=\textwidth]{fig/sourcecode2}
+        \caption{The distribution of events across the lines for the UniqueIdHandler file}
+        \label{fig:source2}
+\end{figure*}
+
+The user wants to know what files in the source code, Specifically
+what lines in the source code are producing the most number of events
+in traces as well as producing the least number of events in traces.
+The user clicks on the Source tab on the navigation bar
+to land at the source page to see the distribution of events
+across files in sorted order as shown in Figure ~\ref{fig:source1}.
+To view the distribution of events across the lines in a particular
+file, the user clicks on the bar with the name of the target file.
+This gives rise to another chart which shows the distribution
+of the events across lines in that file in sorted order as shown
+in Figure ~\ref{fig:source2}. To view the line in the context of the source
+code, the user clicks on the bar of that specific line to get
+redirected to that specific line in the specific file on github.
+
+\subsection{Use Case 6: Service Dependency Analysis}
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{fig/dependency}
+    \caption{The dependency graph shows how the services in the system interact with each other. 
+    The detail view shows the messages received and sent by the nodes running that specific service from
+    the nodes running other services. This figure shows the breakdown for the ComposePostService from the DeathStar
+    Microbenchmark suite.}
+    \label{fig:dependency}
+\end{figure*}
+
+The user wants to know how the different services in the distributed
+system interacts with each other. Specifically, the user wishes to know
+the load each service is receiving from all the other services in the system.
+To accomplish this, the user clicks on the Dependency tab on the navigation bar
+to land at the dependency page to see the dependency graph as shown in Figure ~\ref{fig:dependency}.
+To find out detailed information about each service, the user clicks on the node with
+the particular service to bring up the detailed view of the service which shows
+the number of messages received by that service from every other service, and the number
+of messages sent by that service to every other service.
 
 \subsection{Informal User Study}
 
