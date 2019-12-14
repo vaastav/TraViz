@@ -21,23 +21,24 @@ find outliers. For example, traces with more events than usual can be quickly id
 filtering functionality.
 
 \begin{center}
-    \begin{tabular}{ |c| }
+    \begin{tabular}{|p{.95\columnwidth}|}
         \hline
-        Outliers and Overview  \\
+        \textbf{Outliers and Overview}                             \\
         \hline
-        What: data \\
-         - A collection of traces \\
+        \textbf{What: data}                                        \\
+        - A collection of traces                                   \\
         \hline
-        Why: tasks \\
-         - Find outliers \\
-         - Identify patterns \\
+        \textbf{Why: tasks}                                        \\
+        - Find outliers                                            \\
+        - Identify patterns                                        \\
         \hline
-        How: reduce \\
-         - Filter items using attributes such as number of events, duration,
-        and date of a trace. \\
-        How: show \\
-         - Display traces on table that can be sorted and filtered.
-        \end{tabular}
+        \textbf{How: reduce}                                       \\
+        - Filter items using attributes such as number of events, duration,
+        and date of a trace.                                       \\
+        \textbf{How: show}                                         \\
+        - Display traces on table that can be sorted and filtered. \\
+        \hline
+    \end{tabular}
 \end{center}
 
 
@@ -56,25 +57,26 @@ source code integration, Traviz allows users to click on a bar in the source cod
 redirect the user to the line in a Github repo hosting the project being visualized.
 
 \begin{center}
-    \begin{tabular}{ |c| }
+    \begin{tabular}{|p{.95\columnwidth}|}
         \hline
-        Source Code Integration  \\
+        \textbf{Source Code Integration}                                 \\
         \hline
-        What: data \\
-         - A collection of traces \\
+        \textbf{What: data}                                              \\
+        - A collection of traces                                         \\
         \hline
-        Why: tasks \\
-         - Identify what files produce events \\
-         - Identify what lines in a file produce the most or least events \\
+        \textbf{Why: tasks}                                              \\
+        - Identify what files produce events                             \\
+        - Identify what lines in a file produce the most or least events \\
         \hline
-        How: display \\ 
-         - Display number of events in a file and number of events originating from a 
-        line in the source code using bar charts\\
-        How : encode\\
-         - Encode number of events in a file and number of events originating from a line in the source code using the
-        size of the bar. \\
-         - Encode number of events in a file and number of events originating from a line in the source code using the
-         luminance of the bar.
+        \textbf{How: display}                                            \\
+        - Display number of events in a file and number of events originating from a
+        line in the source code using bar charts                         \\
+        \textbf{How : encode}                                            \\
+        - Encode number of events in a file and number of events originating from a line in the source code using the
+        size of the bar.                                                 \\
+        - Encode number of events in a file and number of events originating from a line in the source code using the
+        luminance of the bar.                                            \\
+        \hline
     \end{tabular}
 \end{center}
 
@@ -89,22 +91,23 @@ encodes each thread as a a lane, the time of an event as the position on the x-a
 if an event triggered an event in another thread, we show this relationship with a connecting line.
 
 \begin{center}
-    \begin{tabular}{ |c| }
+    \begin{tabular}{|p{.95\columnwidth}|}
         \hline
-        Individual Trace Analysis  \\
+        \textbf{Individual Trace Analysis}                                              \\
         \hline
-        What: data \\
-         - One trace \\
+        \textbf{What: data}                                                             \\
+        - One trace                                                                     \\
         \hline
-        Why: tasks \\
-         - Observe the timing of events in a trace \\
-         - Identify events that triggered events in other threads \\
+        \textbf{Why: tasks}                                                             \\
+        - Observe the timing of events in a trace                                       \\
+        - Identify events that triggered events in other threads                        \\
         \hline
-        How: encode \\
-         - Encode each thread as a lane \\
-         - Encode the time of an event as the position of a point on the x-axis \\
-         - Encode the thread of an event as the position of a point on the y-axis \\
-         - Identify events that triggered events in other threads with a connecting line \\
+        \textbf{How: encode}                                                            \\
+        - Encode each thread as a lane                                                  \\
+        - Encode the time of an event as the position of a point on the x-axis          \\
+        - Encode the thread of an event as the position of a point on the y-axis        \\
+        - Identify events that triggered events in other threads with a connecting line \\
+        \hline
     \end{tabular}
 \end{center}
 
@@ -112,7 +115,7 @@ if an event triggered an event in another thread, we show this relationship with
 \subsection{Service Dependency Analysis}
 
 
-The service dependency analysis derives the total number of messages issued by a service. 
+The service dependency analysis derives the total number of messages issued by a service.
 This tool is important for comprehending distributed systems because it allows developers to understand the
 dependency relationship between services. For example, in a micro-service architecture, the dependency graph helps understand what services
 talk to each other and what services talk to the most services. To visualize the dependencies, we arranged the services into
@@ -120,23 +123,24 @@ a node-link graph, where each service is a node, and the dependency is a link be
 a circle, so that services that talk to many services can be easily recognized.
 
 \begin{center}
-    \begin{tabular}{ |c| }
+    \begin{tabular}{|p{.95\columnwidth}|}
         \hline
-        Service Dependency Analysis  \\
+        \textbf{Service Dependency Analysis}                                   \\
         \hline
-        What: derived data \\
-         - Total messages issued by a service \\
+        \textbf{What: derived data}                                            \\
+        - Total messages issued by a service                                   \\
         \hline
-        Why: task \\
-         - Understand the dependency between services \\
+        \textbf{Why: task}                                                     \\
+        - Understand the dependency between services                           \\
         \hline
-        How: arrange\\
-         - Arrange services into a node-link graph \\
-         - Services are represented as nodes \\
-         - Dependencies between services are represented as links between nodes \\
-        How: encode \\
-         - Encode the amount of dependencies in a service with the area
-         of the node 
+        \textbf{How: arrange}                                                  \\
+        - Arrange services into a node-link graph                              \\
+        - Services are represented as nodes                                    \\
+        - Dependencies between services are represented as links between nodes \\
+        \textbf{How: encode}                                                   \\
+        - Encode the amount of dependencies in a service with the area
+        of the node                                                            \\
+        \hline
     \end{tabular}
 \end{center}
 
@@ -155,26 +159,27 @@ want to take a look at the full graph. If users want to look at the details of a
 to be displayed on the side.
 
 \begin{center}
-    \begin{tabular}{ |c| }
+    \begin{tabular}{|p{.95\columnwidth}|}
         \hline
-        Trace Comparison  \\
+        \textbf{Trace Comparison}                                                           \\
         \hline
-        What: data \\
-         - Two traces \\
+        \textbf{What: data}                                                                 \\
+        - Two traces                                                                        \\
         \hline
-        Why: tasks \\
-         - Identify differences between traces \\
-         - Observe patterns \\
+        \textbf{Why: tasks}                                                                 \\
+        - Identify differences between traces                                               \\
+        - Observe patterns                                                                  \\
         \hline
-        How: arrange \\
-         - Arrange events into a node-link graph \\
-         - Events are represented as nodes \\
-         - Parent-child relattionships between events are represented as links between nodes
-        How: encode \\
-         - Encode nodes in group 3 as squares and nodes in groups 1 and 2 as circles \\
-         - Encode the group of an event using hue \\
-        How: aggregate \\
-         - Aggregate group 3 nodes to reduce the size of the graph
+        \textbf{How: arrange}                                                               \\
+        - Arrange events into a node-link graph                                             \\
+        - Events are represented as nodes                                                   \\
+        - Parent-child relattionships between events are represented as links between nodes \\
+        \textbf{How: encode}                                                                \\
+        - Encode nodes in group 3 as squares and nodes in groups 1 and 2 as circles         \\
+        - Encode the group of an event using hue                                            \\
+        \textbf{How: aggregate}                                                             \\
+        - Aggregate group 3 nodes to reduce the size of the graph                           \\
+        \hline
     \end{tabular}
 \end{center}
 
@@ -190,26 +195,27 @@ be selected by clicking, which results in detailed information about that event 
 The aggreagation tool also allows the structure from multiple traces to be analysed, while reducing the amount of nodes on display.
 
 \begin{center}
-    \begin{tabular}{ |c| }
+    \begin{tabular}{|p{.95\columnwidth}|}
         \hline
-        Trace Aggregation  \\
+        \textbf{Trace Aggregation}                                                          \\
         \hline
-        What: data \\
-         - A collection of traces \\
+        \textbf{What: data}                                                                 \\
+        - A collection of traces                                                            \\
         \hline
-        Why: tasks \\
-         - Visualizing the big picture \\
-         - Analyzing multiple traces \\
+        \textbf{Why: tasks}                                                                 \\
+        - Visualizing the big picture                                                       \\
+        - Analyzing multiple traces                                                         \\
         \hline
-        How: arrange \\
-         - Arrange avents into a node-link graph \\
-         - Events are represented as nodes \\
-         - Parent-child relattionships between events are represented as links between nodes
-         How: aggreagate \\
-         - Aggregate events from the same source code line as one node
-         How: encode \\
-          - Encode number of events in a node with luminance \\
-          - High luminance means a node is aggregating many events
-          - Low luminance means a node is aggregating few events
+        \textbf{How: arrange}                                                               \\
+        - Arrange avents into a node-link graph                                             \\
+        - Events are represented as nodes                                                   \\
+        - Parent-child relattionships between events are represented as links between nodes \\
+        \textbf{How: aggregate}                                                            \\
+        - Aggregate events from the same source code line as one node                       \\
+        \textbf{How: encode}                                                                \\
+        - Encode number of events in a node with luminance                                  \\
+        - High luminance means a node is aggregating many events                            \\
+        - Low luminance means a node is aggregating few events                              \\
+        \hline
     \end{tabular}
 \end{center}
