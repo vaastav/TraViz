@@ -1,51 +1,34 @@
-\section{Task Abstraction}
+\section{Tasks}
 
-We have identified a total of six tasks that we want to support with our viz tool.
-We discuss each task in detail with an example scenario below.
+We have identified a total of six tasks that we want to support with our viz tool. These tasks
+are finding outliers and providing an overview of the dataset, integrating tracing data to the source
+code, analysing a single trace, understanding the dependencies between services in a distributed system,
+comparing two traces, and aggregating multiple traces. Each task is clarified through an example below.
 
-The first main task for this project is comparison. Namely, we want to compare the path and performance of different
-requests. Each one of our traces represents a request and the collection of events in one trace forms a directed acyclic graph. Our
-comparison tasks are meant to compare the structure of the DAGs created by the events and the duration of different requests. 
-We want to support three different comparison tasks: one trace against one trace, one trace against many traces, and many traces
-against many traces. In more abstract terms, we will compare the DAGs formed by the events in different traces by partitioning them
-into side-by-side views or by showing some sort of a graph diff.
+\textbf{Scenario 1: Overview and finding outliers}
 
-The second major task we are proposing is summarizing data. Many of the traces in our datasets are similar, so we want to
-aggregate traces with the same tags and events. We believe aggregating traces with the same tags or events will give the user
-a more generalized understanding of the traces. The user will be able to analyze the average duration of a group of traces, instead
-of relying on the data from one single trace. This task will take the DAGs formed by the events of different traces and will summarize
-them by aggregating traces with the same tags or events, so that we can better understand the topology and paths of these graphs.
+A developer wants to find requests that are slower than usual in a distributed system. This information should be consumed by the developer,
+so that a detailed analysis of the system can be conducted. For example, identifying unsually slow requests is useful at selecting what traces
+should be further analyzed.
 
-There are two more tasks we want to support, but may be out of scope for the project so we are leaving these tasks as stretch goals.
-The first task is creating a dependency graph using
-the processes in a trace and the second task is adding source code integration to our tool. The \textit{process\_name} attribute in 
-our dataset gives the name of a service in a microservice.
-Developers building distributed systems are interested in understanding the structure of the microservice
-architecture they are building. We want to consume the list of events in a trace and use the \textit{process\_name} attribute in an 
-event to build a graph that links processes that trigger other processes. This information will be presented to developers so that 
-they can discover the dependencies that build their microservices. 
-The second task consists of using the \textit{src\_line} and \textit{file\_path}
-attributes to locate the line in the source code that triggered an event. We will do this by providing a hyperlink to the file and line
-in the github repository. 
+\textbf{Scenario 2: Integrating traces with the source code}
 
-\textbf{Scenario 1}: A developer wants to find out why two similar requests have very different 
-completion times. The developer will select the two traces corresponding to the requests. After the traces are selected, our tool will
-use the events of these traces to generate a view showing the differences between the traces as well as showing the
-context and timing of the original requests. This will allow the developer to analyze and identify why 2 similar requests have 
-different completion times.
+A developer wants to locate files that are highly active. This information can be used to understand what areas of the source code are responsible
+for the activity in the system, and thus require more attention. These insights can be used to alert developers that new code to those files should
+be thoroughly tested and reviewed, since it belongs to a critical part of the system. The developer should be directed to the source code once a file of
+interest is identified.
 
- \textbf{Scenario 2}: A developer wants to find out why requests on Monday are
-slower than the requests on Tuesday. The developer will make 2 different selections - selection of traces from Monday and selection
-of traces from Tuesday. Our tool will aggregate the 2 selections into representative graphs and then show the difference of these
-two aggregate traces. This will allow the developer to possibly figure out a high-level change between the request execution from
-Monday to Tuesday.
+\textbf{Scenario 3: Analyzing one trace}
 
- \textbf{Scenario 3}: A developer wants to analyze why a given trace is anomalous as compared to some of the previous
-traces. To do this, the developer will first create a selection of traces that will be aggregated down into 1 trace. The developer
-will then select the anomalous trace and create a comparison between the anomalous and the representative trace.
-Our tool will show the difference between the 2 traces and allow the developer to figure out why a particular trace is anomalous.
+A developer wants to have detailed information on a request. Tracing data can be consumed to reveal information such as the path of the request, the 
+time the events in a request where triggered, and what threads executed a request. This information can reveal detailed system information that can be
+used to optimize the code.
 
- \textbf{Scenario 4}: A developer wants to understand the communication load between different services of the system.
-Our tool will show the developer an overview graph that shows how often 2 services in the distributed system communicate
-with each other. This will allow the developer to figure out how an addition of a new service would increase the load on each
-service.
+\textbf{Scenario 4: Finding service dependencies}
+
+A developer wants to find how many services communicate with a specified service. This task entails locating the node in a graph representing the service of interest,
+and following the links from that service to other services. This information can be used to identify the services in a microservice that are dependent in many other
+services, which can be useful at helping developers what services should be refactored to minimize dependencies.
+
+\textbf{Scenario 5: Aggregating traces}
+

@@ -151,10 +151,10 @@ In this tool we take two traces and merge them in a way that the user can indent
 differences and similarities between the traces. Understanding the differences and similarities
 between a trace can help developers identify why some requests take longer than others.
 
-To build this tool we assigned each event in both traces a group between 1 and 3. The events are arranged into a node-link graph,
-where each event is a node and the link encodes the parent-child relationship between events. We encode group 3 nodes as squares and groups 1 and 2 as circles.
-We also encode the group a node belongs to using hue. Group three nodes are grey, group one nodes are ----, and group two nodes are -----. We aggregate
-group three nodes, with the intent of reducing the total number of nodes in the graph and reduce cognitive load. Users can disaggregate group three nodes if they
+To build this tool we assigned each event in both traces a group between one and three. The events are arranged into a node-link graph,
+where each event is a node and the link encodes the parent-child relationship between events. We encode group three nodes as squares and groups one and two as circles.
+We also encode the group a node belongs to using hue. Group three nodes are aggreagated together, so that the total number of nodes, and consequentially cognitive load, are reduced.
+Users can disaggregate group three nodes if they
 want to take a look at the full graph. If users want to look at the details of an event, they can click on a node, which causes the attributes of the selected event
 to be displayed on the side.
 
