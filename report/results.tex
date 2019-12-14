@@ -42,7 +42,47 @@ on the trace.
 
 \subsection{Use Case 3: Finding differences in pair of traces}
 
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{fig/compare}
+    \caption{Comparison of 2 outlier traces from the DeathStarBench dataset}
+    \label{fig:compare}
+\end{figure*}
+
+The user wants to compare the structure of two of the outlier traces 
+from the filtered list in Figure ~\ref{fig:outlier}
+to see if the outlier traces are very different or not. The user selects
+two traces of their choice and presses the compare button to produce
+a comparison graph between the traces as shown in Figure ~\ref{fig:compare}.
+The comparison graph has a lot of nodes which suggests that the selected
+traces are quite different. The user can click on circular nodes to
+look at details of the event that the node corresponds to.
+The user is mostly confused with this visualization due to the hairball effect.
+
 \subsection{Use Case 4: Finding similarities in groups of traces}
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{fig/aggregate}
+    \caption{Aggregation of 20 outlier traces from the DeathStarBench dataset into a single graph}
+    \label{fig:outlier}
+\end{figure*}
+
+The user wants to aggregate some of the outlier traces from the filtered list
+in Figure ~\ref{fig:outlier}
+to generate
+a super graph that represents the structure of outlier traces. The user
+selects 20 traces using the select all button. The user then clicks
+the Aggregate button which produces the graph shown to the user
+in Figure ~\ref{fig:aggregation}. The user notices that most nodes
+have bright luminance which suggests to the user that most of the
+nodes don't appear in a lot of traces. However, the user notices
+one dark node which the user clicks to see the details of the event
+which is common across a large proportion of the traces.
+Seeing the aggregate graph reminds the user of spaghetti and meatballs
+as the user is not able to fully understand what the aggregate graph
+is telling the user. The user wishes for a better graph layout in the next
+update of TraViz.
 
 \subsection{Use Case 5: Source Code Optimization}
 
