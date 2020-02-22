@@ -102,6 +102,21 @@ function mapThreadsIdsToLane(spans) {
     return threadToLaneMap
 }
 
+function getCriticalPath(spans) {
+    let criticalPath = spans.slice()
+    for (let i = 1; i < spans.length; i++) {
+        let span = spans[i];
+        for (let j = 1; j < spans.length; j++) {
+            let comparisonSpan = spans[j];
+            if (span.start > comparisonSpan.start && span.end < comparisonSpan.end) {
+                criticalPath.splice(i, 1);
+                break;
+            }
+        }
+    }
+    return criticalPath;
+}
+
 class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
@@ -123,24 +138,16 @@ class SpanSwimlane extends Component {
     }
 
     createSwimlane() {
-        console.log("State trace")
-        console.log(this.state.trace)
-        let events = this.state.trace
-        let lanes = createLanes(this.state.trace)
-        let spans = createSpans(this.state.trace)
-        let connectingLines = getConnectingLines(events)
-        console.log("Events")
-        console.log(events)
-        console.log("Lanes");
-        console.log(lanes);
-        console.log("Spans")
-        console.log(spans)
-        console.log("Connecting Lines")
-        console.log(connectingLines)
-        let start = getStartTime(this.state.trace)
-        let end = getEndTime(this.state.trace)
-        let duration = end - start
-        let threadToLaneMap = mapThreadsIdsToLane(spans)
+        let events = this.state.trace;
+        let lanes = createLanes(this.state.trace);
+        let spans = createSpans(this.state.trace);
+        let connectingLines = getConnectingLines(events);
+        let criticalPath = getCriticalPath(spans);
+
+        let start = getStartTime(this.state.trace);
+        let end = getEndTime(this.state.trace);
+        let duration = end - start;
+        let threadToLaneMap = mapThreadsIdsToLane(spans);
 
         var margin = { top: 20, right: 15, bottom: 15, left: 150 }
             , width = 1900 - margin.left - margin.right
@@ -148,7 +155,7 @@ class SpanSwimlane extends Component {
             , miniHeight = lanes.length * 12 + 50
             , mainHeight = height - miniHeight - 50;
 
-        var x_padding = 0.1 * duration
+        var x_padding = 0.1 * duration;
         var x = d3v3.scale.linear().domain([start - x_padding, end + x_padding]).range([0, width]);
         var x1 = d3v3.scale.linear().domain([start - x_padding, end + x_padding]).range([0, width]);
 
