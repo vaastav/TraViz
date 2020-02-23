@@ -29,12 +29,6 @@
 	stroke-width: 6;	
 }
 
-.future {
-	stroke: #b1de00;
-	fill: #b1de00;
-	opacity: 0.7;
-}
-
 .normal {
 	stroke: #b1de00;
 	fill: #b1de00;
@@ -43,7 +37,7 @@
 
 .criticalPath {
 	stroke: red;
-	fill: #b1de00;
+	fill: red;
 	opacity: 0.7;
 }
 

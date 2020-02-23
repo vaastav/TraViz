@@ -31,7 +31,7 @@ const tableFunc = (divRef, ndx) => {
             {
                 label: 'ID',
                 format: function (d) {
-                    return '<a href=trace/' + d.ID + '>' + d.ID + '</a>'
+                    return '<a href=travista/' + d.ID + '>' + d.ID + '</a>'
                 },
                 sort_state: 'ascending',
                 field_name: 'ID'

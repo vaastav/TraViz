@@ -117,21 +117,10 @@ function markCriticalPath(spans) {
             span.class = "criticalPath"
         }
     }
-}
 
-function getCriticalPath(spans) {
-    let criticalPath = spans.slice()
-    for (let i = 1; i < spans.length; i++) {
-        let span = spans[i];
-        for (let j = 1; j < spans.length; j++) {
-            let comparisonSpan = spans[j];
-            if (span.start > comparisonSpan.start && span.end < comparisonSpan.end) {
-                criticalPath.splice(i, 1);
-                break;
-            }
-        }
+    if (spans.length > 0) {
+        spans[0].class = "criticalPath"
     }
-    return criticalPath;
 }
 
 class SpanSwimlane extends Component {
@@ -198,11 +187,11 @@ class SpanSwimlane extends Component {
             .attr('height', mainHeight)
             .attr('class', 'main');
 
-        var mini = chart.append('g')
-            .attr('transform', 'translate(' + margin.left + ',' + (mainHeight + 60) + ')')
-            .attr('width', width)
-            .attr('height', miniHeight)
-            .attr('class', 'mini');
+        // var mini = chart.append('g')
+        //     .attr('transform', 'translate(' + margin.left + ',' + (mainHeight + 60) + ')')
+        //     .attr('width', width)
+        //     .attr('height', miniHeight)
+        //     .attr('class', 'mini');
 
         // draw the lanes for the main chart
         main.append('g').selectAll('.laneLines')
@@ -227,26 +216,26 @@ class SpanSwimlane extends Component {
             .attr('class', 'laneText');
 
         // draw the lanes for the mini chart
-        mini.append('g').selectAll('.laneLines')
-            .data(lanes)
-            .enter().append('line')
-            .attr('x1', 0)
-            .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-            .attr('x2', width)
-            .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-            .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
+        // mini.append('g').selectAll('.laneLines')
+        //     .data(lanes)
+        //     .enter().append('line')
+        //     .attr('x1', 0)
+        //     .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
+        //     .attr('x2', width)
+        //     .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
+        //     .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
 
-        mini.append('g').selectAll('.laneText')
-            .data(lanes)
-            .enter().append('text')
-            .text(function (d) { return d.label; })
-            .attr('x', -10)
-            .attr('y', function (d) { return y2(d.id + .5); })
-            .attr('dy', '0.5ex')
-            .attr('text-anchor', 'end')
-            .style('font-weight', 'bold')
-            .attr('fill', "white")
-            .attr('class', 'laneText');
+        // mini.append('g').selectAll('.laneText')
+        //     .data(lanes)
+        //     .enter().append('text')
+        //     .text(function (d) { return d.label; })
+        //     .attr('x', -10)
+        //     .attr('y', function (d) { return y2(d.id + .5); })
+        //     .attr('dy', '0.5ex')
+        //     .attr('text-anchor', 'end')
+        //     .style('font-weight', 'bold')
+        //     .attr('fill', "white")
+        //     .attr('class', 'laneText');
 
         // draw the x axis
         var xAxis = d3v3.svg.axis()
@@ -275,21 +264,21 @@ class SpanSwimlane extends Component {
             .attr('fill', 'white')
             .call(x1Axis);
 
-        mini.append('g')
-            .attr('transform', 'translate(0,' + miniHeight + ')')
-            .attr('class', 'axis')
-            .attr('fill', 'white')
-            .call(xAxis);
+        // mini.append('g')
+        //     .attr('transform', 'translate(0,' + miniHeight + ')')
+        //     .attr('class', 'axis')
+        //     .attr('fill', 'white')
+        //     .call(xAxis);
 
         // draw the spans
         var itemRects = main.append('g')
             .attr('clip-path', 'url(#clip)');
 
-        mini.append('g').selectAll('miniItems')
-            .data(getPaths(spans))
-            .enter().append('path')
-            .attr('class', function (d) { return 'miniItem ' + d.class; })
-            .attr('d', function (d) { return d.path; });
+        // mini.append('g').selectAll('miniItems')
+        //     .data(getPaths(spans))
+        //     .enter().append('path')
+        //     .attr('class', function (d) { return 'miniItem ' + d.class; })
+        //     .attr('d', function (d) { return d.path; });
 
         // Create node for event circles
         let circles = main.append("g")
@@ -301,12 +290,12 @@ class SpanSwimlane extends Component {
             .attr("stroke", "#ffd800")
 
         // invisible hit area to move around the selection window
-        mini.append('rect')
-            .attr('pointer-events', 'painted')
-            .attr('width', width)
-            .attr('height', miniHeight)
-            .attr('visibility', 'hidden')
-            .on('mouseup', moveBrush);
+        // mini.append('rect')
+        //     .attr('pointer-events', 'painted')
+        //     .attr('width', width)
+        //     .attr('height', miniHeight)
+        //     .attr('visibility', 'hidden')
+        //     .on('mouseup', moveBrush);
 
         // draw the selection area
         var brush = d3v3.svg.brush()
@@ -314,14 +303,14 @@ class SpanSwimlane extends Component {
             .extent([start, end])
             .on("brush", display);
 
-        mini.append('g')
-            .attr('class', 'x brush')
-            .call(brush)
-            .selectAll('rect')
-            .attr('y', 1)
-            .attr('height', miniHeight - 1);
+        // mini.append('g')
+        //     .attr('class', 'x brush')
+        //     .call(brush)
+        //     .selectAll('rect')
+        //     .attr('y', 1)
+        //     .attr('height', miniHeight - 1);
 
-        mini.selectAll('rect.background').remove();
+        // mini.selectAll('rect.background').remove();
         display();
 
         function display() {
@@ -336,7 +325,7 @@ class SpanSwimlane extends Component {
                         (d.destination.HRT <= maxExtent && d.destination.HRT >= minExtent)
                 });
 
-            mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
+            // mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
 
             x1.domain([minExtent, maxExtent]);
 
