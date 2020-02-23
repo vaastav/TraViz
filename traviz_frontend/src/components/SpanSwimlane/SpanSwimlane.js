@@ -144,15 +144,20 @@ class SpanSwimlane extends Component {
     }
 
     createSwimlane() {
+
+        // Define events, lanes, spand and connecting lines
         let events = this.state.trace;
         let lanes = createLanes(this.state.trace);
         let spans = createSpans(this.state.trace);
         let connectingLines = getConnectingLines(events);
         markCriticalPath(spans);
 
+        // Get start, end and duration
         let start = getStartTime(this.state.trace);
         let end = getEndTime(this.state.trace);
         let duration = end - start;
+
+        // Create map that contains the proper thread ids on each lane
         let threadToLaneMap = mapThreadsIdsToLane(spans);
 
         var margin = { top: 20, right: 15, bottom: 15, left: 150 }
@@ -187,12 +192,6 @@ class SpanSwimlane extends Component {
             .attr('height', mainHeight)
             .attr('class', 'main');
 
-        // var mini = chart.append('g')
-        //     .attr('transform', 'translate(' + margin.left + ',' + (mainHeight + 60) + ')')
-        //     .attr('width', width)
-        //     .attr('height', miniHeight)
-        //     .attr('class', 'mini');
-
         // draw the lanes for the main chart
         main.append('g').selectAll('.laneLines')
             .data(lanes)
@@ -214,28 +213,6 @@ class SpanSwimlane extends Component {
             .attr('fill', 'white')
             .style('font-weight', 'bold')
             .attr('class', 'laneText');
-
-        // draw the lanes for the mini chart
-        // mini.append('g').selectAll('.laneLines')
-        //     .data(lanes)
-        //     .enter().append('line')
-        //     .attr('x1', 0)
-        //     .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-        //     .attr('x2', width)
-        //     .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-        //     .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
-
-        // mini.append('g').selectAll('.laneText')
-        //     .data(lanes)
-        //     .enter().append('text')
-        //     .text(function (d) { return d.label; })
-        //     .attr('x', -10)
-        //     .attr('y', function (d) { return y2(d.id + .5); })
-        //     .attr('dy', '0.5ex')
-        //     .attr('text-anchor', 'end')
-        //     .style('font-weight', 'bold')
-        //     .attr('fill', "white")
-        //     .attr('class', 'laneText');
 
         // draw the x axis
         var xAxis = d3v3.svg.axis()
@@ -264,21 +241,9 @@ class SpanSwimlane extends Component {
             .attr('fill', 'white')
             .call(x1Axis);
 
-        // mini.append('g')
-        //     .attr('transform', 'translate(0,' + miniHeight + ')')
-        //     .attr('class', 'axis')
-        //     .attr('fill', 'white')
-        //     .call(xAxis);
-
         // draw the spans
         var itemRects = main.append('g')
             .attr('clip-path', 'url(#clip)');
-
-        // mini.append('g').selectAll('miniItems')
-        //     .data(getPaths(spans))
-        //     .enter().append('path')
-        //     .attr('class', function (d) { return 'miniItem ' + d.class; })
-        //     .attr('d', function (d) { return d.path; });
 
         // Create node for event circles
         let circles = main.append("g")
@@ -289,28 +254,18 @@ class SpanSwimlane extends Component {
 
             .attr("stroke", "#ffd800")
 
-        // invisible hit area to move around the selection window
-        // mini.append('rect')
-        //     .attr('pointer-events', 'painted')
-        //     .attr('width', width)
-        //     .attr('height', miniHeight)
-        //     .attr('visibility', 'hidden')
-        //     .on('mouseup', moveBrush);
-
         // draw the selection area
         var brush = d3v3.svg.brush()
             .x(x)
             .extent([start, end])
             .on("brush", display);
 
-        // mini.append('g')
-        //     .attr('class', 'x brush')
-        //     .call(brush)
-        //     .selectAll('rect')
-        //     .attr('y', 1)
-        //     .attr('height', miniHeight - 1);
 
-        // mini.selectAll('rect.background').remove();
+        // Define the div for the tooltip
+        var tooltipdiv = d3v3.select("body").append("div")	
+            .attr("class", "tooltip")				
+            .style("opacity", 0);
+
         display();
 
         function display() {
@@ -365,7 +320,20 @@ class SpanSwimlane extends Component {
                 .attr("stroke", "black")
                 .attr("cx", function (d) { return x1(d.HRT) })
                 .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5; })
-                .attr("class", "circ");
+                .attr("class", "circ")
+                .on("mouseover", function(d) {
+                    tooltipdiv.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                    tooltipdiv.html("Event id: " + d.EventID + "<br/>" + "Timestamp: " + d.Timestamp)	
+                    .style("left", (d3v3.event.pageX) + "px")		
+                    .style("top", (d3v3.event.pageY - 28) + "px");	
+                })
+                .on("mouseout", function(d) {
+                    tooltipdiv.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+                })
 
             circs.exit().remove();
 
