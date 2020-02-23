@@ -84,7 +84,7 @@ function createSpans(events) {
                 start: event.HRT,
                 end: event.HRT,
                 events: newEventArray,
-                class: "past",
+                class: "normal",
                 y_id: count
             };
             spans.push(newSpan);
@@ -100,6 +100,23 @@ function mapThreadsIdsToLane(spans) {
         threadToLaneMap.set(span.id, span.y_id)
     });
     return threadToLaneMap
+}
+
+function markCriticalPath(spans) {
+    for (let i = 1; i < spans.length; i++) {
+        let span = spans[i];
+        let inCriticalPath = true;
+        for (let j = 1; j < spans.length; j++) {
+            let comparisonSpan = spans[j];
+            if (span.start > comparisonSpan.start && span.end < comparisonSpan.end) {
+                inCriticalPath = false;
+                break;
+            }
+        }
+        if (inCriticalPath) {
+            span.class = "criticalPath"
+        }
+    }
 }
 
 function getCriticalPath(spans) {
@@ -142,7 +159,7 @@ class SpanSwimlane extends Component {
         let lanes = createLanes(this.state.trace);
         let spans = createSpans(this.state.trace);
         let connectingLines = getConnectingLines(events);
-        let criticalPath = getCriticalPath(spans);
+        markCriticalPath(spans);
 
         let start = getStartTime(this.state.trace);
         let end = getEndTime(this.state.trace);
@@ -235,7 +252,6 @@ class SpanSwimlane extends Component {
         var xAxis = d3v3.svg.axis()
             .scale(x)
             .orient('bottom')
-            // .ticks(d3v3.time.mondays, (x.domain()[1] - x.domain()[0]) > 15552e6 ? 2 : 1)
             .ticks(5)
             .tickFormat((d) => {
                 let scaledVals = x(d)
@@ -331,14 +347,16 @@ class SpanSwimlane extends Component {
             rects = itemRects.selectAll('rect')
                 .data(visItems, function (d) { return d.id; })
                 .attr('x', function (d) { return x1(d.start); })
-                .attr('width', function (d) { return x1(d.end) - x1(d.start); });
+                .attr('width', function (d) { return x1(d.end) - x1(d.start); })
+                .attr('stroke', 'red')
 
             rects.enter().append('rect')
                 .attr('x', function (d) { return x1(d.start); })
                 .attr('y', function (d) { return y1(d.y_id) + .1 * y1(1) + 0.5; })
                 .attr('width', function (d) { return x1(d.end) - x1(d.start); })
                 .attr('height', function (d) { return .8 * y1(1); })
-                .attr('class', function (d) { return 'mainItem ' + d.class; });
+                .attr('class', function (d) { return 'mainItem ' + d.class; })
+                .attr('stroke', 'red')
 
             rects.exit().remove();
 
