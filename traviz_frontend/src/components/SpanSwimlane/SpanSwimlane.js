@@ -1,7 +1,12 @@
 import React, { Component } from "react"
 import * as d3v3 from "d3-v3"
+import * as dc from "dc"
+import * as crossfilter from "crossfilter2/crossfilter";
 import './SpanSwimlane.css'
 import TraceService from "../../services/TraceService/TraceService";
+
+// TODO: Move histogram to bottom
+// TODO: Fix scaling on histogram
 
 function createLanes(events) {
     let lanes = []
@@ -41,6 +46,28 @@ function getEndTime(events) {
         }
     })
     return lastEnd
+}
+
+function getMaxDur(spans) {
+    let maxDur = 0;
+    spans.forEach(span => {
+        let dur = span.end - span.start;
+        if (dur > maxDur) {
+            maxDur = dur
+        }
+    });
+    return maxDur
+}
+
+function getMinDur(spans) {
+    let minDur = Infinity;
+    spans.forEach(span => {
+        let dur = span.end - span.start;
+        if (dur < minDur) {
+            minDur = dur
+        }
+    });
+    return minDur
 }
 
 function getConnectingLines(events) {
@@ -254,7 +281,7 @@ class SpanSwimlane extends Component {
 
             .attr("stroke", "#ffd800")
 
-        // draw the selection area
+        // Draw the selection area
         var brush = d3v3.svg.brush()
             .x(x)
             .extent([start, end])
@@ -265,6 +292,38 @@ class SpanSwimlane extends Component {
         var tooltipdiv = d3v3.select("body").append("div")	
             .attr("class", "tooltip")				
             .style("opacity", 0);
+
+        // Get span with max and min duration
+        let maxDur = getMaxDur(spans)
+        let minDur = getMinDur(spans)
+
+        // Create histogram for span duration
+        let chartGroup = "chartGroup"
+        let barChart = new dc.barChart("#barchart", chartGroup);
+        let mycrossfilter = crossfilter(spans)
+        let durationDimension = mycrossfilter.dimension(data => {
+            return Math.round((data.end - data.start) / 1000000) * 1000000
+        })
+        let durationGroup = durationDimension.group().reduceCount();
+        let numTicks = Math.round((maxDur - minDur) / 1000000)
+
+        barChart
+        .width(800)
+        .height(400)
+        .x(d3v3.scale.linear().domain([minDur, maxDur]))
+        .brushOn(false)
+        .yAxisLabel("Duration")
+        .xAxisLabel("Span")
+        .dimension(durationDimension)
+        .group(durationGroup)
+        .on("renderlet", function(barChart) {
+            barChart.selectAll("rect").on("click", function(d) {
+                console.log("click!", d);
+            });
+        });
+
+        // Render span histogram
+        barChart.render()
 
         display();
 
@@ -392,7 +451,10 @@ class SpanSwimlane extends Component {
     }
 
     render() {
-        return <div id={"#" + this.props.id}></div>
+        return <div>
+            <div id={"#" + this.props.id}></div>
+            <div id="barchart"></div>
+        </div>
     }
 }
 
