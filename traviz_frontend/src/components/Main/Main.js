@@ -7,6 +7,7 @@ import Dependency from "../../pages/Dependency/Dependency"
 import Compare1v1 from "../../pages/Compare1v1/Compare1v1"
 import Aggregate from "../../pages/Aggregate/Aggregate"
 import Travista from "../../pages/TraVista/TraVista"
+import Experiment from "../../pages/Experiment/Experiment"
 
 import "./Main.css";
 
@@ -21,6 +22,7 @@ function Main() {
                 <Route exact path="/compare/onevsone/:trace1/:trace2" component={Compare1v1} />
                 <Route exact path="/aggregate" component={Aggregate} />
                 <Route exact path="/travista/:id" component={Travista} />
+                <Route exact path="/experiment" component={Experiment} />
             </Switch>
         </main>
     );
