@@ -310,7 +310,6 @@ class SpanSwimlane extends Component {
             .extent([start, end])
             .on("brush", display);
 
-
         // Define the div for the tooltip
         var tooltipdiv = d3v3.select("body").append("div")	
             .attr("class", "tooltip")				
@@ -329,8 +328,6 @@ class SpanSwimlane extends Component {
                     return (d.origin.HRT <= maxExtent && d.origin.HRT >= minExtent) ||
                         (d.destination.HRT <= maxExtent && d.destination.HRT >= minExtent)
                 });
-
-            // mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
 
             x1.domain([minExtent, maxExtent]);
 
@@ -375,16 +372,15 @@ class SpanSwimlane extends Component {
                     tooltipdiv.transition()
                     .duration(200)
                     .style("opacity", .9);
-                    tooltipdiv.html("Event id: " + d.EventID + "<br/>" + "Timestamp: " + d.Timestamp)	
+                    tooltipdiv.html("Event id: " + d.EventID + "<br/>" + "Timestamp: " + d.Timestamp + "<br/>" + "Label: " + d.Label)	
                     .style("left", (d3v3.event.pageX) + "px")		
-                    .style("top", (d3v3.event.pageY - 28) + "px");	
+                    .style("top", (d3v3.event.pageY - 28) + "px")
                 })
                 .on("mouseout", function(d) {
                     tooltipdiv.transition()
                     .duration(500)
                     .style("opacity", 0);
                 })
-
             circs.exit().remove();
 
             // draw the lines between parent and child events
