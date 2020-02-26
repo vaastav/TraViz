@@ -124,6 +124,7 @@ function makeSpanMap(spans) {
     return spanMap;
 }
 
+// For each span, find and set the direct children of that span.
 function setChildSpans(spanMap, eventMap) {
     spanMap.forEach(span => {
         if (span.parentEventID !== null && span.parentEventID !== undefined) {
@@ -143,6 +144,7 @@ function setChildSpans(spanMap, eventMap) {
     });
 }
 
+// Mark the spans that are in the critical path.
 function markCriticalPath(spanMap, currentSpanId, parentSpanClass) {
     if (currentSpanId === null || currentSpanId === undefined) {
         return;
@@ -197,8 +199,19 @@ class SpanSwimlane extends Component {
         let lanes = createLanes(this.state.trace);
         let spans = createSpans(this.state.trace);
         let connectingLines = getConnectingLines(events);
+
+        // Create an event map and span map to get event and span faster,
+        // but still need the array to pass it to d3.
         let spanMap = makeSpanMap(spans);
         let eventMap = makeEventMap(events);
+
+        // Mark first span as in critical path
+        if (spans.length > 0) {
+            spans[0].class = "criticalPath"
+        }
+
+        // Find the child span of each span and then use that to
+        // find the critical path of a trace.
         setChildSpans(spanMap, eventMap);
         markCriticalPath(spanMap, spans[0].id, "criticalPath");
 
