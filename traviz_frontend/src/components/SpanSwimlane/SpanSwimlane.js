@@ -48,28 +48,6 @@ function getEndTime(events) {
     return lastEnd
 }
 
-function getMaxDur(spans) {
-    let maxDur = 0;
-    spans.forEach(span => {
-        let dur = span.end - span.start;
-        if (dur > maxDur) {
-            maxDur = dur
-        }
-    });
-    return maxDur
-}
-
-function getMinDur(spans) {
-    let minDur = Infinity;
-    spans.forEach(span => {
-        let dur = span.end - span.start;
-        if (dur < minDur) {
-            minDur = dur
-        }
-    });
-    return minDur
-}
-
 function getConnectingLines(events) {
     let mapOfEvents = new Map()
     events.forEach(event => {
@@ -130,27 +108,6 @@ function mapThreadsIdsToLane(spans) {
     return threadToLaneMap
 }
 
-// function markCriticalPath(spans) {
-//     for (let i = 1; i < spans.length; i++) {
-//         let span = spans[i];
-//         let inCriticalPath = true;
-//         for (let j = 1; j < spans.length; j++) {
-//             let comparisonSpan = spans[j];
-//             if (span.start > comparisonSpan.start && span.end < comparisonSpan.end) {
-//                 inCriticalPath = false;
-//                 break;
-//             }
-//         }
-//         if (inCriticalPath) {
-//             span.class = "criticalPath"
-//         }
-//     }
-
-//     if (spans.length > 0) {
-//         spans[0].class = "criticalPath"
-//     }
-// }
-
 function makeEventMap(events) {
     let eventMap = new Map();
     events.forEach(event => {
@@ -167,24 +124,52 @@ function makeSpanMap(spans) {
     return spanMap;
 }
 
-function setParentSpans(spanMap, eventMap) {
+function setChildSpans(spanMap, eventMap) {
     spanMap.forEach(span => {
-        span.ParentSpanId = new Array()
         if (span.parentEventID !== null && span.parentEventID !== undefined) {
             span.parentEventID.forEach(parentEventId => {
-                let event = eventMap.get(span.parentEventID)
-                span.ParentSpanId.push(event.ThreadID)
-            })
+                let parentEvent = eventMap.get(parentEventId);
+                let parentSpanId = parentEvent.ThreadID;
+                let parentSpan = spanMap.get(parentSpanId);
+                if (parentSpan.childSpanId == null || parentSpan.childSpanId == undefined) {
+                    let childSpanId = new Array()
+                    childSpanId.push(span.id);
+                    parentSpan.childSpanId = childSpanId
+                } else {
+                    parentSpan.childSpanId.push(span.id);
+                }
+            });
         }
-    })
+    });
 }
 
-function markCriticalPath(spans) {
-    console.log(spans)
-    spans.forEach(span => {
+function markCriticalPath(spanMap, currentSpanId, parentSpanClass) {
+    if (currentSpanId === null || currentSpanId === undefined) {
+        return;
+    }
+    let currentSpan = spanMap.get(currentSpanId);
 
-    })
+    if (currentSpan.childSpanId !== null && currentSpan.childSpanId !== undefined) {
+        for (let i = 0; i < currentSpan.childSpanId.length; i++) {
+            let childSpanId = currentSpan.childSpanId[i];
+            let childSpan = spanMap.get(childSpanId);
+            let inCriticalPath = true;
+            for (let j = 0; j < currentSpan.childSpanId.length; j++) {
+                let comparisonSpanId = currentSpan.childSpanId[j];
+                let comparisonSpan = spanMap.get(comparisonSpanId);
+                if (childSpan.start > comparisonSpan.start && childSpan.end < comparisonSpan.end) {
+                    inCriticalPath = false;
+                    break
+                }
+            }
+            if (inCriticalPath && parentSpanClass === "criticalPath") {
+                childSpan.class = "criticalPath";
+            }
+            markCriticalPath(spanMap, childSpanId, childSpan.class);
+        }
+    }
 }
+
 class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
@@ -212,9 +197,10 @@ class SpanSwimlane extends Component {
         let lanes = createLanes(this.state.trace);
         let spans = createSpans(this.state.trace);
         let connectingLines = getConnectingLines(events);
-        markCriticalPath(spans);
         let spanMap = makeSpanMap(spans);
         let eventMap = makeEventMap(events);
+        setChildSpans(spanMap, eventMap);
+        markCriticalPath(spanMap, spans[0].id, "criticalPath");
 
         // Get start, end and duration
         let start = getStartTime(this.state.trace);
@@ -329,38 +315,6 @@ class SpanSwimlane extends Component {
         var tooltipdiv = d3v3.select("body").append("div")	
             .attr("class", "tooltip")				
             .style("opacity", 0);
-
-        // Get span with max and min duration
-        let maxDur = getMaxDur(spans)
-        let minDur = getMinDur(spans)
-
-        // Create histogram for span duration
-        let chartGroup = "chartGroup"
-        let barChart = new dc.barChart("#barchart", chartGroup);
-        let mycrossfilter = crossfilter(spans)
-        let durationDimension = mycrossfilter.dimension(data => {
-            return Math.round((data.end - data.start) / 1000000) * 1000000
-        })
-        let durationGroup = durationDimension.group().reduceCount();
-        let numTicks = Math.round((maxDur - minDur) / 1000000)
-
-        barChart
-        .width(800)
-        .height(400)
-        .x(d3v3.scale.linear().domain([minDur, maxDur]))
-        .brushOn(false)
-        .yAxisLabel("Duration")
-        .xAxisLabel("Span")
-        .dimension(durationDimension)
-        .group(durationGroup)
-        .on("renderlet", function(barChart) {
-            barChart.selectAll("rect").on("click", function(d) {
-                console.log("click!", d);
-            });
-        });
-
-        // Render span histogram
-        barChart.render()
 
         display();
 
