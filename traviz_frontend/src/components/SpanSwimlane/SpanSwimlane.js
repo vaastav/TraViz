@@ -112,7 +112,8 @@ function createSpans(events) {
                 end: event.HRT,
                 events: newEventArray,
                 class: "normal",
-                y_id: count
+                y_id: count,
+                parentEventID: event.ParentEventID
             };
             spans.push(newSpan);
             count++
@@ -129,27 +130,61 @@ function mapThreadsIdsToLane(spans) {
     return threadToLaneMap
 }
 
-function markCriticalPath(spans) {
-    for (let i = 1; i < spans.length; i++) {
-        let span = spans[i];
-        let inCriticalPath = true;
-        for (let j = 1; j < spans.length; j++) {
-            let comparisonSpan = spans[j];
-            if (span.start > comparisonSpan.start && span.end < comparisonSpan.end) {
-                inCriticalPath = false;
-                break;
-            }
-        }
-        if (inCriticalPath) {
-            span.class = "criticalPath"
-        }
-    }
+// function markCriticalPath(spans) {
+//     for (let i = 1; i < spans.length; i++) {
+//         let span = spans[i];
+//         let inCriticalPath = true;
+//         for (let j = 1; j < spans.length; j++) {
+//             let comparisonSpan = spans[j];
+//             if (span.start > comparisonSpan.start && span.end < comparisonSpan.end) {
+//                 inCriticalPath = false;
+//                 break;
+//             }
+//         }
+//         if (inCriticalPath) {
+//             span.class = "criticalPath"
+//         }
+//     }
 
-    if (spans.length > 0) {
-        spans[0].class = "criticalPath"
-    }
+//     if (spans.length > 0) {
+//         spans[0].class = "criticalPath"
+//     }
+// }
+
+function makeEventMap(events) {
+    let eventMap = new Map();
+    events.forEach(event => {
+        eventMap.set(event.EventID, event);
+    })
+    return eventMap;
 }
 
+function makeSpanMap(spans) {
+    let spanMap = new Map();
+    spans.forEach(span => {
+        spanMap.set(span.id, span);
+    })
+    return spanMap;
+}
+
+function setParentSpans(spanMap, eventMap) {
+    spanMap.forEach(span => {
+        span.ParentSpanId = new Array()
+        if (span.parentEventID !== null && span.parentEventID !== undefined) {
+            span.parentEventID.forEach(parentEventId => {
+                let event = eventMap.get(span.parentEventID)
+                span.ParentSpanId.push(event.ThreadID)
+            })
+        }
+    })
+}
+
+function markCriticalPath(spans) {
+    console.log(spans)
+    spans.forEach(span => {
+
+    })
+}
 class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
@@ -178,6 +213,8 @@ class SpanSwimlane extends Component {
         let spans = createSpans(this.state.trace);
         let connectingLines = getConnectingLines(events);
         markCriticalPath(spans);
+        let spanMap = makeSpanMap(spans);
+        let eventMap = makeEventMap(events);
 
         // Get start, end and duration
         let start = getStartTime(this.state.trace);
