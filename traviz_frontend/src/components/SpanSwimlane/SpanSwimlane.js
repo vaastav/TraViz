@@ -5,9 +5,6 @@ import * as crossfilter from "crossfilter2/crossfilter";
 import './SpanSwimlane.css'
 import TraceService from "../../services/TraceService/TraceService";
 
-// TODO: Move histogram to bottom
-// TODO: Fix scaling on histogram
-
 function createLanes(events) {
     let lanes = []
     let count = 0
@@ -278,16 +275,6 @@ class SpanSwimlane extends Component {
             .attr('class', 'laneText');
 
         // draw the x axis
-        var xAxis = d3v3.svg.axis()
-            .scale(x)
-            .orient('bottom')
-            .ticks(5)
-            .tickFormat((d) => {
-                let scaledVals = x(d)
-                return d3v3.round(scaledVals)
-            })
-            .tickSize(6, 0, 0);
-
         var x1Axis = d3v3.svg.axis()
             .scale(x1)
             .orient('bottom')
@@ -333,7 +320,7 @@ class SpanSwimlane extends Component {
 
         function display() {
 
-            var rects, labels
+            var rects
                 , minExtent = brush.extent()[0]
                 , maxExtent = brush.extent()[1]
                 , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent })
@@ -421,44 +408,10 @@ class SpanSwimlane extends Component {
             lins.exit().remove();
 
         }
-
-        function moveBrush() {
-            var origin = d3v3.mouse(this)
-                , point = x.invert(origin[0])
-                , halfExtent = (brush.extent()[1] - brush.extent()[0]) / 2
-                , start = point - halfExtent
-                , end = point + halfExtent;
-
-            brush.extent([start, end]);
-            display();
-        }
-
-        // generates a single path for each item class in the mini display
-        // ugly - but draws mini 2x faster than append lines or line generator
-        // is there a better way to do a bunch of lines as a single path with d3v3?
-        function getPaths(items) {
-            var paths = {}
-            var d
-            var offset = .5 * y2(1) + 0.5
-            var result = [];
-            for (var i = 0; i < items.length; i++) {
-                d = items[i];
-                if (!paths[d.class]) paths[d.class] = '';
-                paths[d.class] += ['M', x(d.start), (y2(d.y_id) + offset), 'H', x(d.end)].join(' ');
-            }
-
-            for (var className in paths) {
-                result.push({ class: className, path: paths[className] });
-            }
-            return result;
-        }
     }
 
     render() {
-        return <div>
-            <div id={"#" + this.props.id}></div>
-            <div id="barchart"></div>
-        </div>
+        return <div id={"#" + this.props.id}></div>
     }
 }
 
