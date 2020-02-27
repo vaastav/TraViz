@@ -5,6 +5,10 @@ import * as crossfilter from "crossfilter2/crossfilter";
 import './SpanSwimlane.css'
 import TraceService from "../../services/TraceService/TraceService";
 
+// TODO: Find best way to partition bins in x-axis
+//         - Static 20 bins at the moment. Make it dynamic to input.
+//         - 
+
 function createLanes(events) {
     let lanes = []
     let count = 0
@@ -43,6 +47,28 @@ function getEndTime(events) {
         }
     })
     return lastEnd
+}
+
+function getMaxDur(spans) {
+    let maxDur = 0;
+    spans.forEach(span => {
+        let dur = span.end - span.start;
+        if (dur > maxDur) {
+            maxDur = dur
+        }
+    });
+    return maxDur
+}
+
+function getMinDur(spans) {
+    let minDur = Infinity;
+    spans.forEach(span => {
+        let dur = span.end - span.start;
+        if (dur < minDur) {
+            minDur = dur
+        }
+    });
+    return minDur
 }
 
 function getConnectingLines(events) {
@@ -311,10 +337,11 @@ class SpanSwimlane extends Component {
             .on("brush", display);
 
         // Define the div for the tooltip
-        var tooltipdiv = d3v3.select("body").append("div")	
-            .attr("class", "tooltip")				
+        var tooltipdiv = d3v3.select("body").append("div")
+            .attr("class", "tooltip")
             .style("opacity", 0);
 
+        this.createHistogram(spans)
         display();
 
         function display() {
@@ -368,18 +395,18 @@ class SpanSwimlane extends Component {
                 .attr("cx", function (d) { return x1(d.HRT) })
                 .attr("cy", function (d) { return y1(threadToLaneMap.get(d.ThreadID)) + .5 * y1(1) + 0.5; })
                 .attr("class", "circ")
-                .on("mouseover", function(d) {
+                .on("mouseover", function (d) {
                     tooltipdiv.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-                    tooltipdiv.html("Event id: " + d.EventID + "<br/>" + "Timestamp: " + d.Timestamp + "<br/>" + "Label: " + d.Label)	
-                    .style("left", (d3v3.event.pageX) + "px")		
-                    .style("top", (d3v3.event.pageY - 28) + "px")
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltipdiv.html("Event id: " + d.EventID + "<br/>" + "Timestamp: " + d.Timestamp + "<br/>" + "Label: " + d.Label)
+                        .style("left", (d3v3.event.pageX) + "px")
+                        .style("top", (d3v3.event.pageY - 28) + "px")
                 })
-                .on("mouseout", function(d) {
+                .on("mouseout", function (d) {
                     tooltipdiv.transition()
-                    .duration(500)
-                    .style("opacity", 0);
+                        .duration(500)
+                        .style("opacity", 0);
                 })
             circs.exit().remove();
 
@@ -406,8 +433,81 @@ class SpanSwimlane extends Component {
         }
     }
 
+    createHistogram(spans) {
+        // Define histogram boundaries
+        let histMargin = { top: 20, right: 30, bottom: 30, left: 30 };
+        let histWidth = 960 - histMargin.left - histMargin.right;
+        let histHeight = 500 - histMargin.top - histMargin.bottom;
+
+        let maxDur = Math.round(getMaxDur(spans)) / 1000000;
+        let minDur = Math.round(getMinDur(spans)) / 1000000;
+        let histX = d3v3.scale.linear()
+            .domain([minDur, maxDur])
+            .range([0, histWidth]);
+
+        // Generate a histogram using twenty uniformly-spaced bins.kd
+        let data = d3v3.layout.histogram()
+            .bins(histX.ticks(20))
+            (spans.map(s => { return Math.round((s.end - s.start) / 1000000) }));
+
+        let color = "#b1de00";
+        let histYMax = d3v3.max(data, function (d) { return d.length });
+        let histYMin = d3v3.min(data, function (d) { return d.length });
+        let colorScale = d3v3.scale.linear()
+            .domain([histYMin, histYMax])
+            .range([d3v3.rgb(color).brighter(), d3v3.rgb(color).darker()]);
+
+        let histY = d3v3.scale.linear()
+            .domain([0, histYMax])
+            .range([histHeight, 0]);
+
+        let histXAxis = d3v3.svg.axis()
+            .scale(histX)
+            .orient("bottom")
+
+        let histSvg = d3v3.select("body").append("svg")
+            .attr("width", histWidth + histMargin.left + histMargin.right)
+            .attr("height", histHeight + histMargin.top + histMargin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + histMargin.left + "," + histMargin.top + ")");
+
+        let bar = histSvg.selectAll(".bar")
+            .data(data)
+            .enter().append("g")
+            .attr("class", "bar")
+            .attr("transform", function (d) { return "translate(" + histX(d.x) + "," + histY(d.y) + ")"; });
+
+        bar.append("rect")
+            .attr("x", 1)
+            .attr("width", (histX(data[0].dx) - histX(0)) - 1)
+            .attr("height", function (d) { return histHeight - histY(d.y); })
+            .attr("fill", function (d) { return colorScale(d.y) });
+
+        bar.append("text")
+            .attr("dy", ".75em")
+            .attr("y", -12)
+            .attr("x", (histX(data[0].dx) - histX(0)) / 2)
+            .attr("text-anchor", "middle")
+            .text(function (d) { return d.y; });
+
+        histSvg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + histHeight + ")")
+            .call(histXAxis)
+
+        histSvg.append("text")
+        .attr("transform", "translate(" + (histWidth / 2) + " ," + (histHeight + histMargin.bottom) + ")")
+        .style("text-anchor", "middle")
+        .text("Duration")
+        
+    }
+
     render() {
-        return <div id={"#" + this.props.id}></div>
+        return <div>
+            <div id={"#" + this.props.id}></div>
+            <div id={"histogram"}></div>
+        </div>
+
     }
 }
 
