@@ -2,6 +2,11 @@
 	shape-rendering: crispEdges;
 }
 
+.text {
+	font: sans-serif;	
+	color: #bebebe
+}
+
 .mini text {
 	font: 9px sans-serif;	
 	color: #bebebe;

@@ -7,7 +7,6 @@ import TraceService from "../../services/TraceService/TraceService";
 
 // TODO: Find best way to partition bins in x-axis
 //         - Static 20 bins at the moment. Make it dynamic to input.
-//         - 
 
 function createLanes(events) {
     let lanes = []
@@ -445,6 +444,17 @@ class SpanSwimlane extends Component {
             .domain([minDur, maxDur])
             .range([0, histWidth]);
 
+        // Append svg to the body of the page
+        var histSvg = d3v3.select('body')
+            .append("svg")
+            .attr("width", histWidth + histMargin.left + histMargin.right)
+            .attr("height", histHeight + histMargin.top + histMargin.bottom)
+            .append("g")
+            .attr('class', "histogram")
+            .attr("transform",
+                "translate(" + histMargin.left + "," + histMargin.top + ")")
+
+
         // Generate a histogram using twenty uniformly-spaced bins.kd
         let data = d3v3.layout.histogram()
             .bins(histX.ticks(20))
@@ -465,12 +475,6 @@ class SpanSwimlane extends Component {
             .scale(histX)
             .orient("bottom")
 
-        let histSvg = d3v3.select("body").append("svg")
-            .attr("width", histWidth + histMargin.left + histMargin.right)
-            .attr("height", histHeight + histMargin.top + histMargin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + histMargin.left + "," + histMargin.top + ")");
-
         let bar = histSvg.selectAll(".bar")
             .data(data)
             .enter().append("g")
@@ -488,24 +492,27 @@ class SpanSwimlane extends Component {
             .attr("y", -12)
             .attr("x", (histX(data[0].dx) - histX(0)) / 2)
             .attr("text-anchor", "middle")
-            .text(function (d) { return d.y; });
+            .attr("class", "histText")
+            .text(function (d) { return d.y; })
+            .style("fill", "#bebebe");
 
         histSvg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + histHeight + ")")
             .call(histXAxis)
+            .style("fill", "#bebebe");
 
         histSvg.append("text")
-        .attr("transform", "translate(" + (histWidth / 2) + " ," + (histHeight + histMargin.bottom) + ")")
-        .style("text-anchor", "middle")
-        .text("Duration")
-        
+            .attr("transform", "translate(" + (histWidth / 2) + " ," + (histHeight + histMargin.bottom) + ")")
+            .style("fill", "#bebebe")
+            .style("text-anchor", "middle")
+            .text("Duration");
+
     }
 
     render() {
         return <div>
             <div id={"#" + this.props.id}></div>
-            <div id={"histogram"}></div>
         </div>
 
     }
