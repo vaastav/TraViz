@@ -187,7 +187,6 @@ class SpanSwimlane extends Component {
         this.traceService.getTrace(id).then(trace => {
             this.state.trace = trace
             this.taskService.getTasks(id).then(tasks => {
-                console.log(tasks)
                 this.state.tasks = tasks;
                 this.createSwimlane();
             })
@@ -230,18 +229,18 @@ class SpanSwimlane extends Component {
         // Create map that contains the proper thread ids on each lane
         let threadToLaneMap = mapThreadsIdsToLane(spans);
 
-        var margin = { top: 20, right: 15, bottom: 15, left: 15 }
-            , width = 1900 - margin.left - margin.right
+        var margin = { top: 20, right: 10, bottom: 15, left: 10 }
+            , width = 1800 - margin.left - margin.right
             , height = 900 - margin.top - margin.bottom
             , miniHeight = lanes.length * 12 + 50
-            , mainHeight = height - miniHeight - 50;
+            // , mainHeight = height - miniHeight - 50;
 
-        var x_padding = 0.1 * duration;
-        var x = d3v3.scale.linear().domain([start - x_padding, end + x_padding]).range([0, width]);
-        var x1 = d3v3.scale.linear().domain([start - x_padding, end + x_padding]).range([0, width]);
+        // var x_padding = 0.1 * duration;
+        var x = d3v3.scale.linear().domain([start, end]).range([0, width]);
+        var x1 = d3v3.scale.linear().domain([start, end]).range([0, width]);
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
-        var y1 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, mainHeight]);
+        // var y1 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, mainHeight]);
         var y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
 
         var chart = d3v3.select('body')
@@ -249,6 +248,8 @@ class SpanSwimlane extends Component {
             .attr('width', width + margin.right + margin.left)
             .attr('height', height + margin.top + margin.bottom)
             .attr('class', 'chart');
+
+        d3v3.select("body").attr("allign", "center")
 
         // chart.append('defs').append('clipPath')
         //     .attr('id', 'clip')
@@ -301,17 +302,17 @@ class SpanSwimlane extends Component {
             .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
             .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
 
-        mini.append('g').selectAll('.laneText')
-            .data(lanes)
-            .enter().append('text')
-            .text(function (d) { return d.label; })
-            .attr('x', -10)
-            .attr('y', function (d) { return y2(d.id + .5); })
-            .attr('dy', '0.5ex')
-            .attr('text-anchor', 'end')
-            .style('font-weight', 'bold')
-            .attr('fill', "white")
-            .attr('class', 'laneText');
+        // mini.append('g').selectAll('.laneText')
+        //     .data(lanes)
+            // .enter().append('text')
+            // // .text(function (d) { return d.label; })
+            // .attr('x', -10)
+            // .attr('y', function (d) { return y2(d.id + .5); })
+            // .attr('dy', '0.5ex')
+            // .attr('text-anchor', 'end')
+            // .style('font-weight', 'bold')
+            // .attr('fill', "white")
+            // .attr('class', 'laneText');
 
         // draw the x axis
         var xAxis = d3v3.svg.axis()
@@ -518,14 +519,15 @@ class SpanSwimlane extends Component {
 
     createHistograms(tasks) {
         // Define size of one histogram
-        let histMargin = { top: 20, right: 10, bottom: 15, left: 10 }
+        let histMargin = { top: 20, right: 20, bottom: 15, left: 5 }
         let histWidth = 100
         let histHeight = 100
-        console.log(tasks)
-        tasks.forEach(task => {
 
-            let minDur = Math.min.apply(null, task.Data)
-            let maxDur = Math.max.apply(null, task.Data)
+        tasks.forEach(task => {
+            let logData = task.Data.filter(d => d != 0).map(d => Math.log(d))
+
+            let minDur = Math.min.apply(Math, logData)
+            let maxDur = Math.max.apply(Math, logData)
 
             let histSvg = d3v3.select('body')
                 .append("svg")
@@ -541,12 +543,7 @@ class SpanSwimlane extends Component {
                 .range([0, histWidth]);
 
             let data = d3v3.layout.histogram()
-                .bins(histX.ticks(20))(task.Data);
-                console.log(minDur)
-                console.log(maxDur)
-                console.log(task.Data)
-                console.log("about to print data")
-                console.log(data)
+                .bins(histX.ticks(15))(logData);
 
             let color = "#b1de00";
             let histYMax = d3v3.max(data, function (d) { return d.length });
@@ -559,9 +556,9 @@ class SpanSwimlane extends Component {
                 .domain([0, histYMax])
                 .range([histHeight, 0]);
 
-            let histXAxis = d3v3.svg.axis()
-                .scale(histX)
-                .orient("bottom")
+            // let histXAxis = d3v3.svg.axis()
+            //     .scale(histX)
+            //     .orient("bottom")
 
             let bar = histSvg.selectAll(".bar")
                 .data(data)
@@ -584,17 +581,18 @@ class SpanSwimlane extends Component {
             //     .text(function (d) { return d.y; })
             //     .style("fill", "#bebebe");
 
-            histSvg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + histHeight + ")")
-                .call(histXAxis)
-                .style("fill", "#bebebe");
+            // histSvg.append("g")
+            //     .attr("class", "x axis")
+            //     .attr("transform", "translate(0," + histHeight + ")")
+            //     .call(histXAxis)
+            //     .style("fill", "#bebebe");
 
-            histSvg.append("text")
-                .attr("transform", "translate(" + (histWidth / 2) + " ," + (histMargin.top / 2) + ")")
-                .style("fill", "#bebebe")
-                .style("text-anchor", "middle")
-                .text("Task: " + task.Operation);
+            // histSvg.append("text")
+            //     .attr("transform", "translate(" + (histWidth / 2) + " ," + (histMargin.top / 2) + ")")
+            //     .style("fill", "#bebebe")
+            //     .style("text-anchor", "middle")
+            //     .style("font-size", "5px")
+            //     .text("Task: " + task.Operation);
         })
 
     }
