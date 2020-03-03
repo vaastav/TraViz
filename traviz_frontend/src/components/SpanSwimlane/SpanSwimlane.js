@@ -278,7 +278,7 @@ class SpanSwimlane extends Component {
         //     .attr('class', 'main');
 
         var mini = chart.append('g')
-            .attr('transform', 'translate(' + margin.left + ',' + (mainHeight + 60) + ')')
+            .attr('transform', 'translate(' + margin.left + ',' + 60 + ')')
             .attr('width', width)
             .attr('height', miniHeight)
             .attr('class', 'mini');
@@ -389,17 +389,17 @@ class SpanSwimlane extends Component {
         //     .on('mouseup', moveBrush);
 
         // Draw the selection area
-        var brush = d3v3.svg.brush()
-            .x(x)
-            .extent([start, end])
-            .on("brush", display);
+        // var brush = d3v3.svg.brush()
+        //     .x(x)
+        //     .extent([start, end])
+        //     .on("brush", display);
 
-        mini.append('g')
-            .attr('class', 'x brush')
-            .call(brush)
-            .selectAll('rect')
-            .attr('y', 1)
-            .attr('height', miniHeight - 1);
+        // mini.append('g')
+        //     .attr('class', 'x brush')
+        //     .call(brush)
+        //     .selectAll('rect')
+        //     .attr('y', 1)
+        //     .attr('height', miniHeight - 1);
 
         mini.selectAll('rect.background').remove();
 
@@ -414,18 +414,18 @@ class SpanSwimlane extends Component {
         function display() {
 
             var rects, labels
-                , minExtent = brush.extent()[0]
-                , maxExtent = brush.extent()[1]
-                , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent })
-                , visEvents = events.filter(function (d) { return d.HRT <= maxExtent && d.HRT >= minExtent })
-                , visLines = connectingLines.filter(function (d) {
-                    return (d.origin.HRT <= maxExtent && d.origin.HRT >= minExtent) ||
-                        (d.destination.HRT <= maxExtent && d.destination.HRT >= minExtent)
-                });
+                // , minExtent = brush.extent()[0]
+                // , maxExtent = brush.extent()[1]
+                // , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent })
+                // , visEvents = events.filter(function (d) { return d.HRT <= maxExtent && d.HRT >= minExtent })
+                // , visLines = connectingLines.filter(function (d) {
+                //     return (d.origin.HRT <= maxExtent && d.origin.HRT >= minExtent) ||
+                //         (d.destination.HRT <= maxExtent && d.destination.HRT >= minExtent)
+                // });
 
-            mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
+            // mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
 
-            x1.domain([minExtent, maxExtent]);
+            // x1.domain([minExtent, maxExtent]);
 
             // update the axis
             // main.select('.main.axis').call(x1Axis);
@@ -519,16 +519,16 @@ class SpanSwimlane extends Component {
             return result;
         }
 
-        function moveBrush() {
-            var origin = d3v3.mouse(this)
-                , point = x.invert(origin[0])
-                , halfExtent = (brush.extent()[1] - brush.extent()[0]) / 2
-                , start = point - halfExtent
-                , end = point + halfExtent;
+        // function moveBrush() {
+        //     var origin = d3v3.mouse(this)
+        //         , point = x.invert(origin[0])
+        //         , halfExtent = (brush.extent()[1] - brush.extent()[0]) / 2
+        //         , start = point - halfExtent
+        //         , end = point + halfExtent;
 
-            brush.extent([start, end]);
-            display();
-        }
+        //     brush.extent([start, end]);
+        //     display();
+        // }
     }
 
     createHistogram(spans) {
