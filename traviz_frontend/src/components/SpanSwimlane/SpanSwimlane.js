@@ -265,11 +265,11 @@ class SpanSwimlane extends Component {
             .attr('height', height + margin.top + margin.bottom)
             .attr('class', 'chart');
 
-        chart.append('defs').append('clipPath')
-            .attr('id', 'clip')
-            .append('rect')
-            .attr('width', width)
-            .attr('height', mainHeight);
+        // chart.append('defs').append('clipPath')
+        //     .attr('id', 'clip')
+        //     .append('rect')
+        //     .attr('width', width)
+        //     .attr('height', mainHeight);
 
         // var main = chart.append('g')
         //     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
@@ -381,12 +381,12 @@ class SpanSwimlane extends Component {
         //     .attr("stroke", "#ffd800")
 
         // invisible hit area to move around the selection window
-        mini.append('rect')
-            .attr('pointer-events', 'painted')
-            .attr('width', width)
-            .attr('height', miniHeight)
-            .attr('visibility', 'hidden')
-            .on('mouseup', moveBrush);
+        // mini.append('rect')
+        //     .attr('pointer-events', 'painted')
+        //     .attr('width', width)
+        //     .attr('height', miniHeight)
+        //     .attr('visibility', 'hidden')
+        //     .on('mouseup', moveBrush);
 
         // Draw the selection area
         var brush = d3v3.svg.brush()

@@ -41,8 +41,8 @@
 }
 
 .criticalPath {
-	stroke: darkred;
-	fill: darkred;
+	stroke: #b1de00;
+	fill: #b1de00;
 	opacity: 0.7;
 }
 
