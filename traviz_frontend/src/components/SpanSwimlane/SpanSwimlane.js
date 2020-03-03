@@ -49,28 +49,6 @@ function getEndTime(events) {
     return lastEnd
 }
 
-function getMaxDur(spans) {
-    let maxDur = 0;
-    spans.forEach(span => {
-        let dur = span.end - span.start;
-        if (dur > maxDur) {
-            maxDur = dur
-        }
-    });
-    return maxDur
-}
-
-function getMinDur(spans) {
-    let minDur = Infinity;
-    spans.forEach(span => {
-        let dur = span.end - span.start;
-        if (dur < minDur) {
-            minDur = dur
-        }
-    });
-    return minDur
-}
-
 function getConnectingLines(events) {
     let mapOfEvents = new Map()
     events.forEach(event => {
@@ -209,6 +187,7 @@ class SpanSwimlane extends Component {
         this.traceService.getTrace(id).then(trace => {
             this.state.trace = trace
             this.taskService.getTasks(id).then(tasks => {
+                console.log(tasks)
                 this.state.tasks = tasks;
                 this.createSwimlane();
             })
@@ -223,6 +202,7 @@ class SpanSwimlane extends Component {
 
         // Define events, lanes, spand and connecting lines
         let events = this.state.trace;
+        let tasks = this.state.tasks;
         let lanes = createLanes(this.state.trace);
         let spans = createSpans(this.state.trace);
         let connectingLines = getConnectingLines(events);
@@ -413,7 +393,7 @@ class SpanSwimlane extends Component {
             .attr("class", "tooltip")
             .style("opacity", 0);
 
-        this.createHistogram(spans)
+        this.createHistograms(tasks)
         display();
 
         function display() {
@@ -536,17 +516,16 @@ class SpanSwimlane extends Component {
         // }
     }
 
-
-    createHistograms(tasks, margin, width, height) {
+    createHistograms(tasks) {
         // Define size of one histogram
-        let histMargin = { top: 5, right: 5, bottom: 5, left: 5 }
-        let histWidth = 20
-        let histHeight = 30
-
-        let minDur = 0
-        let maxDur = 100
-
+        let histMargin = { top: 20, right: 10, bottom: 15, left: 10 }
+        let histWidth = 100
+        let histHeight = 100
+        console.log(tasks)
         tasks.forEach(task => {
+
+            let minDur = Math.min.apply(null, task.Data)
+            let maxDur = Math.max.apply(null, task.Data)
 
             let histSvg = d3v3.select('body')
                 .append("svg")
@@ -562,8 +541,12 @@ class SpanSwimlane extends Component {
                 .range([0, histWidth]);
 
             let data = d3v3.layout.histogram()
-                .bins(histX.ticks(20))
-                (task.data.map(s => { return Math.round((s.end - s.start) / 1000000) }));
+                .bins(histX.ticks(20))(task.Data);
+                console.log(minDur)
+                console.log(maxDur)
+                console.log(task.Data)
+                console.log("about to print data")
+                console.log(data)
 
             let color = "#b1de00";
             let histYMax = d3v3.max(data, function (d) { return d.length });
@@ -592,14 +575,14 @@ class SpanSwimlane extends Component {
                 .attr("height", function (d) { return histHeight - histY(d.y); })
                 .attr("fill", function (d) { return colorScale(d.y) });
 
-            bar.append("text")
-                .attr("dy", ".75em")
-                .attr("y", -12)
-                .attr("x", (histX(data[0].dx) - histX(0)) / 2)
-                .attr("text-anchor", "middle")
-                .attr("class", "histText")
-                .text(function (d) { return d.y; })
-                .style("fill", "#bebebe");
+            // bar.append("text")
+            //     .attr("dy", ".75em")
+            //     .attr("y", -12)
+            //     .attr("x", (histX(data[0].dx) - histX(0)) / 2)
+            //     .attr("text-anchor", "middle")
+            //     .attr("class", "histText")
+            //     .text(function (d) { return d.y; })
+            //     .style("fill", "#bebebe");
 
             histSvg.append("g")
                 .attr("class", "x axis")
@@ -608,32 +591,13 @@ class SpanSwimlane extends Component {
                 .style("fill", "#bebebe");
 
             histSvg.append("text")
-                .attr("transform", "translate(" + (histWidth / 2) + " ," + (histHeight + histMargin.bottom) + ")")
+                .attr("transform", "translate(" + (histWidth / 2) + " ," + (histMargin.top / 2) + ")")
                 .style("fill", "#bebebe")
                 .style("text-anchor", "middle")
-                .text("Duration");
+                .text("Task: " + task.Operation);
         })
 
     }
-
-    // createHistogram(spans, histMargin, histWidth, histHeight) {
-    //     // Define histogram boundaries
-    //     let histMargin = { top: 20, right: 30, bottom: 30, left: 30 };
-    //     let histWidth = 960 - histMargin.left - histMargin.right;
-    //     let histHeight = 500 - histMargin.top - histMargin.bottom;
-
-    //     let maxDur = Math.round(getMaxDur(spans)) / 1000000;
-    //     let minDur = Math.round(getMinDur(spans)) / 1000000;
-    //     let histX = d3v3.scale.linear()
-    //         .domain([minDur, maxDur])
-    //         .range([0, histWidth]);
-
-
-
-
-
-
-    // }
 
     render() {
         return <div>
