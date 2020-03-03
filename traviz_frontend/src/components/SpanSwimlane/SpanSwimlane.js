@@ -4,6 +4,7 @@ import * as dc from "dc"
 import * as crossfilter from "crossfilter2/crossfilter";
 import './SpanSwimlane.css'
 import TraceService from "../../services/TraceService/TraceService";
+import TaskService from "../../services/TaskService/TaskService";
 
 // TODO: Find best way to partition bins in x-axis
 //         - Static 20 bins at the moment. Make it dynamic to input.
@@ -198,15 +199,19 @@ class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [] };
+        this.state = { trace: [], tasks: null };
         this.traceService = new TraceService();
+        this.taskService = new TaskService();
     }
 
     componentDidMount() {
         const id = this.props.id;
         this.traceService.getTrace(id).then(trace => {
             this.state.trace = trace
-            this.createSwimlane();
+            this.taskService.getTasks(id).then(tasks => {
+                this.state.tasks = tasks;
+                this.createSwimlane();
+            })
         });
     }
 
@@ -245,7 +250,7 @@ class SpanSwimlane extends Component {
         // Create map that contains the proper thread ids on each lane
         let threadToLaneMap = mapThreadsIdsToLane(spans);
 
-        var margin = { top: 20, right: 15, bottom: 15, left: 150 }
+        var margin = { top: 20, right: 15, bottom: 15, left: 15 }
             , width = 1900 - margin.left - margin.right
             , height = 900 - margin.top - margin.bottom
             , miniHeight = lanes.length * 12 + 50
@@ -414,14 +419,14 @@ class SpanSwimlane extends Component {
         function display() {
 
             var rects, labels
-                // , minExtent = brush.extent()[0]
-                // , maxExtent = brush.extent()[1]
-                // , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent })
-                // , visEvents = events.filter(function (d) { return d.HRT <= maxExtent && d.HRT >= minExtent })
-                // , visLines = connectingLines.filter(function (d) {
-                //     return (d.origin.HRT <= maxExtent && d.origin.HRT >= minExtent) ||
-                //         (d.destination.HRT <= maxExtent && d.destination.HRT >= minExtent)
-                // });
+            // , minExtent = brush.extent()[0]
+            // , maxExtent = brush.extent()[1]
+            // , visItems = spans.filter(function (d) { return d.start < maxExtent && d.end > minExtent })
+            // , visEvents = events.filter(function (d) { return d.HRT <= maxExtent && d.HRT >= minExtent })
+            // , visLines = connectingLines.filter(function (d) {
+            //     return (d.origin.HRT <= maxExtent && d.origin.HRT >= minExtent) ||
+            //         (d.destination.HRT <= maxExtent && d.destination.HRT >= minExtent)
+            // });
 
             // mini.select('.brush').call(brush.extent([minExtent, maxExtent]));
 
@@ -531,83 +536,104 @@ class SpanSwimlane extends Component {
         // }
     }
 
-    createHistogram(spans) {
-        // Define histogram boundaries
-        let histMargin = { top: 20, right: 30, bottom: 30, left: 30 };
-        let histWidth = 960 - histMargin.left - histMargin.right;
-        let histHeight = 500 - histMargin.top - histMargin.bottom;
 
-        let maxDur = Math.round(getMaxDur(spans)) / 1000000;
-        let minDur = Math.round(getMinDur(spans)) / 1000000;
-        let histX = d3v3.scale.linear()
-            .domain([minDur, maxDur])
-            .range([0, histWidth]);
+    createHistograms(tasks, margin, width, height) {
+        // Define size of one histogram
+        let histMargin = { top: 5, right: 5, bottom: 5, left: 5 }
+        let histWidth = 20
+        let histHeight = 30
 
-        // Append svg to the body of the page
-        var histSvg = d3v3.select('body')
-            .append("svg")
-            .attr("width", histWidth + histMargin.left + histMargin.right)
-            .attr("height", histHeight + histMargin.top + histMargin.bottom)
-            .append("g")
-            .attr('class', "histogram")
-            .attr("transform",
-                "translate(" + histMargin.left + "," + histMargin.top + ")")
+        let minDur = 0
+        let maxDur = 100
 
+        tasks.forEach(task => {
 
-        // Generate a histogram using twenty uniformly-spaced bins.kd
-        let data = d3v3.layout.histogram()
-            .bins(histX.ticks(20))
-            (spans.map(s => { return Math.round((s.end - s.start) / 1000000) }));
+            let histSvg = d3v3.select('body')
+                .append("svg")
+                .attr("width", histWidth + histMargin.left + histMargin.right)
+                .attr("height", histHeight + histMargin.top + histMargin.bottom)
+                .append("g")
+                .attr('class', "histogram")
+                .attr("transform",
+                    "translate(" + histMargin.left + "," + histMargin.top + ")")
 
-        let color = "#b1de00";
-        let histYMax = d3v3.max(data, function (d) { return d.length });
-        let histYMin = d3v3.min(data, function (d) { return d.length });
-        let colorScale = d3v3.scale.linear()
-            .domain([histYMin, histYMax])
-            .range([d3v3.rgb(color).brighter(), d3v3.rgb(color).darker()]);
+            let histX = d3v3.scale.linear()
+                .domain([minDur, maxDur])
+                .range([0, histWidth]);
 
-        let histY = d3v3.scale.linear()
-            .domain([0, histYMax])
-            .range([histHeight, 0]);
+            let data = d3v3.layout.histogram()
+                .bins(histX.ticks(20))
+                (task.data.map(s => { return Math.round((s.end - s.start) / 1000000) }));
 
-        let histXAxis = d3v3.svg.axis()
-            .scale(histX)
-            .orient("bottom")
+            let color = "#b1de00";
+            let histYMax = d3v3.max(data, function (d) { return d.length });
+            let histYMin = d3v3.min(data, function (d) { return d.length });
+            let colorScale = d3v3.scale.linear()
+                .domain([histYMin, histYMax])
+                .range([d3v3.rgb(color).brighter(), d3v3.rgb(color).darker()]);
 
-        let bar = histSvg.selectAll(".bar")
-            .data(data)
-            .enter().append("g")
-            .attr("class", "bar")
-            .attr("transform", function (d) { return "translate(" + histX(d.x) + "," + histY(d.y) + ")"; });
+            let histY = d3v3.scale.linear()
+                .domain([0, histYMax])
+                .range([histHeight, 0]);
 
-        bar.append("rect")
-            .attr("x", 1)
-            .attr("width", (histX(data[0].dx) - histX(0)) - 1)
-            .attr("height", function (d) { return histHeight - histY(d.y); })
-            .attr("fill", function (d) { return colorScale(d.y) });
+            let histXAxis = d3v3.svg.axis()
+                .scale(histX)
+                .orient("bottom")
 
-        bar.append("text")
-            .attr("dy", ".75em")
-            .attr("y", -12)
-            .attr("x", (histX(data[0].dx) - histX(0)) / 2)
-            .attr("text-anchor", "middle")
-            .attr("class", "histText")
-            .text(function (d) { return d.y; })
-            .style("fill", "#bebebe");
+            let bar = histSvg.selectAll(".bar")
+                .data(data)
+                .enter().append("g")
+                .attr("class", "bar")
+                .attr("transform", function (d) { return "translate(" + histX(d.x) + "," + histY(d.y) + ")"; });
 
-        histSvg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + histHeight + ")")
-            .call(histXAxis)
-            .style("fill", "#bebebe");
+            bar.append("rect")
+                .attr("x", 1)
+                .attr("width", (histX(data[0].dx) - histX(0)) - 1)
+                .attr("height", function (d) { return histHeight - histY(d.y); })
+                .attr("fill", function (d) { return colorScale(d.y) });
 
-        histSvg.append("text")
-            .attr("transform", "translate(" + (histWidth / 2) + " ," + (histHeight + histMargin.bottom) + ")")
-            .style("fill", "#bebebe")
-            .style("text-anchor", "middle")
-            .text("Duration");
+            bar.append("text")
+                .attr("dy", ".75em")
+                .attr("y", -12)
+                .attr("x", (histX(data[0].dx) - histX(0)) / 2)
+                .attr("text-anchor", "middle")
+                .attr("class", "histText")
+                .text(function (d) { return d.y; })
+                .style("fill", "#bebebe");
+
+            histSvg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + histHeight + ")")
+                .call(histXAxis)
+                .style("fill", "#bebebe");
+
+            histSvg.append("text")
+                .attr("transform", "translate(" + (histWidth / 2) + " ," + (histHeight + histMargin.bottom) + ")")
+                .style("fill", "#bebebe")
+                .style("text-anchor", "middle")
+                .text("Duration");
+        })
 
     }
+
+    // createHistogram(spans, histMargin, histWidth, histHeight) {
+    //     // Define histogram boundaries
+    //     let histMargin = { top: 20, right: 30, bottom: 30, left: 30 };
+    //     let histWidth = 960 - histMargin.left - histMargin.right;
+    //     let histHeight = 500 - histMargin.top - histMargin.bottom;
+
+    //     let maxDur = Math.round(getMaxDur(spans)) / 1000000;
+    //     let minDur = Math.round(getMinDur(spans)) / 1000000;
+    //     let histX = d3v3.scale.linear()
+    //         .domain([minDur, maxDur])
+    //         .range([0, histWidth]);
+
+
+
+
+
+
+    // }
 
     render() {
         return <div>
