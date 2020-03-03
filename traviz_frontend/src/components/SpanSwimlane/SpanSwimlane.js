@@ -229,9 +229,8 @@ class SpanSwimlane extends Component {
         // Create map that contains the proper thread ids on each lane
         let threadToLaneMap = mapThreadsIdsToLane(spans);
 
-        var margin = { top: 20, right: 10, bottom: 15, left: 10 }
+        var margin = { top: 20, right: 10, bottom: 100, left: 10 }
             , width = 1800 - margin.left - margin.right
-            , height = 900 - margin.top - margin.bottom
             , miniHeight = lanes.length * 12 + 50
             // , mainHeight = height - miniHeight - 50;
 
@@ -246,7 +245,7 @@ class SpanSwimlane extends Component {
         var chart = d3v3.select('body')
             .append('svg:svg')
             .attr('width', width + margin.right + margin.left)
-            .attr('height', height + margin.top + margin.bottom)
+            .attr('height', miniHeight + margin.top + margin.bottom)
             .attr('class', 'chart');
 
         d3v3.select("body").attr("allign", "center")
