@@ -34,6 +34,17 @@ type Dependency struct {
     Destination string
 }
 
+type Span struct {
+    TraceID string
+    SpanID string
+    Duration uint64
+    Operation string
+    Source string
+    ProcessName string
+    ProcessID int
+    ThreadID int
+}
+
 type Swap struct {
     Src string `json:"src"`
     Dst string `json:"dst`
@@ -63,6 +74,15 @@ type OverviewRow struct {
     Date string
     NumEvents int
     Tags []string
+}
+
+type TaskRow struct {
+    Operation string
+    ProcessName string
+    ProcessID int
+    ThreadID int
+    Duration uint64
+    Data []uint64
 }
 
 type D3Node struct {
@@ -177,6 +197,77 @@ func processDependencies(trace xtrace.XTrace) map[Dependency]int {
         }
     }
     return depMap
+}
+
+func processSpan(events []xtrace.Event, traceID string, key string) Span {
+    var span Span
+
+    var duration uint64
+    var operationName string
+    var eventID string
+    var earliest_time_hrt uint64
+    earliest_time_hrt = math.MaxUint64
+    var latest_time_hrt uint64
+    var last_event_id  string
+    var source string
+
+    for _, event :=  range events {
+        if event.HRT < earliest_time_hrt {
+            earliest_time_hrt = event.HRT
+            eventID = event.EventID
+            source = event.Source
+        }
+        if event.HRT > latest_time_hrt {
+            latest_time_hrt = event.HRT
+            last_event_id = event.EventID
+        }
+        label := event.Label
+        if strings.Contains(label, "::") {
+            pieces := strings.Split(label, "::")
+            if pieces[0] != "ThreadLocalBaggage" {
+                opNamePieces := strings.Split(pieces[1], " ")
+                operationName = pieces[0] + "::" + opNamePieces[0]
+            }
+        }
+    }
+    if operationName == "" {
+        log.Println("Empty operation name for trace", traceID, key)
+    }
+    duration = latest_time_hrt - earliest_time_hrt
+    pieces := strings.Split(key, ":")
+
+    span.Duration = duration
+    span.TraceID = traceID
+    span.SpanID = eventID + "-" + last_event_id
+    span.Operation = operationName
+    span.Source = source
+    span.ProcessName = pieces[0]
+    span.ProcessID, _ = strconv.Atoi(pieces[1])
+    span.ThreadID, _ = strconv.Atoi(pieces[2])
+
+    return span
+}
+
+func processSpans(trace xtrace.XTrace) []Span {
+    id := trace.ID
+    spans := make(map[string][]xtrace.Event)
+    for _, event := range trace.Events {
+        key := event.ProcessName + ":" + strconv.Itoa(event.ProcessID) + ":" + strconv.Itoa(event.ThreadID)
+        if v, ok := spans[key]; !ok {
+            spans[key] = []xtrace.Event{event}
+        } else {
+            v = append(v, event)
+            spans[key] = v
+        }
+    }
+
+    var spanInfos []Span
+    for key, events := range spans {
+        span := processSpan(events, id, key)
+        spanInfos = append(spanInfos, span)
+    }
+
+    return spanInfos
 }
 
 func compare2Traces(trace1 xtrace.XTrace, trace2 xtrace.XTrace) ComparisonResponse {
@@ -337,8 +428,105 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
+    err = server.LoadSpans()
+    if err != nil {
+        return nil, err
+    }
     server.routes()
     return &server, nil
+}
+
+func (s * Server) LoadSpans() error {
+    log.Println("Loading spans")
+    results, err := s.DB.Query("SELECT overview.trace_id, loc FROM overview, tasks WHERE overview.trace_id = tasks.trace_id")
+    if err != nil {
+        return err
+    }
+    locations := make(map[string]bool)
+    seen_traces := make(map[string]bool)
+
+    for results.Next() {
+        var tid string
+        var loc string
+        err = results.Scan(&tid, &loc)
+        if err!= nil {
+            return err
+        }
+        seen_traces[tid] = true
+        locations[loc] = true
+    }
+    span_stmtIns, err := s.DB.Prepare("INSERT INTO tasks VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    if err != nil {
+        return err
+    }
+    defer span_stmtIns.Close()
+    var newTraces []xtrace.XTrace
+    log.Println("Walking trace directory")
+    err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+        if fi.IsDir() {
+            return nil
+        }
+
+        matched, err :=  filepath.Match("*.json", fi.Name())
+        if err != nil {
+            log.Fatal(err)
+        }
+        if matched {
+            if _, ok := locations[fp] ; !ok{
+                var traces []xtrace.XTrace
+                f, err := os.Open(fp)
+                if err != nil {
+                    return err
+                }
+                defer f.Close()
+                dec := json.NewDecoder(f)
+                err = dec.Decode(&traces)
+                if err != nil {
+                    return err
+                }
+                if len(traces) != 1 {
+                    //Multiple traces in 1 file not handled yet
+                    return nil
+                }
+                if _, ok := seen_traces[traces[0].ID]; !ok {
+                    // This trace is not in the database yet
+                    seen_traces[traces[0].ID] = true
+                    newTraces = append(newTraces, traces[0])
+                }
+            }
+        }
+        return nil
+    })
+    log.Println("Finished walking")
+    if err != nil {
+        log.Println("Error in walking")
+        return err
+    }
+    log.Println("New traces to be processed for spans :", len(newTraces))
+    for _, trace := range newTraces {
+        spans := processSpans(trace)
+        for _, span := range spans {
+            var linenum int
+            var fname string
+            if span.Source == " " || span.Source == "" {
+                linenum = 0
+                fname = ""
+            } else {
+                tokens := strings.Split(span.Source, ":")
+                linenum, _ = strconv.Atoi(tokens[1])
+                fname = tokens[0]
+            }
+            _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID)
+            if err != nil {
+                log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
+                return err
+            }
+        }
+    }
+    return nil
 }
 
 func (s * Server) LoadDependencies() error {
@@ -545,6 +733,7 @@ func (s * Server) routes() {
     s.Router.HandleFunc("/aggregate", s.Aggregate)
     s.Router.HandleFunc("/traces", s.FilterTraces)
     s.Router.HandleFunc("/tags", s.Tags)
+    s.Router.HandleFunc("/tasks/{id}", s.Tasks)
 }
 
 func setupResponse(w *http.ResponseWriter, r *http.Request) {
@@ -703,6 +892,64 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(xtrace.Sort_events(traces[0].Events))
     }
 }
+
+func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
+    log.Println(r)
+    w.Header().Set("Content-Type", "application/json")
+    params := mux.Vars(r)
+    if len(params) != 1 {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Request"})
+        return
+    }
+    traceID := params["id"]
+    if _, ok := s.Traces[traceID]; !ok {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID"})
+        return
+    }
+    lotasks, err := s.DB.Query("SELECT tasks.ProcessName, tasks.ProcessID, tasks.ThreadID, tasks.duration, tasks.operation FROM tasks WHERE trace_id=\"" + traceID + "\"")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+        log.Println("FAILED TO LOAD LIST OF TASKS", err)
+        return
+    }
+    var taskRows []TaskRow
+    for lotasks.Next() {
+        var task TaskRow
+        err = lotasks.Scan(&task.ProcessName, &task.ProcessID, &task.ThreadID, &task.Duration, &task.Operation)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            return
+        }
+        durationRows, err := s.DB.Query("SELECT tasks.duration FROM tasks WHERE operation=\"" + task.Operation + "\"")
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            log.Println("FAILED TO LOAD LIST OF DURATIONS")
+            return
+        }
+        var all_data []uint64
+        for durationRows.Next() {
+            var data uint64
+            err = durationRows.Scan(&data)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+                return
+            }
+            all_data = append(all_data, data)
+        }
+        task.Data = all_data
+        taskRows = append(taskRows, task)
+    }
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(taskRows)
+}
+
 
 func (s *Server) SourceCode(w http.ResponseWriter, r *http.Request) {
     setupResponse(&w, r)
