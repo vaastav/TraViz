@@ -316,7 +316,7 @@ class SpanSwimlane extends Component {
                         let logDur = Math.log(task.Duration);
                         logDur = task.Duration
                         if (logDur !== null && logDur >= min && logDur <= max) {
-                            return "#fff600" // Yellow
+                            return "red" 
                         } else {
                             return "#8EB200" // Green
                         }

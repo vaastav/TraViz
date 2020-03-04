@@ -41,8 +41,8 @@
 }
 
 .selected {
-	stroke: #fff600;
-	fill: #fff600;
+	stroke: red;
+	fill: red;
 	opacity: 1;
 }
 
