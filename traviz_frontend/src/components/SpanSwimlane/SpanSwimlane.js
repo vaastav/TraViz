@@ -248,7 +248,7 @@ class SpanSwimlane extends Component {
 
         function createHistograms() {
             // Define size of one histogram
-            let histMargin = { top: 20, right: 20, bottom: 15, left: 5 }
+            let histMargin = { top: 10, right: 10, bottom: 10, left: 10 }
             let histWidth = 100
             let histHeight = 100
 
@@ -259,55 +259,63 @@ class SpanSwimlane extends Component {
                 let minDur = Math.min.apply(Math, logData)
                 let maxDur = Math.max.apply(Math, logData)
 
+                // Create svg element for each histrogram
                 let histSvg = d3v3.select('#hists')
                     .append("svg")
+                    .attr("width", histWidth + histMargin.left + histMargin.right)
+                    .attr("height", histHeight + histMargin.top + histMargin.bottom)
+                    .append("g")
+                    .attr("transform",
+                        "translate(" + histMargin.left + "," + histMargin.top + ")")
+
+                // Append highlight rectangle to each histogram svg
+                histSvg.append("rect")
+                    .attr("width", histWidth + histMargin.left + histMargin.right)
+                    .attr("height", histHeight + histMargin.top + histMargin.bottom)
+                    .attr("class", "bleh")
+                    .style("opacity", 0)
+                    .style("fill", "white")
                     .on("mouseover", function () {
+                        d3v3.selectAll("rect.bleh")
+                        .style("opacity", 0)
+                        
+                        d3v3.select(this)
+                        .style("opacity", 0.1)
+
                         setSelectedSpan(spans, task.ThreadID)
                         let miniItems = mini.selectAll('miniItems').data(getPaths(spans))
                         miniItems.enter().append('path')
                             .attr('class', function (d) {
-                                return "miniItem " + d.class 
+                                return "miniItem " + d.class
                             })
                             .attr('d', function (d) { return d.path; });
                         miniItems.exit().remove()
                     })
-                    .on("mouseout", function () {
-                        setSelectedSpan(spans, null)
-                        let miniItems = mini.selectAll('miniItems').data(getPaths(spans))
-                        miniItems.enter().append('path')
-                            .attr('class', function (d) { return "miniItem " + d.class  })
-                            .attr('d', function (d) { return d.path; });
-                        miniItems.exit().remove()
-                    })
-                    .attr("width", histWidth + histMargin.left + histMargin.right)
-                    .attr("height", histHeight + histMargin.top + histMargin.bottom)
-                    .append("g")
-                    .attr('class', "histsvg" + threadIdToId.get(task.ThreadID))
-                    .attr("transform",
-                        "translate(" + histMargin.left + "," + histMargin.top + ")")
 
+
+                // Create actual histogram
                 let histX = d3v3.scale.linear()
                     .domain([minDur, maxDur])
-                    .range([0, histWidth]);
+                    .range([histMargin.left, histWidth - histMargin.right]);
 
                 let data = d3v3.layout.histogram()
                     .bins(histX.ticks(15))(logData);
 
                 let histYMax = d3v3.max(data, function (d) { return d.length });
-                let histYMin = d3v3.min(data, function (d) { return d.length });
 
                 let histY = d3v3.scale.linear()
                     .domain([0, histYMax])
-                    .range([histHeight, 0]);
+                    .range([histHeight, histMargin.bottom]);
 
                 let bar = histSvg.selectAll(".bar")
                     .data(data)
                     .enter().append("g")
                     .attr("class", "bar")
-                    .attr("transform", function (d) { return "translate(" + histX(d.x) + "," + histY(d.y) + ")"; });
+                    .attr("transform", function (d) { return "translate(" + histX(d.x) + "," + histY(d.y) + ")"; })
+                    .style("align", "center")
 
                 bar.append("rect")
-                    .attr("x", 1)
+                    .attr("class", "align-bars")
                     .attr("width", (histX(data[0].dx) - histX(0)) - 1)
                     .attr("height", function (d) { return histHeight - histY(d.y); })
                     .attr("fill", function (d) {
@@ -316,11 +324,12 @@ class SpanSwimlane extends Component {
                         let logDur = Math.log(task.Duration);
                         logDur = task.Duration
                         if (logDur !== null && logDur >= min && logDur <= max) {
-                            return "red" 
+                            return "red"
                         } else {
                             return "#8EB200" // Green
                         }
-                    });
+                    })
+                    .style("align", "center")
             })
 
         }
