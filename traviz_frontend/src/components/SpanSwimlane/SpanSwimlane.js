@@ -230,9 +230,9 @@ class SpanSwimlane extends Component {
         let threadToLaneMap = mapThreadsIdsToLane(spans);
 
         var margin = { top: 20, right: 10, bottom: 100, left: 10 }
-            , width = 1800 - margin.left - margin.right
-            , miniHeight = lanes.length * 12 + 50
-            // , mainHeight = height - miniHeight - 50;
+            , width = 1870 - margin.left - margin.right
+            , miniHeight = lanes.length * 20 + 50
+        // , mainHeight = height - miniHeight - 50;
 
         // var x_padding = 0.1 * duration;
         var x = d3v3.scale.linear().domain([start, end]).range([0, width]);
@@ -242,13 +242,12 @@ class SpanSwimlane extends Component {
         // var y1 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, mainHeight]);
         var y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
 
-        var chart = d3v3.select('body')
-            .append('svg:svg')
+        var chart = d3v3.select('#swimlane')
+            .append('svg')
             .attr('width', width + margin.right + margin.left)
             .attr('height', miniHeight + margin.top + margin.bottom)
             .attr('class', 'chart');
 
-        d3v3.select("body").attr("allign", "center")
 
         // chart.append('defs').append('clipPath')
         //     .attr('id', 'clip')
@@ -301,39 +300,41 @@ class SpanSwimlane extends Component {
             .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
             .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
 
+        // Draw the last lane so we have a box
+
         // mini.append('g').selectAll('.laneText')
         //     .data(lanes)
-            // .enter().append('text')
-            // // .text(function (d) { return d.label; })
-            // .attr('x', -10)
-            // .attr('y', function (d) { return y2(d.id + .5); })
-            // .attr('dy', '0.5ex')
-            // .attr('text-anchor', 'end')
-            // .style('font-weight', 'bold')
-            // .attr('fill', "white")
-            // .attr('class', 'laneText');
+        // .enter().append('text')
+        // // .text(function (d) { return d.label; })
+        // .attr('x', -10)
+        // .attr('y', function (d) { return y2(d.id + .5); })
+        // .attr('dy', '0.5ex')
+        // .attr('text-anchor', 'end')
+        // .style('font-weight', 'bold')
+        // .attr('fill', "white")
+        // .attr('class', 'laneText');
 
         // draw the x axis
-        var xAxis = d3v3.svg.axis()
-            .scale(x)
-            .orient('bottom')
+        // var xAxis = d3v3.svg.axis()
+        //     .scale(x)
+        //     .orient('bottom')
             // .ticks(d3v3.time.mondays, (x.domain()[1] - x.domain()[0]) > 15552e6 ? 2 : 1)
-            .ticks(5)
-            .tickFormat((d) => {
-                let scaledVals = x(d)
-                return d3v3.round(scaledVals)
-            })
-            .tickSize(6, 0, 0);
+            // .ticks(5)
+            // .tickFormat((d) => {
+            //     let scaledVals = x(d)
+            //     return d3v3.round(scaledVals)
+            // })
+            // .tickSize(6, 0, 0);
 
-        var x1Axis = d3v3.svg.axis()
-            .scale(x1)
-            .orient('bottom')
-            .ticks(5)
-            .tickFormat((d) => {
-                let scaledVals = x1(d)
-                return d3v3.round(scaledVals)
-            })
-            .tickSize(6, 0, 0)
+        // var x1Axis = d3v3.svg.axis()
+        //     .scale(x1)
+        //     .orient('bottom')
+        //     .ticks(5)
+        //     .tickFormat((d) => {
+        //         let scaledVals = x1(d)
+        //         return d3v3.round(scaledVals)
+        //     })
+        //     .tickSize(6, 0, 0)
 
         // main.append('g')
         //     .attr('transform', 'translate(0,' + mainHeight + ')')
@@ -341,11 +342,11 @@ class SpanSwimlane extends Component {
         //     .attr('fill', 'white')
         //     .call(x1Axis);
 
-        mini.append('g')
-            .attr('transform', 'translate(0,' + miniHeight + ')')
-            .attr('class', 'axis')
-            .attr('fill', 'white')
-            .call(xAxis);
+        // mini.append('g')
+        //     .attr('transform', 'translate(0,' + miniHeight + ')')
+        //     .attr('class', 'axis')
+        //     .attr('fill', 'white')
+        //     .call(xAxis);
 
         // draw the spans
         // var itemRects = main.append('g')
@@ -485,6 +486,7 @@ class SpanSwimlane extends Component {
 
             // lins.exit().remove();
 
+            d3v3.select("#cont").attr("align", "center")
         }
 
         function getPaths(items) {
@@ -528,7 +530,7 @@ class SpanSwimlane extends Component {
             let minDur = Math.min.apply(Math, logData)
             let maxDur = Math.max.apply(Math, logData)
 
-            let histSvg = d3v3.select('body')
+            let histSvg = d3v3.select('#hists')
                 .append("svg")
                 .attr("width", histWidth + histMargin.left + histMargin.right)
                 .attr("height", histHeight + histMargin.top + histMargin.bottom)
@@ -597,8 +599,9 @@ class SpanSwimlane extends Component {
     }
 
     render() {
-        return <div>
-            <div id={"#" + this.props.id}></div>
+        return <div id="container" >
+            <div id="swimlane"> </div>
+            <div id="hists"></div>
         </div>
 
     }

@@ -62,3 +62,17 @@ div.tooltip {
 	pointer-events: none;
 	display: inline-block
 }
+
+.swimlane {
+	display: inline-block;
+}
+
+.hists {
+	display: inline-block;
+}
+
+.container {
+	display: inline-block;
+	height: 100vh;
+	width: 100vw;
+}
