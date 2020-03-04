@@ -43,7 +43,7 @@
 .selected {
 	stroke: #fff600;
 	fill: #fff600;
-	opacity: 0.7;
+	opacity: 1;
 }
 
 .brush .extent {

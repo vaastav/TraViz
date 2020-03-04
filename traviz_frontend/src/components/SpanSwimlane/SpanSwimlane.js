@@ -272,7 +272,7 @@ class SpanSwimlane extends Component {
                         miniItems.exit().remove()
                     })
                     .on("mouseout", function () {
-                        setSelectedSpan(spans, task.ThreadID)
+                        setSelectedSpan(spans, null)
                         let miniItems = mini.selectAll('miniItems').data(getPaths(spans))
                         miniItems.enter().append('path')
                             .attr('class', function (d) { return "miniItem " + d.class  })
