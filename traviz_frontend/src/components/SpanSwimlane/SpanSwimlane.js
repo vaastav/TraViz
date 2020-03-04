@@ -143,11 +143,22 @@ function markCriticalPath(spanMap, currentSpanId, parentSpanClass) {
     }
 }
 
+// function threadIdToIdMap(spans) {
+//     let map = new Map()
+//     for (let i = 0; i < spans.length; i++) {
+//         let span = spans[i]
+//         map.set(i, span)
+//     }
+//     spans.forEach(s => {
+//         map.set()
+//     })
+// }
+
 class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [], tasks: null };
+        this.state = { trace: [], tasks: null, selectedTask: null };
         this.traceService = new TraceService();
         this.taskService = new TaskService();
     }
@@ -374,14 +385,23 @@ class SpanSwimlane extends Component {
             let minDur = Math.min.apply(Math, logData)
             let maxDur = Math.max.apply(Math, logData)
 
+            console.log(task)
             let histSvg = d3v3.select('#hists')
                 .append("svg")
                 .attr("width", histWidth + histMargin.left + histMargin.right)
                 .attr("height", histHeight + histMargin.top + histMargin.bottom)
                 .append("g")
-                .attr('class', "histogram")
+                .attr('class', "s")
                 .attr("transform",
                     "translate(" + histMargin.left + "," + histMargin.top + ")")
+                .on("mouseover", function() {
+                    console.log("mouseover")
+                    d3v3.select("s")
+                    .attr("fill", "red");
+                })
+                .on("mouseout", function() {
+                    console.log("mouseout")
+                })
 
             let histX = d3v3.scale.linear()
                 .domain([minDur, maxDur])
