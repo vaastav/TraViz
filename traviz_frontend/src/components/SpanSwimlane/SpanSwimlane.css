@@ -40,9 +40,9 @@
 	opacity: 0.7;
 }
 
-.criticalPath {
-	stroke: #8EB200;
-	fill: #8EB200;
+.selected {
+	stroke: #fff600;
+	fill: #fff600;
 	opacity: 0.7;
 }
 
