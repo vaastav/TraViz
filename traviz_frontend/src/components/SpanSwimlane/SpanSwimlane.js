@@ -318,13 +318,13 @@ class SpanSwimlane extends Component {
         // var xAxis = d3v3.svg.axis()
         //     .scale(x)
         //     .orient('bottom')
-            // .ticks(d3v3.time.mondays, (x.domain()[1] - x.domain()[0]) > 15552e6 ? 2 : 1)
-            // .ticks(5)
-            // .tickFormat((d) => {
-            //     let scaledVals = x(d)
-            //     return d3v3.round(scaledVals)
-            // })
-            // .tickSize(6, 0, 0);
+        // .ticks(d3v3.time.mondays, (x.domain()[1] - x.domain()[0]) > 15552e6 ? 2 : 1)
+        // .ticks(5)
+        // .tickFormat((d) => {
+        //     let scaledVals = x(d)
+        //     return d3v3.round(scaledVals)
+        // })
+        // .tickSize(6, 0, 0);
 
         // var x1Axis = d3v3.svg.axis()
         //     .scale(x1)
@@ -567,11 +567,21 @@ class SpanSwimlane extends Component {
                 .attr("class", "bar")
                 .attr("transform", function (d) { return "translate(" + histX(d.x) + "," + histY(d.y) + ")"; });
 
+            // console.log(tasks)
             bar.append("rect")
                 .attr("x", 1)
                 .attr("width", (histX(data[0].dx) - histX(0)) - 1)
                 .attr("height", function (d) { return histHeight - histY(d.y); })
-                .attr("fill", function (d) { return colorScale(d.y) });
+                .attr("fill", function (d) {
+                    let min = Math.min.apply(Math, d);
+                    let max = Math.max.apply(Math, d);
+                    let logDur = Math.log(task.Duration);
+                    if (logDur !== null && logDur >= min && logDur <= max) {
+                        return "#fff600" // Red
+                    } else {
+                        return "#8EB200" //
+                    }
+                });
 
             // bar.append("text")
             //     .attr("dy", ".75em")
