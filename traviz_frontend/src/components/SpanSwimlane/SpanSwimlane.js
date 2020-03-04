@@ -224,10 +224,10 @@ class SpanSwimlane extends Component {
         // Get start, end and duration
         let start = getStartTime(this.state.trace);
         let end = getEndTime(this.state.trace);
-        let duration = end - start;
+        // let duration = end - start;
 
         // Create map that contains the proper thread ids on each lane
-        let threadToLaneMap = mapThreadsIdsToLane(spans);
+        // let threadToLaneMap = mapThreadsIdsToLane(spans);
 
         var margin = { top: 20, right: 10, bottom: 100, left: 10 }
             , width = 1870 - margin.left - margin.right
@@ -236,7 +236,7 @@ class SpanSwimlane extends Component {
 
         // var x_padding = 0.1 * duration;
         var x = d3v3.scale.linear().domain([start, end]).range([0, width]);
-        var x1 = d3v3.scale.linear().domain([start, end]).range([0, width]);
+        // var x1 = d3v3.scale.linear().domain([start, end]).range([0, width]);
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         // var y1 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, mainHeight]);
@@ -298,9 +298,19 @@ class SpanSwimlane extends Component {
             .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
             .attr('x2', width)
             .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-            .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
+            .attr('stroke', 'white');
 
         // Draw the last lane so we have a box
+        let lastLane = lanes[lanes.length - 1] 
+        mini.append('g').selectAll('.laneLines')
+            .data(lanes)
+            .enter().append('line')
+            .attr('x1', 0)
+            .attr('y1', d3v3.round(y2(lastLane.id + 1)) + 0.5)
+            .attr('x2', width)
+            .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
+            .attr('stroke', 'white')
+            .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
 
         // mini.append('g').selectAll('.laneText')
         //     .data(lanes)
@@ -546,12 +556,11 @@ class SpanSwimlane extends Component {
             let data = d3v3.layout.histogram()
                 .bins(histX.ticks(15))(logData);
 
-            let color = "#b1de00";
             let histYMax = d3v3.max(data, function (d) { return d.length });
             let histYMin = d3v3.min(data, function (d) { return d.length });
-            let colorScale = d3v3.scale.linear()
-                .domain([histYMin, histYMax])
-                .range([d3v3.rgb(color).brighter(), d3v3.rgb(color).darker()]);
+            // let colorScale = d3v3.scale.linear()
+            //     .domain([histYMin, histYMax])
+            //     .range([d3v3.rgb(color).brighter(), d3v3.rgb(color).darker()]);
 
             let histY = d3v3.scale.linear()
                 .domain([0, histYMax])
@@ -567,7 +576,6 @@ class SpanSwimlane extends Component {
                 .attr("class", "bar")
                 .attr("transform", function (d) { return "translate(" + histX(d.x) + "," + histY(d.y) + ")"; });
 
-            // console.log(tasks)
             bar.append("rect")
                 .attr("x", 1)
                 .attr("width", (histX(data[0].dx) - histX(0)) - 1)
@@ -579,7 +587,7 @@ class SpanSwimlane extends Component {
                     if (logDur !== null && logDur >= min && logDur <= max) {
                         return "#fff600" // Red
                     } else {
-                        return "#8EB200" //
+                        return "#8EB200" // Green
                     }
                 });
 
