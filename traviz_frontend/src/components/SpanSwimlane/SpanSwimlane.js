@@ -49,28 +49,6 @@ function getEndTime(events) {
     return lastEnd
 }
 
-function getConnectingLines(events) {
-    let mapOfEvents = new Map()
-    events.forEach(event => {
-        mapOfEvents.set(event.EventID, event)
-    })
-
-    let connectingLines = new Array()
-    events.forEach(event => {
-        if (event.ParentEventID !== null) {
-            event.ParentEventID.forEach(pid => {
-                let parentEvent = mapOfEvents.get(pid)
-                if (event.ThreadID != parentEvent.ThreadID) {
-                    let line = { origin: parentEvent, destination: event }
-                    connectingLines.push(line)
-                }
-            })
-
-        }
-    })
-    return connectingLines
-}
-
 function createSpans(events) {
     let spans = new Array();
     let count = 0
@@ -99,14 +77,6 @@ function createSpans(events) {
         }
     });
     return spans
-}
-
-function mapThreadsIdsToLane(spans) {
-    let threadToLaneMap = new Map()
-    spans.forEach(span => {
-        threadToLaneMap.set(span.id, span.y_id)
-    });
-    return threadToLaneMap
 }
 
 function makeEventMap(events) {
@@ -204,10 +174,6 @@ class SpanSwimlane extends Component {
         let tasks = this.state.tasks;
         let lanes = createLanes(this.state.trace);
         let spans = createSpans(this.state.trace);
-        let connectingLines = getConnectingLines(events);
-
-        // Create an event map and span map to get event and span faster,
-        // but still need the array to pass it to d3.
         let spanMap = makeSpanMap(spans);
         let eventMap = makeEventMap(events);
 
@@ -224,22 +190,16 @@ class SpanSwimlane extends Component {
         // Get start, end and duration
         let start = getStartTime(this.state.trace);
         let end = getEndTime(this.state.trace);
-        // let duration = end - start;
 
         // Create map that contains the proper thread ids on each lane
-        // let threadToLaneMap = mapThreadsIdsToLane(spans);
 
         var margin = { top: 20, right: 10, bottom: 100, left: 10 }
             , width = 1870 - margin.left - margin.right
             , miniHeight = lanes.length * 20 + 50
-        // , mainHeight = height - miniHeight - 50;
 
-        // var x_padding = 0.1 * duration;
         var x = d3v3.scale.linear().domain([start, end]).range([0, width]);
-        // var x1 = d3v3.scale.linear().domain([start, end]).range([0, width]);
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
-        // var y1 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, mainHeight]);
         var y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
 
         var chart = d3v3.select('#swimlane')
@@ -248,47 +208,11 @@ class SpanSwimlane extends Component {
             .attr('height', miniHeight + margin.top + margin.bottom)
             .attr('class', 'chart');
 
-
-        // chart.append('defs').append('clipPath')
-        //     .attr('id', 'clip')
-        //     .append('rect')
-        //     .attr('width', width)
-        //     .attr('height', mainHeight);
-
-        // var main = chart.append('g')
-        //     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-        //     .attr('width', width)
-        //     .attr('height', mainHeight)
-        //     .attr('class', 'main');
-
         var mini = chart.append('g')
             .attr('transform', 'translate(' + margin.left + ',' + 60 + ')')
             .attr('width', width)
             .attr('height', miniHeight)
             .attr('class', 'mini');
-
-        // draw the lanes for the main chart
-        // main.append('g').selectAll('.laneLines')
-        //     .data(lanes)
-        //     .enter().append('line')
-        //     .attr('x1', 0)
-        //     .attr('y1', function (d) { return d3v3.round(y1(d.id)) + 0.5; })
-        //     .attr('x2', width)
-        //     .attr('y2', function (d) { return d3v3.round(y1(d.id)) + 0.5; })
-        //     .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
-
-        // main.append('g').selectAll('.laneText')
-        //     .data(lanes)
-        //     .enter().append('text')
-        //     .text(function (d) { return d.label; })
-        //     .attr('x', -10)
-        //     .attr('y', function (d) { return y1(d.id + .5); })
-        //     .attr('dy', '0.5ex')
-        //     .attr('text-anchor', 'end')
-        //     .attr('fill', 'white')
-        //     .style('font-weight', 'bold')
-        //     .attr('class', 'laneText');
-
 
         // draw the lanes for the mini chart
         mini.append('g').selectAll('.laneLines')
@@ -298,7 +222,7 @@ class SpanSwimlane extends Component {
             .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
             .attr('x2', width)
             .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-            .attr('stroke', 'white');
+            .attr('stroke', "#979797");
 
         // Draw the last lane so we have a box
         let lastLane = lanes[lanes.length - 1] 
@@ -309,93 +233,13 @@ class SpanSwimlane extends Component {
             .attr('y1', d3v3.round(y2(lastLane.id + 1)) + 0.5)
             .attr('x2', width)
             .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
-            .attr('stroke', 'white')
-            .attr('stroke', function (d) { return d.label === '' ? 'white' : 'white' });
-
-        // mini.append('g').selectAll('.laneText')
-        //     .data(lanes)
-        // .enter().append('text')
-        // // .text(function (d) { return d.label; })
-        // .attr('x', -10)
-        // .attr('y', function (d) { return y2(d.id + .5); })
-        // .attr('dy', '0.5ex')
-        // .attr('text-anchor', 'end')
-        // .style('font-weight', 'bold')
-        // .attr('fill', "white")
-        // .attr('class', 'laneText');
-
-        // draw the x axis
-        // var xAxis = d3v3.svg.axis()
-        //     .scale(x)
-        //     .orient('bottom')
-        // .ticks(d3v3.time.mondays, (x.domain()[1] - x.domain()[0]) > 15552e6 ? 2 : 1)
-        // .ticks(5)
-        // .tickFormat((d) => {
-        //     let scaledVals = x(d)
-        //     return d3v3.round(scaledVals)
-        // })
-        // .tickSize(6, 0, 0);
-
-        // var x1Axis = d3v3.svg.axis()
-        //     .scale(x1)
-        //     .orient('bottom')
-        //     .ticks(5)
-        //     .tickFormat((d) => {
-        //         let scaledVals = x1(d)
-        //         return d3v3.round(scaledVals)
-        //     })
-        //     .tickSize(6, 0, 0)
-
-        // main.append('g')
-        //     .attr('transform', 'translate(0,' + mainHeight + ')')
-        //     .attr('class', 'main axis')
-        //     .attr('fill', 'white')
-        //     .call(x1Axis);
-
-        // mini.append('g')
-        //     .attr('transform', 'translate(0,' + miniHeight + ')')
-        //     .attr('class', 'axis')
-        //     .attr('fill', 'white')
-        //     .call(xAxis);
-
-        // draw the spans
-        // var itemRects = main.append('g')
-        //     .attr('clip-path', 'url(#clip)');
+            .attr('stroke', "#979797");
 
         mini.append('g').selectAll('miniItems')
             .data(getPaths(spans))
             .enter().append('path')
             .attr('class', function (d) { return 'miniItem ' + d.class; })
             .attr('d', function (d) { return d.path; });
-
-        // Create node for event circles
-        // let circles = main.append("g")
-
-        // Create node for event lines
-        // let lines = main.append("svg")
-        //     .attr("stroke-width", 2)
-        //     .attr("stroke", "#ffd800")
-
-        // invisible hit area to move around the selection window
-        // mini.append('rect')
-        //     .attr('pointer-events', 'painted')
-        //     .attr('width', width)
-        //     .attr('height', miniHeight)
-        //     .attr('visibility', 'hidden')
-        //     .on('mouseup', moveBrush);
-
-        // Draw the selection area
-        // var brush = d3v3.svg.brush()
-        //     .x(x)
-        //     .extent([start, end])
-        //     .on("brush", display);
-
-        // mini.append('g')
-        //     .attr('class', 'x brush')
-        //     .call(brush)
-        //     .selectAll('rect')
-        //     .attr('y', 1)
-        //     .attr('height', miniHeight - 1);
 
         mini.selectAll('rect.background').remove();
 
@@ -515,17 +359,6 @@ class SpanSwimlane extends Component {
             }
             return result;
         }
-
-        // function moveBrush() {
-        //     var origin = d3v3.mouse(this)
-        //         , point = x.invert(origin[0])
-        //         , halfExtent = (brush.extent()[1] - brush.extent()[0]) / 2
-        //         , start = point - halfExtent
-        //         , end = point + halfExtent;
-
-        //     brush.extent([start, end]);
-        //     display();
-        // }
     }
 
     createHistograms(tasks) {
@@ -536,6 +369,7 @@ class SpanSwimlane extends Component {
 
         tasks.forEach(task => {
             let logData = task.Data.filter(d => d != 0).map(d => Math.log(d))
+            logData = task.Data
 
             let minDur = Math.min.apply(Math, logData)
             let maxDur = Math.max.apply(Math, logData)
@@ -558,17 +392,10 @@ class SpanSwimlane extends Component {
 
             let histYMax = d3v3.max(data, function (d) { return d.length });
             let histYMin = d3v3.min(data, function (d) { return d.length });
-            // let colorScale = d3v3.scale.linear()
-            //     .domain([histYMin, histYMax])
-            //     .range([d3v3.rgb(color).brighter(), d3v3.rgb(color).darker()]);
 
             let histY = d3v3.scale.linear()
                 .domain([0, histYMax])
                 .range([histHeight, 0]);
-
-            // let histXAxis = d3v3.svg.axis()
-            //     .scale(histX)
-            //     .orient("bottom")
 
             let bar = histSvg.selectAll(".bar")
                 .data(data)
@@ -584,34 +411,13 @@ class SpanSwimlane extends Component {
                     let min = Math.min.apply(Math, d);
                     let max = Math.max.apply(Math, d);
                     let logDur = Math.log(task.Duration);
+                    logDur = task.Duration
                     if (logDur !== null && logDur >= min && logDur <= max) {
                         return "#fff600" // Red
                     } else {
                         return "#8EB200" // Green
                     }
                 });
-
-            // bar.append("text")
-            //     .attr("dy", ".75em")
-            //     .attr("y", -12)
-            //     .attr("x", (histX(data[0].dx) - histX(0)) / 2)
-            //     .attr("text-anchor", "middle")
-            //     .attr("class", "histText")
-            //     .text(function (d) { return d.y; })
-            //     .style("fill", "#bebebe");
-
-            // histSvg.append("g")
-            //     .attr("class", "x axis")
-            //     .attr("transform", "translate(0," + histHeight + ")")
-            //     .call(histXAxis)
-            //     .style("fill", "#bebebe");
-
-            // histSvg.append("text")
-            //     .attr("transform", "translate(" + (histWidth / 2) + " ," + (histMargin.top / 2) + ")")
-            //     .style("fill", "#bebebe")
-            //     .style("text-anchor", "middle")
-            //     .style("font-size", "5px")
-            //     .text("Task: " + task.Operation);
         })
 
     }
