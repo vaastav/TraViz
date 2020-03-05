@@ -254,7 +254,7 @@ class SpanSwimlane extends Component {
 
             tasks.forEach(task => {
                 let logData = task.Data.filter(d => d != 0).map(d => Math.log(d))
-                logData = task.Data
+                logData = task.Data.filter(d => d !== 0).map(d => Math.log(d));
 
                 let minDur = Math.min.apply(Math, logData)
                 let maxDur = Math.max.apply(Math, logData)
@@ -277,10 +277,10 @@ class SpanSwimlane extends Component {
                     .style("fill", "white")
                     .on("mouseover", function () {
                         d3v3.selectAll("rect.bleh")
-                        .style("opacity", 0)
-                        
+                            .style("opacity", 0)
+
                         d3v3.select(this)
-                        .style("opacity", 0.1)
+                            .style("opacity", 0.1)
 
                         setSelectedSpan(spans, task.ThreadID)
                         let miniItems = mini.selectAll('miniItems').data(getPaths(spans))
@@ -322,7 +322,6 @@ class SpanSwimlane extends Component {
                         let min = Math.min.apply(Math, d);
                         let max = Math.max.apply(Math, d);
                         let logDur = Math.log(task.Duration);
-                        logDur = task.Duration
                         if (logDur !== null && logDur >= min && logDur <= max) {
                             return "red"
                         } else {
