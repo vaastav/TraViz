@@ -113,24 +113,6 @@ function setChildSpans(spanMap, eventMap) {
     });
 }
 
-function threadIdToIdMap(spans) {
-    let map = new Map();
-    for (let i = 0; i < spans.length; i++) {
-        let span = spans[i];
-        map.set(span.id, i);
-    }
-    return map;
-}
-
-function idToThreadIdMap(spans) {
-    let map = new Map();
-    for (let i = 0; i < spans.length; i++) {
-        let span = spans[i];
-        map.set(i, span.id);
-    }
-    return map;
-}
-
 function setSelectedSpan(spans, threadId) {
     spans.forEach(span => {
         if (span.id === threadId) {
@@ -139,6 +121,20 @@ function setSelectedSpan(spans, threadId) {
             span.class = "normal"
         }
     })
+}
+
+function sortTasks(tasks, spans) {
+    let sortedTasks = new Array(tasks.length);
+    for (let i = 0; i < tasks.length; i++) {
+        let task = tasks[i];
+        for (let j = 0; j < spans.length; j++) {
+            let span = spans[j];
+            if (task.ThreadID === span.id) {
+                sortedTasks[j] = task;
+            }
+        }
+    }
+    return sortedTasks;
 }
 
 class SpanSwimlane extends Component {
@@ -169,13 +165,12 @@ class SpanSwimlane extends Component {
 
         // Define events, lanes, spand and connecting lines
         let events = this.state.trace;
-        let tasks = this.state.tasks;
-        let lanes = createLanes(this.state.trace);
         let spans = createSpans(this.state.trace);
+        let tasks = sortTasks(this.state.tasks, spans);
+        this.state.taks = tasks;
+        let lanes = createLanes(this.state.trace);
         let spanMap = makeSpanMap(spans);
         let eventMap = makeEventMap(events);
-        let idToThreadId = idToThreadIdMap(spans);
-        let threadIdToId = threadIdToIdMap(spans);
         // Find the child span of each span and then use that to
         // find the critical path of a trace.
         setChildSpans(spanMap, eventMap);
