@@ -175,7 +175,7 @@ class SpanSwimlane extends Component {
         let events = this.state.trace;
         let spans = createSpans(this.state.trace);
         let tasks = sortTasks(this.state.tasks, spans);
-        this.state.taks = tasks;
+        this.state.tasks = tasks;
         let lanes = createLanes(this.state.trace);
         let spanMap = makeSpanMap(spans);
         let eventMap = makeEventMap(events);
