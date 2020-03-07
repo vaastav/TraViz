@@ -22,7 +22,7 @@
 }
 
 .todayLine {
-	stroke: blue;
+	stroke: #1ECBE1;
 	stroke-width: 1.5;
 }
 
@@ -41,8 +41,8 @@
 }
 
 .selected {
-	stroke: red;
-	fill: red;
+	stroke: #E1341E;
+	fill: #E1341E;
 	opacity: 1;
 }
 
@@ -53,7 +53,7 @@
 }
 
 .brush .extent {
-	fill: blue;
+	fill: #1ECBE1;
 	fill-opacity: .165;
 }
 

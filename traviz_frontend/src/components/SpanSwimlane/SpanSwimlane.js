@@ -140,7 +140,7 @@ function setSelectedSpan(spans, threadId, tasks) {
                 let max = Math.max.apply(Math, d);
                 let logDur = Math.log(task.Duration);
                 if (logDur !== null && logDur >= min && logDur <= max) {
-                    return "red"
+                    return "#E1341E" // Red
                 } else {
                     return "#8EB200" // Green
                 }
@@ -162,7 +162,7 @@ function setSelectedSpan(spans, threadId, tasks) {
                 let max = Math.max.apply(Math, d);
                 let logDur = Math.log(task.Duration);
                 if (logDur !== null && logDur >= min && logDur <= max) {
-                    return "blue"
+                    return "#1693A3" // Blue
                 } else {
                     return "#8EB200" // Green
                 }
@@ -368,7 +368,7 @@ class SpanSwimlane extends Component {
                         let max = Math.max.apply(Math, d);
                         let logDur = Math.log(task.Duration);
                         if (logDur !== null && logDur >= min && logDur <= max) {
-                            return "blue"
+                            return "#1ECBE1"
                         } else {
                             return "#8EB200" // Green
                         }
@@ -399,7 +399,7 @@ class SpanSwimlane extends Component {
         function createLegend() {
             var keys = ["Selected task", "Previous Selected Task"];
             var legend = d3v3.select("#legend").append("svg");
-            var colors = ["red", "orange"]
+            var colors = ["#E1341E", "orange"]
             legend.selectAll("mydots").data(keys).enter()
                   .append("circle")
                         .attr("cx", function(d,i) { return 100})
