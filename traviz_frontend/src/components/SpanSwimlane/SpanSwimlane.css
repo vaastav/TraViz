@@ -46,6 +46,12 @@
 	opacity: 1;
 }
 
+.prevselected {
+    stroke: orange;
+    fill: orange;
+    opacity: 1;
+}
+
 .brush .extent {
 	fill: blue;
 	fill-opacity: .165;

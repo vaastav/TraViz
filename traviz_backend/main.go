@@ -889,7 +889,10 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
         }
         w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(xtrace.Sort_events(traces[0].Events))
+        //sorted_events := xtrace.Sort_events(traces[0].Events)
+        sorted_events := traces[0].Events
+        log.Println(len(sorted_events))
+        json.NewEncoder(w).Encode(sorted_events)
     }
 }
 

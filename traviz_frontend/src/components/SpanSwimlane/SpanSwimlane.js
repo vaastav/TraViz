@@ -115,10 +115,18 @@ function setChildSpans(spanMap, eventMap) {
 
 function setSelectedSpan(spans, threadId) {
     spans.forEach(span => {
+        if (span.class == "prevselected") {
+            console.log(span.class)
+            span.class = "normal"
+        }
+        if (span.class == "selected") {
+            console.log(span.class)
+            span.class = "prevselected"
+        }
+    })
+    spans.forEach(span => {
         if (span.id === threadId) {
             span.class = "selected"
-        } else {
-            span.class = "normal"
         }
     })
 }
@@ -318,7 +326,7 @@ class SpanSwimlane extends Component {
                         let max = Math.max.apply(Math, d);
                         let logDur = Math.log(task.Duration);
                         if (logDur !== null && logDur >= min && logDur <= max) {
-                            return "red"
+                            return "blue"
                         } else {
                             return "#8EB200" // Green
                         }
