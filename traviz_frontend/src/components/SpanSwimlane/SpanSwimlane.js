@@ -248,6 +248,7 @@ class SpanSwimlane extends Component {
             .style("opacity", 0);
 
         createHistograms();
+        createLegend();
 
         function createHistograms() {
             // Define size of one histogram
@@ -352,10 +353,34 @@ class SpanSwimlane extends Component {
             }
             return result;
         }
+
+        function createLegend() {
+            var keys = ["Selected task", "Previous Selected Task"];
+            var legend = d3v3.select("#legend").append("svg");
+            var colors = ["red", "orange"]
+            legend.selectAll("mydots").data(keys).enter()
+                  .append("circle")
+                        .attr("cx", function(d,i) { return 100})
+                        .attr("cy", function(d,i){ return 100 + i * 25;})
+                        .attr("r", 7)
+                        .style("fill", function(d,i) {return colors[i];});
+
+            legend.selectAll("mylabels")
+                  .data(keys)
+                  .enter()
+                  .append("text")
+                    .attr("x", function(d,i) {return 120} )
+                    .attr("y", function(d,i) {return 100 + i * 25;})
+                    .style("fill", "white")
+                    .text(function(d){ return d})
+                    .attr("text-anchor", "left")
+                    .style("alignment-baseline", "middle") 
+        }
     }
 
     render() {
         return <div id="container" >
+            <div id="legend"></div>
             <div id="swimlane"> </div>
             <div id="hists"></div>
         </div>
