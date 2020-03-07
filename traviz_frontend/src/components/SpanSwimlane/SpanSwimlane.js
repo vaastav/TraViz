@@ -113,20 +113,60 @@ function setChildSpans(spanMap, eventMap) {
     });
 }
 
-function setSelectedSpan(spans, threadId) {
+function setSelectedSpan(spans, threadId, tasks) {
+    var prevprevThreadID = 0;
+    var prevThreadID = 0;
     spans.forEach(span => {
         if (span.class == "prevselected") {
+            prevprevThreadID = span.id;
             console.log(span.class)
             span.class = "normal"
         }
         if (span.class == "selected") {
             console.log(span.class)
+            prevThreadID = span.id;
             span.class = "prevselected"
         }
     })
     spans.forEach(span => {
         if (span.id === threadId) {
             span.class = "selected"
+        }
+    })
+    tasks.forEach(task => {
+        if (task.ThreadID === threadId) {
+            task.bar.attr("fill", function (d) {
+                let min = Math.min.apply(Math, d);
+                let max = Math.max.apply(Math, d);
+                let logDur = Math.log(task.Duration);
+                if (logDur !== null && logDur >= min && logDur <= max) {
+                    return "red"
+                } else {
+                    return "#8EB200" // Green
+                }
+            })
+        } else if (task.ThreadID === prevThreadID){
+            task.bar.attr("fill", function (d) {
+                let min = Math.min.apply(Math, d);
+                let max = Math.max.apply(Math, d);
+                let logDur = Math.log(task.Duration);
+                if (logDur !== null && logDur >= min && logDur <= max) {
+                    return "orange"
+                } else {
+                    return "#8EB200" // Green
+                }
+            })
+        } else {
+            task.bar.attr("fill", function (d) {
+                let min = Math.min.apply(Math, d);
+                let max = Math.max.apply(Math, d);
+                let logDur = Math.log(task.Duration);
+                if (logDur !== null && logDur >= min && logDur <= max) {
+                    return "blue"
+                } else {
+                    return "#8EB200" // Green
+                }
+            })
         }
     })
 }
@@ -141,6 +181,7 @@ function sortTasks(tasks, spans) {
                 sortedTasks[j] = task;
             }
         }
+        task.bar = null;
     }
     return sortedTasks;
 }
@@ -248,7 +289,7 @@ class SpanSwimlane extends Component {
             .style("opacity", 0);
 
         createHistograms();
-        createLegend();
+        //createLegend(); //This legend suckssss
 
         function createHistograms() {
             // Define size of one histogram
@@ -286,7 +327,7 @@ class SpanSwimlane extends Component {
                         d3v3.select(this)
                             .style("opacity", 0.1)
 
-                        setSelectedSpan(spans, task.ThreadID)
+                        setSelectedSpan(spans, task.ThreadID, tasks)
                         let miniItems = mini.selectAll('miniItems').data(getPaths(spans))
                         miniItems.enter().append('path')
                             .attr('class', function (d) {
@@ -318,7 +359,7 @@ class SpanSwimlane extends Component {
                     .attr("transform", function (d) { return "translate(" + histX(d.x) + "," + histY(d.y) + ")"; })
                     .style("align", "center")
 
-                bar.append("rect")
+                let rect = bar.append("rect")
                     .attr("class", "align-bars")
                     .attr("width", (histX(data[0].dx) - histX(0)) - 1)
                     .attr("height", function (d) { return histHeight - histY(d.y); })
@@ -333,6 +374,7 @@ class SpanSwimlane extends Component {
                         }
                     })
                     .style("align", "center")
+                task.bar = rect
             })
 
         }
