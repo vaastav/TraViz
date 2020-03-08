@@ -99,14 +99,16 @@ function setChildSpans(spanMap, eventMap) {
         if (span.parentEventID !== null && span.parentEventID !== undefined) {
             span.parentEventID.forEach(parentEventId => {
                 let parentEvent = eventMap.get(parentEventId);
-                let parentSpanId = parentEvent.ThreadID;
-                let parentSpan = spanMap.get(parentSpanId);
-                if (parentSpan.childSpanId == null || parentSpan.childSpanId == undefined) {
-                    let childSpanId = new Array()
-                    childSpanId.push(span.id);
-                    parentSpan.childSpanId = childSpanId
-                } else {
-                    parentSpan.childSpanId.push(span.id);
+                if (parentEvent !== undefined) {
+                    let parentSpanId = parentEvent.ThreadID;
+                    let parentSpan = spanMap.get(parentSpanId);
+                    if (parentSpan.childSpanId == null || parentSpan.childSpanId == undefined) {
+                        let childSpanId = new Array()
+                        childSpanId.push(span.id);
+                        parentSpan.childSpanId = childSpanId
+                    } else {
+                        parentSpan.childSpanId.push(span.id);
+                    }
                 }
             });
         }
@@ -119,11 +121,9 @@ function setSelectedSpan(spans, threadId, tasks) {
     spans.forEach(span => {
         if (span.class == "prevselected") {
             prevprevThreadID = span.id;
-            console.log(span.class)
             span.class = "normal"
         }
         if (span.class == "selected") {
-            console.log(span.class)
             prevThreadID = span.id;
             span.class = "prevselected"
         }
@@ -213,7 +213,7 @@ class SpanSwimlane extends Component {
     createSwimlane() {
 
         // Define events, lanes, spand and connecting lines
-        let events = this.state.trace;
+        let events = this.state.trace.sort((a, b) => {return a.Timestamp - b.Timestamp})
         let spans = createSpans(this.state.trace);
         let tasks = sortTasks(this.state.tasks, spans);
         this.state.tasks = tasks;
@@ -222,7 +222,7 @@ class SpanSwimlane extends Component {
         let eventMap = makeEventMap(events);
         // Find the child span of each span and then use that to
         // find the critical path of a trace.
-        setChildSpans(spanMap, eventMap);
+        // setChildSpans(spanMap, eventMap);
 
         // Get start, end and duration
         let start = getStartTime(this.state.trace);
@@ -368,7 +368,7 @@ class SpanSwimlane extends Component {
                         let max = Math.max.apply(Math, d);
                         let logDur = Math.log(task.Duration);
                         if (logDur !== null && logDur >= min && logDur <= max) {
-                            return "#1ECBE1"
+                            return "#1693A3"
                         } else {
                             return "#8EB200" // Green
                         }
