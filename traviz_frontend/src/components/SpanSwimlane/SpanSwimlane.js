@@ -48,6 +48,7 @@ function getEndTime(events) {
 }
 
 function createSpans(events) {
+    //if we are going to try add molehills into the frontend then this is personally where I would add it - as an array on the span and then should be able to edit the drawing method too
     let spans = new Array();
     let count = 0
     events.forEach(event => {
@@ -142,7 +143,7 @@ function setSelectedSpan(spans, threadId, tasks) {
                 if (logDur !== null && logDur >= min && logDur <= max) {
                     return "#E1341E" // Red
                 } else {
-                    return "#8EB200" // Green
+                    return "#888888" // Dark Grey
                 }
             })
         } else if (task.ThreadID === prevThreadID){
@@ -153,7 +154,7 @@ function setSelectedSpan(spans, threadId, tasks) {
                 if (logDur !== null && logDur >= min && logDur <= max) {
                     return "orange"
                 } else {
-                    return "#8EB200" // Green
+                    return "#888888" // Dark Grey
                 }
             })
         } else {
@@ -162,9 +163,9 @@ function setSelectedSpan(spans, threadId, tasks) {
                 let max = Math.max.apply(Math, d);
                 let logDur = Math.log(task.Duration);
                 if (logDur !== null && logDur >= min && logDur <= max) {
-                    return "#1693A3" // Blue
+                    return "#8EB200" // Same Green as span
                 } else {
-                    return "#8EB200" // Green
+                    return "#888888" // Dark Grey
                 }
             })
         }
@@ -368,9 +369,9 @@ class SpanSwimlane extends Component {
                         let max = Math.max.apply(Math, d);
                         let logDur = Math.log(task.Duration);
                         if (logDur !== null && logDur >= min && logDur <= max) {
-                            return "#1693A3"
+                            return "#8EB200" // Same colour as span - A2CB00 - slightly brighter possibility
                         } else {
-                            return "#8EB200" // Green
+                            return "#888888" // Dark grey
                         }
                     })
                     .style("align", "center")
@@ -382,7 +383,7 @@ class SpanSwimlane extends Component {
         function getPaths(items) {
             var paths = {}
             var d
-            var offset = .5 * y2(1) + 0.5
+            var offset = .5 * y2(1) + 0.5 //when adding molehills, makes sense to shift the spans down in the lane a little bitm replace first .5 with .7 or .75
             var result = [];
             for (var i = 0; i < items.length; i++) {
                 d = items[i];
