@@ -1,9 +1,9 @@
 {
-    "dir": "/Users/thomasdavidson/Documents/Trace_Datasets/DeathStar/deathstarbench_traces-master/socialNetwork/x-traces/",
+    "dir": "..//Trace_Datasets/deathstarbench_traces/socialNetwork/x-traces/",
     "db": "traviz",
-    "username": "travizUser",
-    "pwd": "traviz",
-    "ip" : ":9000",
+    "username": "username",
+    "pwd": "password",
+    "ip" : "IP:PORT",
     "repo" : "https://github.com/JonathanMace/DeathStarBench/blob/81594d4a35b0d9b7263740577462bb91fff57c35",
     "swaps" : [
         {
