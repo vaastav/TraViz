@@ -219,17 +219,18 @@ class SpanSwimlane extends Component {
         let end = getEndTime(this.state.trace);
 
         // Create map that contains the proper thread ids on each lane
-
         var margin = { top: 20, right: 10, bottom: 100, left: 10 }
             , width = 1870 - margin.left - margin.right
-            , miniHeight = lanes.length * 20 + 50
+        
+        // Gives size of swimlane with mini lanes. 20 is the height of each lane
+        var miniHeight = lanes.length * 20
 
         var x = d3v3.scale.linear().domain([start, end]).range([0, width]);
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         var y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
 
-        let paths = getPaths(spans)
+        // let paths = getPaths(spans)
 
 
         var chart = d3v3.select('#swimlane')
@@ -254,6 +255,8 @@ class SpanSwimlane extends Component {
             .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
             .attr('stroke', "#979797");
 
+        console.log(spans)
+        console.log(lanes)
         // Draw the last lane so we have a box
         let lastLane = lanes[lanes.length - 1]
         mini.append('g').selectAll('.laneLines')
@@ -265,11 +268,26 @@ class SpanSwimlane extends Component {
             .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
             .attr('stroke', "#979797");
 
-        mini.append('g').selectAll('miniItems')
-            .data(getPaths(spans))
-            .enter().append('path')
-            .attr('class', function (d) { return 'miniItem ' + d.class; })
-            .attr('d', function (d) { return d.path; });
+        let spanRectangles = mini.append('g').selectAll('rect')
+        .data(spans)
+        .attr('x', (d) => {return x(d.start)})
+        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - 2.5})
+        .attr('width', (d) => {return x(d.end) - x(d.start)})
+
+        spanRectangles.enter().append('rect')
+        .attr('x', (d) => {return x(d.start)})
+        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - 2.5})
+        .attr('width', (d) => {return x(d.end) - x(d.start)})
+        .attr('height', (d) => {return 5})
+        .attr('class', (d) => {return ''})
+        .attr('stroke', '#c6e1ec')
+        .attr('fill', '#c6e1ec')
+
+        // mini.append('g').selectAll('miniItems')
+        //     .data(getPaths(spans))
+        //     .enter().append('path')
+        //     .attr('class', function (d) { return 'miniItem ' + d.class; })
+        //     .attr('d', function (d) { return d.path; });
 
         mini.selectAll('rect.background').remove();
 
@@ -318,13 +336,13 @@ class SpanSwimlane extends Component {
                             .style("opacity", 0.1)
 
                         setSelectedSpan(spans, task.ThreadID, tasks)
-                        let miniItems = mini.selectAll('miniItems').data(getPaths(spans))
-                        miniItems.enter().append('path')
-                            .attr('class', function (d) {
-                                return "miniItem " + d.class
-                            })
-                            .attr('d', function (d) { return d.path; });
-                        miniItems.exit().remove()
+                        // let miniItems = mini.selectAll('miniItems').data(getPaths(spans))
+                        // miniItems.enter().append('path')
+                        //     .attr('class', function (d) {
+                        //         return "miniItem " + d.class
+                        //     })
+                        //     .attr('d', function (d) { return d.path; });
+                        // miniItems.exit().remove()
                     })
 
 
