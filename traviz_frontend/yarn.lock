@@ -2816,13 +2816,6 @@ core-util-is@1.0.2, core-util-is@~1.0.0:
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
   integrity sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
 
-cose-base@^1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/cose-base/-/cose-base-1.0.1.tgz#8b8dd73d3cc5dc72bd038c6160e49757f703d9b8"
-  integrity sha512-LErvsHUOzYseXGFKWGCAQBTePO1iYZ9JL+YZlmoyqZ7EDcBzrEMRSouOGszQl72J6VK0AVrJbnNCf3eciqy7SA==
-  dependencies:
-    layout-base "^1.0.0"
-
 cosmiconfig@^5.0.0, cosmiconfig@^5.0.5, cosmiconfig@^5.2.1:
   version "5.2.1"
   resolved "https://registry.yarnpkg.com/cosmiconfig/-/cosmiconfig-5.2.1.tgz#040f726809c591e77a17c0a3626ca45b4f168b1a"
@@ -3139,29 +3132,6 @@ cyclist@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-1.0.1.tgz#596e9698fd0c80e12038c2b82d6eb1b35b6224d9"
   integrity sha1-WW6WmP0MgOEgOMK4LW6xs1tiJNk=
-
-cytoscape-cose-bilkent@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/cytoscape-cose-bilkent/-/cytoscape-cose-bilkent-4.1.0.tgz#762fa121df9930ffeb51a495d87917c570ac209b"
-  integrity sha512-wgQlVIUJF13Quxiv5e1gstZ08rnZj2XaLHGoFMYXz7SkNfCDOOteKBE6SYRfA9WxxI/iBc3ajfDoc6hb/MRAHQ==
-  dependencies:
-    cose-base "^1.0.0"
-
-cytoscape@3.2.19:
-  version "3.2.19"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.2.19.tgz#7810624e118b7592acc4f4e62ca2ace70477d899"
-  integrity sha512-kg7jaamRmfW9bhwbCJHPIB32cVvfIOXcOXG/kV52mYWvFce/TZejpQZwDOWiH1SR3imxQHdhipjobFQoAx53MA==
-  dependencies:
-    heap "^0.2.6"
-    lodash.debounce "^4.0.8"
-
-cytoscape@^3.2.19:
-  version "3.12.1"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.12.1.tgz#48fe85481ba7ba4c3b77396426b6b9cc27fe2bb4"
-  integrity sha512-/TIrNXcWZdjTgB2BK2oJfroO8IAM6XSu9lCGEe3boJ68KHqH0fbSrc0tIOfibkzkMfUhFLNed9tcaoYdjxOnTQ==
-  dependencies:
-    heap "^0.2.6"
-    lodash.debounce "^4.0.8"
 
 d3-array@1, d3-array@^1.1.1, d3-array@^1.2.0, d3-array@^1.2.1:
   version "1.2.4"
@@ -5067,11 +5037,6 @@ he@1.2.x:
   resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
   integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
 
-heap@^0.2.6:
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/heap/-/heap-0.2.6.tgz#087e1f10b046932fc8594dd9e6d378afc9d1e5ac"
-  integrity sha1-CH4fELBGky/IWU3Z5tN4r8nR5aw=
-
 hex-color-regex@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/hex-color-regex/-/hex-color-regex-1.1.0.tgz#4c06fccb4602fe2602b3c93df82d7e7dbf1a8a8e"
@@ -6531,11 +6496,6 @@ last-call-webpack-plugin@^3.0.0:
     lodash "^4.17.5"
     webpack-sources "^1.1.0"
 
-layout-base@^1.0.0:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/layout-base/-/layout-base-1.0.2.tgz#1291e296883c322a9dd4c5dd82063721b53e26e2"
-  integrity sha512-8h2oVEZNktL4BH2JCOI90iD1yXwL6iNW7KcCKT2QZgQJR2vbqDsldCTPRU9NifTCqHZci57XvQQ15YTu+sTYPg==
-
 lazy-cache@^0.2.3:
   version "0.2.7"
   resolved "https://registry.yarnpkg.com/lazy-cache/-/lazy-cache-0.2.7.tgz#7feddf2dcb6edb77d11ef1d117ab5ffdf0ab1b65"
@@ -6644,11 +6604,6 @@ lodash.camelcase@^4.3.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz#b28aa6288a2b9fc651035c7711f65ab6190331a6"
   integrity sha1-soqmKIorn8ZRA1x3EfZathkDMaY=
-
-lodash.debounce@^4.0.8:
-  version "4.0.8"
-  resolved "https://registry.yarnpkg.com/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
-  integrity sha1-gteb/zCmfEAF/9XiUVMArZyk168=
 
 lodash.isnumber@^3.0.0:
   version "3.0.3"
@@ -8825,14 +8780,6 @@ react-bootstrap@^1.0.0-beta.16:
     react-transition-group "^4.0.0"
     uncontrollable "^7.0.0"
     warning "^4.0.3"
-
-react-cytoscapejs@^1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/react-cytoscapejs/-/react-cytoscapejs-1.2.1.tgz#ccce46acabf4f0c41dce9070743854f92b0dc050"
-  integrity sha512-8exVCetpzyGCAKuRjXPWGjFCnb22boZ3SXUPpPB/+wQI8Q8BwkT1URN3A7J1Czvj1qAbShh5QQ514mBUp7i7kw==
-  dependencies:
-    cytoscape "^3.2.19"
-    prop-types "^15.6.2"
 
 react-d3-graph@^2.3.0:
   version "2.3.0"

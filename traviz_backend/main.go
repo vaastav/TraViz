@@ -43,6 +43,8 @@ type Span struct {
     ProcessName string
     ProcessID int
     ThreadID int
+    StartTime time.Time
+    EndTime time.Time
 }
 
 type Swap struct {
@@ -210,15 +212,19 @@ func processSpan(events []xtrace.Event, traceID string, key string) Span {
     var latest_time_hrt uint64
     var last_event_id  string
     var source string
+    var earliest_timestamp int64
+    var latest_timestamp int64
 
     for _, event :=  range events {
         if event.HRT < earliest_time_hrt {
             earliest_time_hrt = event.HRT
+            earliest_timestamp = event.Timestamp
             eventID = event.EventID
             source = event.Source
         }
         if event.HRT > latest_time_hrt {
             latest_time_hrt = event.HRT
+            latest_timestamp = event.Timestamp
             last_event_id = event.EventID
         }
         label := event.Label
@@ -244,6 +250,8 @@ func processSpan(events []xtrace.Event, traceID string, key string) Span {
     span.ProcessName = pieces[0]
     span.ProcessID, _ = strconv.Atoi(pieces[1])
     span.ThreadID, _ = strconv.Atoi(pieces[2])
+    span.StartTime = time.Unix(0, earliest_timestamp * 1000000)
+    span.EndTime = time.Unix(0, latest_timestamp * 1000000)
 
     return span
 }
@@ -455,7 +463,7 @@ func (s * Server) LoadSpans() error {
         seen_traces[tid] = true
         locations[loc] = true
     }
-    span_stmtIns, err := s.DB.Prepare("INSERT INTO tasks VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    span_stmtIns, err := s.DB.Prepare("INSERT INTO tasks VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     if err != nil {
         return err
     }
@@ -519,7 +527,7 @@ func (s * Server) LoadSpans() error {
                 linenum, _ = strconv.Atoi(tokens[1])
                 fname = tokens[0]
             }
-            _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID)
+            _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID, span.StartTime, span.EndTime)
             if err != nil {
                 log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
                 return err

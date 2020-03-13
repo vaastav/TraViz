@@ -10,6 +10,8 @@ CREATE TABLE `traviz`.`tasks`(
     processName varchar(64),
     processID int,
     threadID BIGINT,
+    startTime TIMESTAMP,
+    endTime TIMESTAMP,
     primary key(trace_id, span_id, operation),
     foreign key(trace_id) references overview(trace_id)
 );
