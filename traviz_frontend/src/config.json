@@ -1,4 +1,4 @@
 {
-    "ipPortBackend":"40.112.251.74:9000",
+    "ipPortBackend":"localhost:9000",
     "protocol": "http"
 }

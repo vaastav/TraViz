@@ -7,6 +7,9 @@ import TaskService from "../../services/TaskService/TaskService";
 // TODO: Find best way to partition bins in x-axis
 //         - Static 20 bins at the moment. Make it dynamic to input.
 
+var molehillsOn = true; //display molehills on each span
+var molehillThreshold = 95; //set a threshold to highlight values above (set to 100 if not wanted)
+
 function createLanes(events) {
     let lanes = []
     let count = 0
@@ -75,6 +78,34 @@ function createSpans(events) {
             count++
         }
     });
+    //generating some random molehills for each span
+    spans.forEach(s => {
+        let molehills = new Array();
+        let durationMS = Math.round((s.end - s.start)/1000000);
+        //adding random values to molehills - one for every millisecond
+
+        var prevValue = Math.round(Math.random()*100);
+        let molehill = {
+            id: 0,
+            val: prevValue
+        };
+        molehills.push(molehill);
+        for(var i = 1; i<durationMS; i++){
+            //Making sure value varies by no more than 10% each time
+            var randomInt = Math.round(Math.random()*(20))+prevValue-10;
+
+            randomInt = Math.max(0,randomInt);
+            randomInt = Math.min(100,randomInt);
+            let molehill = {
+                id: i,
+                val: randomInt
+            }
+            molehills.push(molehill);
+            prevValue = randomInt;
+        }
+        s.molehills = molehills;
+    })
+    console.log(spans)
     return spans
 }
 
@@ -226,6 +257,7 @@ class SpanSwimlane extends Component {
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         var y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
+        var molehillY = d3v3.scale.linear().domain([0,100]).range([0, 10]);
 
         var chart = d3v3.select('#swimlane')
             .append('svg')
@@ -263,18 +295,41 @@ class SpanSwimlane extends Component {
         let spanRectangles = mini.append('g').selectAll('rect')
         .data(spans)
         .attr('x', (d) => {return x(d.start)})
-        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - 2.5})
+        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5)})
         .attr('width', (d) => {return x(d.end) - x(d.start)})
         .attr('class', (d) => {return d.class})
 
         spanRectangles.enter().append('rect')
         .attr('x', (d) => {return x(d.start)})
-        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - 2.5})
+        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5)})
         .attr('width', (d) => {return x(d.end) - x(d.start)})
         .attr('height', 5)
         .attr('class', (d) => {return d.class})
         .attr('stroke', '#c6e1ec')
         .attr('fill', '#c6e1ec')
+
+        
+        if(molehillsOn){
+            for (var i = 0; i < spans.length; i++) {
+                var mhWidth = (x(spans[i].end) - x(spans[i].start))/spans[i].molehills.length;
+                var spanStartPoint = x(spans[i].start);
+                let molehillRectangles = mini.append('g').selectAll('rect')
+                    .data(spans[i].molehills)
+                    .attr('x', 0)
+                    .attr('y', 0)
+                    .attr('width', 10)
+
+                molehillRectangles.enter().append('rect')
+                    .attr('x', (d) => {
+                            return spanStartPoint+d.id*mhWidth;
+                        })
+                    .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5)-molehillY(d.val) })
+                    .attr('width', mhWidth)
+                    .attr('height', (d) => molehillY(d.val))
+                    .attr('stroke', (d) => (d.val>molehillThreshold ? '#E2A6D9':'#A6937A'))
+                    .attr('fill', (d) => (d.val>molehillThreshold ? '#E2A6D9':'#A6937A'))
+            }
+        }
 
         mini.selectAll('rect.background').remove();
 
@@ -326,13 +381,13 @@ class SpanSwimlane extends Component {
 
                         spanRectangles.enter().append('rect')
                         .attr('x', (d) => {return x(d.start)})
-                        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - 2.5})
+                        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5)})
                         .attr('width', (d) => {return x(d.end) - x(d.start)})
                         .attr('height', 5)
                         .attr('class', (d) => {return d.class})
                         .attr('stroke', '#c6e1ec')
                         .attr('fill', '#c6e1ec')
-
+                        
                         spanRectangles.exit().remove()
                     })
 
@@ -381,7 +436,8 @@ class SpanSwimlane extends Component {
         function getPaths(items) {
             var paths = {}
             var d
-            var offset = .5 * y2(1) + 0.5 //when adding molehills, makes sense to shift the spans down in the lane a little bitm replace first .5 with .7 or .75
+            //when adding molehills, makes sense to shift the spans down in the lane a little bit, replace first .5 with .7 or .75
+            var offset = .5 * y2(1) + 0.5 
             var result = [];
             for (var i = 0; i < items.length; i++) {
                 d = items[i];
