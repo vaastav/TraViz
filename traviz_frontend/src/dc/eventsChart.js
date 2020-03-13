@@ -29,7 +29,7 @@ const eventsChartFunc = (divRef, ndx) => {
     .width(450)
     .height(200);
 
-    eventsChart.ordinalColors(['#b1de00'])
+    eventsChart.ordinalColors(['#c6e1ec'])
 
     eventsChart.xAxis().tickFormat(
         function (v) { return v; }  

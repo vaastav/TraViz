@@ -28,7 +28,7 @@ const dateChartFunc = (divRef, ndx) => {
     .width(450)
     .height(200);
 
-    dateChart.ordinalColors(['#b1de00'])
+    dateChart.ordinalColors(['#c6e1ec'])
 
     dateChart.xAxis().ticks(2).tickFormat(
         function (v) { return monthNames[v.getMonth()] + " " + v.getDate(); }

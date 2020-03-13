@@ -28,7 +28,7 @@ const durationChartFunc = (divRef, ndx) => {
     .width(450)
     .height(200);
 
-    durationChart.ordinalColors(['#b1de00'])
+    durationChart.ordinalColors(['#c6e1ec'])
     
     durationChart.xAxis().tickFormat(
         function (v) { return v;}

@@ -36,9 +36,9 @@
 
 /* Colours for standard spans */
 .normal {
-	stroke: #8EB200;
-	fill: #8EB200;
-	opacity: 0.7;
+	stroke: #c6e1ec;
+	fill: #c6e1ec;
+	opacity: 1;
 }
 
 .selected {
@@ -48,8 +48,8 @@
 }
 
 .prevselected {
-    stroke: orange;
-    fill: orange;
+    stroke: #c6e1ec;
+	fill: #c6e1ec;
     opacity: 1;
 }
 

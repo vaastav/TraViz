@@ -146,24 +146,13 @@ function setSelectedSpan(spans, threadId, tasks) {
                     return "#888888" // Dark Grey
                 }
             })
-        } else if (task.ThreadID === prevThreadID){
-            task.bar.attr("fill", function (d) {
-                let min = Math.min.apply(Math, d);
-                let max = Math.max.apply(Math, d);
-                let logDur = Math.log(task.Duration);
-                if (logDur !== null && logDur >= min && logDur <= max) {
-                    return "orange"
-                } else {
-                    return "#888888" // Dark Grey
-                }
-            })
         } else {
             task.bar.attr("fill", function (d) {
                 let min = Math.min.apply(Math, d);
                 let max = Math.max.apply(Math, d);
                 let logDur = Math.log(task.Duration);
                 if (logDur !== null && logDur >= min && logDur <= max) {
-                    return "#8EB200" // Same Green as span
+                    return "#c6e1ec" // Same Green as span
                 } else {
                     return "#888888" // Dark Grey
                 }
@@ -369,7 +358,7 @@ class SpanSwimlane extends Component {
                         let max = Math.max.apply(Math, d);
                         let logDur = Math.log(task.Duration);
                         if (logDur !== null && logDur >= min && logDur <= max) {
-                            return "#8EB200" // Same colour as span - A2CB00 - slightly brighter possibility
+                            return "#c6e1ec" // Same colour as span - A2CB00 - slightly brighter possibility
                         } else {
                             return "#888888" // Dark grey
                         }
