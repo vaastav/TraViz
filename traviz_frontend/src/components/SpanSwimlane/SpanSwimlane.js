@@ -10,7 +10,23 @@ import TaskService from "../../services/TaskService/TaskService";
 var molehillsOn = true; //display molehills on each span
 var molehillThreshold = 95; //set a threshold to highlight values above (set to 100 if not wanted)
 
+//set the colour options up here
+var spanColorString
+var highlightSpanColorString
+var molehillColorString
+var molehillThresholdColorString
+var histogramPlainColorString
+
+function initialiseColours(){
+    spanColorString = getComputedStyle(document.documentElement).getPropertyValue('--span-color');
+    highlightSpanColorString = getComputedStyle(document.documentElement).getPropertyValue('--highlight-span-color');
+    molehillColorString = getComputedStyle(document.documentElement).getPropertyValue('--molehill-color');
+    molehillThresholdColorString = getComputedStyle(document.documentElement).getPropertyValue('--molehill-threshold-color');
+    histogramPlainColorString = getComputedStyle(document.documentElement).getPropertyValue('--histogram-plain-color');
+}
+
 function createLanes(events) {
+    initialiseColours()
     let lanes = []
     let count = 0
     events.forEach(event => {
@@ -105,7 +121,6 @@ function createSpans(events) {
         }
         s.molehills = molehills;
     })
-    console.log(spans)
     return spans
 }
 
@@ -172,9 +187,9 @@ function setSelectedSpan(spans, threadId, tasks) {
                 let max = Math.max.apply(Math, d);
                 let logDur = Math.log(task.Duration);
                 if (logDur !== null && logDur >= min && logDur <= max) {
-                    return "#E1341E" // Red
+                    return highlightSpanColorString 
                 } else {
-                    return "#888888" // Dark Grey
+                    return histogramPlainColorString
                 }
             })
         } else {
@@ -183,9 +198,9 @@ function setSelectedSpan(spans, threadId, tasks) {
                 let max = Math.max.apply(Math, d);
                 let logDur = Math.log(task.Duration);
                 if (logDur !== null && logDur >= min && logDur <= max) {
-                    return "#c6e1ec" // Same Green as span
+                    return spanColorString 
                 } else {
-                    return "#888888" // Dark Grey
+                    return histogramPlainColorString
                 }
             })
         }
@@ -305,8 +320,8 @@ class SpanSwimlane extends Component {
         .attr('width', (d) => {return x(d.end) - x(d.start)})
         .attr('height', 5)
         .attr('class', (d) => {return d.class})
-        .attr('stroke', '#c6e1ec')
-        .attr('fill', '#c6e1ec')
+        .attr('stroke', spanColorString)
+        .attr('fill', spanColorString)
 
         
         if(molehillsOn){
@@ -326,8 +341,8 @@ class SpanSwimlane extends Component {
                     .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5)-molehillY(d.val) })
                     .attr('width', mhWidth)
                     .attr('height', (d) => molehillY(d.val))
-                    .attr('stroke', (d) => (d.val>molehillThreshold ? '#E2A6D9':'#A6937A'))
-                    .attr('fill', (d) => (d.val>molehillThreshold ? '#E2A6D9':'#A6937A'))
+                    .attr('stroke', (d) => (d.val>molehillThreshold ? molehillThresholdColorString:molehillColorString))
+                    .attr('fill', (d) => (d.val>molehillThreshold ? molehillThresholdColorString:molehillColorString))
             }
         }
 
@@ -385,8 +400,8 @@ class SpanSwimlane extends Component {
                         .attr('width', (d) => {return x(d.end) - x(d.start)})
                         .attr('height', 5)
                         .attr('class', (d) => {return d.class})
-                        .attr('stroke', '#c6e1ec')
-                        .attr('fill', '#c6e1ec')
+                        .attr('stroke', spanColorString)
+                        .attr('fill', spanColorString)
                         
                         spanRectangles.exit().remove()
                     })
@@ -422,9 +437,9 @@ class SpanSwimlane extends Component {
                         let max = Math.max.apply(Math, d);
                         let logDur = Math.log(task.Duration);
                         if (logDur !== null && logDur >= min && logDur <= max) {
-                            return "#c6e1ec" // Same colour as span - A2CB00 - slightly brighter possibility
+                            return spanColorString // Same colour as span - A2CB00 - slightly brighter possibility
                         } else {
-                            return "#888888" // Dark grey
+                            return histogramPlainColorString
                         }
                     })
                     .style("align", "center")
@@ -454,7 +469,7 @@ class SpanSwimlane extends Component {
         function createLegend() {
             var keys = ["Selected task", "Previous Selected Task"];
             var legend = d3v3.select("#legend").append("svg");
-            var colors = ["#E1341E", "orange"]
+            var colors = [highlightSpanColorString, "orange"]
             legend.selectAll("mydots").data(keys).enter()
                   .append("circle")
                         .attr("cx", function(d,i) { return 100})

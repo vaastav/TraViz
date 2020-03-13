@@ -1,3 +1,12 @@
+:root {
+	--span-color: #5BB6FA;
+	--highlight-span-color: #E1341E;
+	--prev-highlight-color: var(--span-color);
+	--histogram-plain-color: #888888;
+	--molehill-color: var(--histogram-plain-color);
+	--molehill-threshold-color: #FE5E60;
+}
+
 .chart {
 	shape-rendering: crispEdges;
 }
@@ -36,20 +45,20 @@
 
 /* Colours for standard spans */
 .normal {
-	stroke: #c6e1ec;
-	fill: #c6e1ec;
+	stroke: var(--span-color);
+	fill: var(--span-color);
 	opacity: 1;
 }
 
 .selected {
-	stroke: #E1341E;
-	fill: #E1341E;
+	stroke: var(--highlight-span-color);
+	fill: var(--highlight-span-color);
 	opacity: 1;
 }
 
 .prevselected {
-    stroke: #c6e1ec;
-	fill: #c6e1ec;
+    stroke: var(--prev-highlight-color);
+	fill: var(--prev-highlight-color);
     opacity: 1;
 }
 
