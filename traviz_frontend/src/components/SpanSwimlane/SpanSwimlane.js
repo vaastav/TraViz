@@ -16,7 +16,7 @@ var molehillColorString
 var molehillThresholdColorString
 var histogramPlainColorString
 
-function initialiseColours(){
+function initialiseColours() {
     spanColorString = getComputedStyle(document.documentElement).getPropertyValue('--span-color');
     highlightSpanColorString = getComputedStyle(document.documentElement).getPropertyValue('--highlight-span-color');
     molehillColorString = getComputedStyle(document.documentElement).getPropertyValue('--molehill-color');
@@ -96,21 +96,21 @@ function createSpans(events) {
     //generating some random molehills for each span
     spans.forEach(s => {
         let molehills = new Array();
-        let durationMS = Math.round((s.end - s.start)/1000000);
+        let durationMS = Math.round((s.end - s.start) / 1000000);
         //adding random values to molehills - one for every millisecond
 
-        var prevValue = Math.round(Math.random()*100);
+        var prevValue = Math.round(Math.random() * 100);
         let molehill = {
             id: 0,
             val: prevValue
         };
         molehills.push(molehill);
-        for(var i = 1; i<durationMS; i++){
+        for (var i = 1; i < durationMS; i++) {
             //Making sure value varies by no more than 10% each time
-            var randomInt = Math.round(Math.random()*(20))+prevValue-10;
+            var randomInt = Math.round(Math.random() * (20)) + prevValue - 10;
 
-            randomInt = Math.max(0,randomInt);
-            randomInt = Math.min(100,randomInt);
+            randomInt = Math.max(0, randomInt);
+            randomInt = Math.min(100, randomInt);
             let molehill = {
                 id: i,
                 val: randomInt
@@ -186,7 +186,7 @@ function setSelectedSpan(spans, threadId, tasks) {
                 let max = Math.max.apply(Math, d);
                 let logDur = Math.log(task.Duration);
                 if (logDur !== null && logDur >= min && logDur <= max) {
-                    return highlightSpanColorString 
+                    return highlightSpanColorString
                 } else {
                     return histogramPlainColorString
                 }
@@ -197,7 +197,7 @@ function setSelectedSpan(spans, threadId, tasks) {
                 let max = Math.max.apply(Math, d);
                 let logDur = Math.log(task.Duration);
                 if (logDur !== null && logDur >= min && logDur <= max) {
-                    return spanColorString 
+                    return spanColorString
                 } else {
                     return histogramPlainColorString
                 }
@@ -225,7 +225,7 @@ class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: true};
+        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false };
         this.traceService = new TraceService();
         this.taskService = new TaskService();
     }
@@ -248,7 +248,7 @@ class SpanSwimlane extends Component {
     createSwimlane() {
 
         // Define events, lanes, spand and connecting lines
-        let events = this.state.trace.sort((a, b) => {return a.Timestamp - b.Timestamp})
+        let events = this.state.trace.sort((a, b) => { return a.Timestamp - b.Timestamp })
         let spans = createSpans(this.state.trace);
         let tasks = sortTasks(this.state.tasks, spans);
         this.state.tasks = tasks;
@@ -263,7 +263,7 @@ class SpanSwimlane extends Component {
         // Create map that contains the proper thread ids on each lane
         var margin = { top: 20, right: 10, bottom: 100, left: 10 }
             , width = 1870 - margin.left - margin.right
-        
+
         // Gives size of swimlane with mini lanes. 20 is the height of each lane
         var miniHeight = lanes.length * 20
 
@@ -271,7 +271,7 @@ class SpanSwimlane extends Component {
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         var y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
-        var molehillY = d3v3.scale.linear().domain([0,100]).range([0, 10]);
+        var molehillY = d3v3.scale.linear().domain([0, 100]).range([0, 10]);
         var molehillsOn = this.state.molehillsOn;
 
         var chart = d3v3.select('#swimlane')
@@ -307,59 +307,98 @@ class SpanSwimlane extends Component {
             .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
             .attr('stroke', "#979797");
 
-        let spanRectangles = mini.append('g').selectAll('rect')
-        .data(spans)
-        .attr('x', (d) => {return x(d.start)})
-        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5)})
-        .attr('width', (d) => {return x(d.end) - x(d.start)})
-        .attr('class', (d) => {return d.class})
+        let spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
+            .data(spans)
+            .attr('x', (d) => { return x(d.start) })
+            .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+            .attr('width', (d) => { return x(d.end) - x(d.start) })
+            .attr('class', (d) => { return d.class })
 
         spanRectangles.enter().append('rect')
-        .attr('x', (d) => {return x(d.start)})
-        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5)})
-        .attr('width', (d) => {return x(d.end) - x(d.start)})
-        .attr('height', 5)
-        .attr('class', (d) => {return d.class})
-        .attr('stroke', spanColorString)
-        .attr('fill', spanColorString)
+            .attr('x', (d) => { return x(d.start) })
+            .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+            .attr('width', (d) => { return x(d.end) - x(d.start) })
+            .attr('height', 5)
+            .attr('class', (d) => { return d.class })
+            .attr('stroke', spanColorString)
+            .attr('fill', spanColorString)
 
-        
+
         // Add Toolbar
         d3v3.select("#toolbar").append('input')
-        .attr('type','checkbox')
-        .attr('id','molehillCheckbox')
-        
-        .on("click", function () {
-            molehillsOn = !molehillsOn;
-            console.log(molehillsOn);
-            if (molehillsOn) {
-                for (var i = 0; i < spans.length; i++) {
-                    var mhWidth = (x(spans[i].end) - x(spans[i].start)) / spans[i].molehills.length;
-                    var spanStartPoint = x(spans[i].start);
-                    let molehillRectangles = mini.append('g').selectAll('rect')
-                        .data(spans[i].molehills)
-                        .attr('x', 0)
-                        .attr('y', 0)
-                        .attr('width', 10)
+            .attr('type', 'checkbox')
+            .attr('id', 'molehillCheckbox')
 
-                    molehillRectangles.enter().append('rect')
-                        .attr('x', (d) => {
-                            return spanStartPoint + d.id * mhWidth;
-                        })
-                        .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5) - molehillY(d.val) })
-                        .attr('width', mhWidth)
-                        .attr('height', (d) => molehillY(d.val))
-                        .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
-                        .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
+            .on("click", function () {
+                molehillsOn = !molehillsOn;
+                if (molehillsOn) {
+                    mini.selectAll('.gSpans').remove();
+
+                    let spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
+                        .data(spans)
+                        .attr('x', (d) => { return x(d.start) })
+                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+                        .attr('width', (d) => { return x(d.end) - x(d.start) })
+                        .attr('class', (d) => { return d.class })
+
+                    spanRectangles.enter().append('rect')
+                        .attr('x', (d) => { return x(d.start) })
+                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+                        .attr('width', (d) => { return x(d.end) - x(d.start) })
+                        .attr('height', 5)
+                        .attr('class', (d) => { return d.class })
+                        .attr('stroke', spanColorString)
+                        .attr('fill', spanColorString)
+
+                    for (var i = 0; i < spans.length; i++) {
+                        var mhWidth = (x(spans[i].end) - x(spans[i].start)) / spans[i].molehills.length;
+                        var spanStartPoint = x(spans[i].start);
+                        let molehillRectangles = mini.append('g').attr('class', 'gMolehillRectangles').selectAll('rect')
+                            .data(spans[i].molehills)
+                            .attr('x', 0)
+                            .attr('y', 0)
+                            .attr('width', 10)
+
+
+                        molehillRectangles.enter().append('rect')
+                            .attr("class", 'molehillRect')
+                            .attr('x', (d) => {
+                                return spanStartPoint + d.id * mhWidth;
+                            })
+                            .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5) - molehillY(d.val) })
+                            .attr('width', mhWidth)
+                            .attr('height', (d) => molehillY(d.val))
+                            .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
+                            .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
+                    }
+                } else {
+                    //this removes the <g> containing all the molehill rectangles
+                    mini.selectAll('.gMolehillRectangles').remove()
+                    //this removes the <g> containing all the span rectangles
+                    mini.selectAll('.gSpans').remove();
+
+                    //need to redraw the spans to put them back in the middle of the lane
+                    let spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
+                        .data(spans)
+                        .attr('x', (d) => { return x(d.start) })
+                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+                        .attr('width', (d) => { return x(d.end) - x(d.start) })
+                        .attr('class', (d) => { return d.class })
+
+                    spanRectangles.enter().append('rect')
+                        .attr('x', (d) => { return x(d.start) })
+                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+                        .attr('width', (d) => { return x(d.end) - x(d.start) })
+                        .attr('height', 5)
+                        .attr('class', (d) => { return d.class })
+                        .attr('stroke', spanColorString)
+                        .attr('fill', spanColorString)
                 }
-            } else {
-                //TODO: Remove molehills. May just be removing the molehillRectangles?
-            }
-        }); 
-        
+            });
+
         d3v3.select("#toolbar")
-        .append('label').attr('for','molehillCheckbox')
-        .text('Molehills On')
+            .append('label').attr('for', 'molehillCheckbox')
+            .text('Molehills On')
         mini.selectAll('rect.background').remove();
 
         // Define the div for the tooltip
@@ -409,14 +448,14 @@ class SpanSwimlane extends Component {
                         setSelectedSpan(spans, task.ThreadID, tasks)
 
                         spanRectangles.enter().append('rect')
-                        .attr('x', (d) => {return x(d.start)})
-                        .attr('y', (d) => {return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5)})
-                        .attr('width', (d) => {return x(d.end) - x(d.start)})
-                        .attr('height', 5)
-                        .attr('class', (d) => {return d.class})
-                        .attr('stroke', spanColorString)
-                        .attr('fill', spanColorString)
-                        
+                            .attr('x', (d) => { return x(d.start) })
+                            .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+                            .attr('width', (d) => { return x(d.end) - x(d.start) })
+                            .attr('height', 5)
+                            .attr('class', (d) => { return d.class })
+                            .attr('stroke', spanColorString)
+                            .attr('fill', spanColorString)
+
                         spanRectangles.exit().remove()
                     })
 
@@ -466,7 +505,7 @@ class SpanSwimlane extends Component {
             var paths = {}
             var d
             //when adding molehills, makes sense to shift the spans down in the lane a little bit, replace first .5 with .7 or .75
-            var offset = .5 * y2(1) + 0.5 
+            var offset = .5 * y2(1) + 0.5
             var result = [];
             for (var i = 0; i < items.length; i++) {
                 d = items[i];
@@ -485,22 +524,22 @@ class SpanSwimlane extends Component {
             var legend = d3v3.select("#legend").append("svg");
             var colors = [highlightSpanColorString, "orange"]
             legend.selectAll("mydots").data(keys).enter()
-                  .append("circle")
-                        .attr("cx", function(d,i) { return 100})
-                        .attr("cy", function(d,i){ return 100 + i * 25;})
-                        .attr("r", 7)
-                        .style("fill", function(d,i) {return colors[i];});
+                .append("circle")
+                .attr("cx", function (d, i) { return 100 })
+                .attr("cy", function (d, i) { return 100 + i * 25; })
+                .attr("r", 7)
+                .style("fill", function (d, i) { return colors[i]; });
 
             legend.selectAll("mylabels")
-                  .data(keys)
-                  .enter()
-                  .append("text")
-                    .attr("x", function(d,i) {return 120} )
-                    .attr("y", function(d,i) {return 100 + i * 25;})
-                    .style("fill", "white")
-                    .text(function(d){ return d})
-                    .attr("text-anchor", "left")
-                    .style("alignment-baseline", "middle") 
+                .data(keys)
+                .enter()
+                .append("text")
+                .attr("x", function (d, i) { return 120 })
+                .attr("y", function (d, i) { return 100 + i * 25; })
+                .style("fill", "white")
+                .text(function (d) { return d })
+                .attr("text-anchor", "left")
+                .style("alignment-baseline", "middle")
         }
     }
 
