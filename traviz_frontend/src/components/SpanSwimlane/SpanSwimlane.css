@@ -1,6 +1,6 @@
 :root {
 	--span-color: #5BB6FA;
-	--highlight-span-color: #E1341E;
+	--highlight-span-color: #F0FE0F;
 	--prev-highlight-color: var(--span-color);
 	--histogram-plain-color: #888888;
 	--molehill-color: var(--histogram-plain-color);
