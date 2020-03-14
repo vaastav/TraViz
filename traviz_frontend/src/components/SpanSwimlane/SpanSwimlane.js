@@ -7,7 +7,6 @@ import TaskService from "../../services/TaskService/TaskService";
 // TODO: Find best way to partition bins in x-axis
 //         - Static 20 bins at the moment. Make it dynamic to input.
 
-var molehillsOn = true; //display molehills on each span
 var molehillThreshold = 95; //set a threshold to highlight values above (set to 100 if not wanted)
 
 //set the colour options up here
@@ -226,7 +225,7 @@ class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [], tasks: null, selectedTask: null };
+        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: true};
         this.traceService = new TraceService();
         this.taskService = new TaskService();
     }
@@ -273,6 +272,7 @@ class SpanSwimlane extends Component {
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         var y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
         var molehillY = d3v3.scale.linear().domain([0,100]).range([0, 10]);
+        var molehillsOn = this.state.molehillsOn;
 
         var chart = d3v3.select('#swimlane')
             .append('svg')
@@ -324,28 +324,42 @@ class SpanSwimlane extends Component {
         .attr('fill', spanColorString)
 
         
-        if(molehillsOn){
-            for (var i = 0; i < spans.length; i++) {
-                var mhWidth = (x(spans[i].end) - x(spans[i].start))/spans[i].molehills.length;
-                var spanStartPoint = x(spans[i].start);
-                let molehillRectangles = mini.append('g').selectAll('rect')
-                    .data(spans[i].molehills)
-                    .attr('x', 0)
-                    .attr('y', 0)
-                    .attr('width', 10)
+        // Add Toolbar
+        d3v3.select("#toolbar").append('input')
+        .attr('type','checkbox')
+        .attr('id','molehillCheckbox')
+        
+        .on("click", function () {
+            molehillsOn = !molehillsOn;
+            console.log(molehillsOn);
+            if (molehillsOn) {
+                for (var i = 0; i < spans.length; i++) {
+                    var mhWidth = (x(spans[i].end) - x(spans[i].start)) / spans[i].molehills.length;
+                    var spanStartPoint = x(spans[i].start);
+                    let molehillRectangles = mini.append('g').selectAll('rect')
+                        .data(spans[i].molehills)
+                        .attr('x', 0)
+                        .attr('y', 0)
+                        .attr('width', 10)
 
-                molehillRectangles.enter().append('rect')
-                    .attr('x', (d) => {
-                            return spanStartPoint+d.id*mhWidth;
+                    molehillRectangles.enter().append('rect')
+                        .attr('x', (d) => {
+                            return spanStartPoint + d.id * mhWidth;
                         })
-                    .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5)-molehillY(d.val) })
-                    .attr('width', mhWidth)
-                    .attr('height', (d) => molehillY(d.val))
-                    .attr('stroke', (d) => (d.val>molehillThreshold ? molehillThresholdColorString:molehillColorString))
-                    .attr('fill', (d) => (d.val>molehillThreshold ? molehillThresholdColorString:molehillColorString))
+                        .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5) - molehillY(d.val) })
+                        .attr('width', mhWidth)
+                        .attr('height', (d) => molehillY(d.val))
+                        .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
+                        .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
+                }
+            } else {
+                //TODO: Remove molehills. May just be removing the molehillRectangles?
             }
-        }
-
+        }); 
+        
+        d3v3.select("#toolbar")
+        .append('label').attr('for','molehillCheckbox')
+        .text('Molehills On')
         mini.selectAll('rect.background').remove();
 
         // Define the div for the tooltip
@@ -492,6 +506,7 @@ class SpanSwimlane extends Component {
 
     render() {
         return <div id="container" >
+            <div id="toolbar"></div>
             <div id="legend"></div>
             <div id="swimlane"> </div>
             <div id="hists"></div>
