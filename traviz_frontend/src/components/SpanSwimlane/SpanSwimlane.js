@@ -334,7 +334,7 @@ class SpanSwimlane extends Component {
                 if (molehillsOn) {
                     mini.selectAll('.gSpans').remove();
 
-                    let spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
+                    spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
                         .data(spans)
                         .attr('x', (d) => { return x(d.start) })
                         .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
@@ -378,7 +378,7 @@ class SpanSwimlane extends Component {
                     mini.selectAll('.gSpans').remove();
 
                     //need to redraw the spans to put them back in the middle of the lane
-                    let spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
+                    spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
                         .data(spans)
                         .attr('x', (d) => { return x(d.start) })
                         .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
