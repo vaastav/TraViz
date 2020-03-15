@@ -219,6 +219,42 @@ function sortTasks(tasks, spans) {
     return sortedTasks;
 }
 
+function spanMouseover(e, spanRectangles, molehillsOn, x, y2, lanes) {
+    spanRectangles.enter().append('rect')
+        .attr('x', (d) => { return x(d.start) })
+        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+        .attr('width', (d) => { return x(d.end) - x(d.start) })
+        .attr('height', 5)
+        .attr('class', (d) => {
+            if (d.id === e.id) {
+                return 'selected'
+            } else {
+                return 'normal'
+            }
+        })
+        .attr('stroke', spanColorString)
+        .attr('fill', spanColorString)
+        .on('mouseover', (e) => {
+            spanMouseover(e, spanRectangles, molehillsOn, x, y2, lanes)
+            // spanRectangles.enter().append('rect')
+            // .attr('x', (d) => { return x(d.start) })
+            // .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+            // .attr('width', (d) => { return x(d.end) - x(d.start) })
+            // .attr('height', 5)
+            // .attr('class', (d) => {
+            //     if (d.id === e.id) {
+            //         return 'selected'
+            //     } else {
+            //         return 'normal'
+            //     }
+            // })
+            // .attr('stroke', spanColorString)
+            // .attr('fill', spanColorString)
+        })
+
+    spanRectangles.exit().remove()
+}
+
 class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
@@ -398,7 +434,7 @@ class SpanSwimlane extends Component {
             let histHeight = 100
 
             tasks.forEach(task => {
-                
+
                 let minDur = Math.min.apply(Math, task.Data)
                 let maxDur = Math.max.apply(Math, task.Data)
 
@@ -415,11 +451,11 @@ class SpanSwimlane extends Component {
                 histSvg.append("rect")
                     .attr("width", histWidth + histMargin.left + histMargin.right)
                     .attr("height", histHeight + histMargin.top + histMargin.bottom)
-                    .attr("class", "bleh")
+                    .attr("class", "bars")
                     .style("opacity", 0)
                     .style("fill", "white")
                     .on("mouseover", function () {
-                        d3v3.selectAll("rect.bleh")
+                        d3v3.selectAll("rect.bars")
                             .style("opacity", 0)
 
                         d3v3.select(this)
@@ -427,16 +463,7 @@ class SpanSwimlane extends Component {
 
                         setSelectedSpan(spans, task.ThreadID, tasks)
 
-                        spanRectangles.enter().append('rect')
-                            .attr('x', (d) => { return x(d.start) })
-                            .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                            .attr('width', (d) => { return x(d.end) - x(d.start) })
-                            .attr('height', 5)
-                            .attr('class', (d) => { return d.class })
-                            .attr('stroke', spanColorString)
-                            .attr('fill', spanColorString)
-
-                        spanRectangles.exit().remove()
+                        drawSpans()
                     })
 
 
@@ -451,7 +478,7 @@ class SpanSwimlane extends Component {
                 let histYMax = d3v3.max(data, function (d) { return d.length });
 
                 let histY = d3v3.scale.log()
-                    .domain([0.01, histYMax])
+                    .domain([0.0001, histYMax])
                     .range([histHeight, histMargin.bottom])
                     .base(2);
 
@@ -556,6 +583,9 @@ class SpanSwimlane extends Component {
                 .attr('class', (d) => { return d.class })
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
+                .on('mouseover', (e) => {
+                    spanMouseover(e, spanRectangles, molehillsOn, x, y2, lanes)
+                })
         }
 
         function drawMolehills() {
