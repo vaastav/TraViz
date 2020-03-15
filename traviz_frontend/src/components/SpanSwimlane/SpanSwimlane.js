@@ -184,8 +184,7 @@ function setSelectedSpan(spans, threadId, tasks) {
             task.bar.attr("fill", function (d) {
                 let min = Math.min.apply(Math, d);
                 let max = Math.max.apply(Math, d);
-                let logDur = Math.log(task.Duration);
-                if (logDur !== null && logDur >= min && logDur <= max) {
+                if (task.Duration !== null && task.Duration >= min && task.Duration <= max) {
                     return highlightSpanColorString
                 } else {
                     return histogramPlainColorString
@@ -195,8 +194,7 @@ function setSelectedSpan(spans, threadId, tasks) {
             task.bar.attr("fill", function (d) {
                 let min = Math.min.apply(Math, d);
                 let max = Math.max.apply(Math, d);
-                let logDur = Math.log(task.Duration);
-                if (logDur !== null && logDur >= min && logDur <= max) {
+                if (task.Duration !== null && task.Duration >= min && task.Duration <= max) {
                     return spanColorString
                 } else {
                     return histogramPlainColorString
@@ -400,11 +398,9 @@ class SpanSwimlane extends Component {
             let histHeight = 100
 
             tasks.forEach(task => {
-                let logData = task.Data.filter(d => d != 0).map(d => Math.log(d))
-                logData = task.Data.filter(d => d !== 0).map(d => Math.log(d));
-
-                let minDur = Math.min.apply(Math, logData)
-                let maxDur = Math.max.apply(Math, logData)
+                
+                let minDur = Math.min.apply(Math, task.Data)
+                let maxDur = Math.max.apply(Math, task.Data)
 
                 // Create svg element for each histrogram
                 let histSvg = d3v3.select('#hists')
@@ -450,13 +446,14 @@ class SpanSwimlane extends Component {
                     .range([histMargin.left, histWidth - histMargin.right]);
 
                 let data = d3v3.layout.histogram()
-                    .bins(histX.ticks(15))(logData);
+                    .bins(histX.ticks(15))(task.Data);
 
                 let histYMax = d3v3.max(data, function (d) { return d.length });
 
-                let histY = d3v3.scale.linear()
-                    .domain([0, histYMax])
-                    .range([histHeight, histMargin.bottom]);
+                let histY = d3v3.scale.log()
+                    .domain([0.01, histYMax])
+                    .range([histHeight, histMargin.bottom])
+                    .base(2);
 
                 let bar = histSvg.selectAll(".bar")
                     .data(data)
@@ -472,8 +469,7 @@ class SpanSwimlane extends Component {
                     .attr("fill", function (d) {
                         let min = Math.min.apply(Math, d);
                         let max = Math.max.apply(Math, d);
-                        let logDur = Math.log(task.Duration);
-                        if (logDur !== null && logDur >= min && logDur <= max) {
+                        if (task.Duration !== null && task.Duration >= min && task.Duration <= max) {
                             return spanColorString // Same colour as span - A2CB00 - slightly brighter possibility
                         } else {
                             return histogramPlainColorString
