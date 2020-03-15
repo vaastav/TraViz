@@ -58,6 +58,10 @@ type SourceTask struct {
     TaskName string `json:"task"`
 }
 
+type Tasks struct {
+    LOTasks []SourceTask `json:"tasks"`
+}
+
 //Struct that represents the Config with which the server should be started
 type Config struct {
     Dir string `json:"dir"`
@@ -432,11 +436,10 @@ func parseTasksFile(filename string) (map[string]string, error) {
         return nil, err
     }
 
-    var tasks []SourceTask
+    var tasks Tasks
     json.Unmarshal(bytes, &tasks)
-
     task_map := make(map[string]string)
-    for _, task := range tasks{
+    for _, task := range tasks.LOTasks{
         task_map[task.Source] = task.TaskName
     }
 
@@ -591,7 +594,6 @@ func (s * Server) LoadSpans() error {
                 log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
                 return err
             }
-            log.Println("New traces to be processed for events :", len(newTraces))
             for _, event := range span.Events {
                 timestamp := time.Unix(0, event.Timestamp * 1000000)
                 _, err := event_stmtIns.Exec(event.EventID, trace.ID, span.SpanID, span.Operation, linenum, fname, timestamp, event.Label, event.Host, event.Cycles)
@@ -965,7 +967,7 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         }
         w.WriteHeader(http.StatusOK)
         //sorted_events := xtrace.Sort_events(traces[0].Events)
-        sorted_events := traces[0].Events
+        //sorted_events := traces[0].Events
         var sorted_events []D3Event
         for _, event := range traces[0].Events {
             var d3event D3Event
@@ -982,9 +984,66 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
             d3event.Source = event.Source
             d3event.Host = event.Host
             d3event.Cycles = event.Cycles
+            operationRes := s.DB.QueryRow("SELECT events.operation FROM events WHERE event_id=?",event.EventID)
+            var operation string
+            err = operationRes.Scan(&operation)
+            if err == sql.ErrNoRows {
+                log.Println(err)
+                d3event.Probability = 0.0
+                sorted_events = append(sorted_events, d3event)
+                continue
+            }
+            if err != nil {
+                log.Println("Inside here")
+                log.Println(err)
+                d3event.Probability = 0.0
+                sorted_events = append(sorted_events, d3event)
+                continue
+            }
+            log.Println("Looking at operation : ", operation, "for event : ", d3event.EventID)
+            // Probability is calculated as COUNT(Tasks with this operation that have this event)/COUNT(Tasks with this operation)
+            allTasks, err := s.DB.Query("SELECT COUNT(*) FROM tasks where operation=?",operation)
+            if err != nil {
+                log.Println(err)
+                d3event.Probability = 0.0
+                sorted_events = append(sorted_events, d3event)
+                continue
+            }
+            var denominator int
+            for allTasks.Next() {
+                err = allTasks.Scan(&denominator)
+                if err != nil {
+                    log.Println(err)
+                    d3event.Probability = 0.0
+                    sorted_events = append(sorted_events, d3event)
+                    continue
+                }
+            }
+            tokens := strings.Split(d3event.Source, ":")
+            fname := tokens[0]
+            linenum := tokens[1]
+            tasksWithThisEvent, err := s.DB.Query("SELECT COUNT(DISTINCT span_id) FROM events where operation=\"" + operation + "\" and fname=\"" + fname + "\" and linenum=" + linenum)
+            if err != nil {
+                log.Println(err)
+                d3event.Probability = 0.0
+                sorted_events = append(sorted_events, d3event)
+                continue
+            }
+            var numerator int
+            for tasksWithThisEvent.Next() {
+                err = allTasks.Scan(&numerator)
+                if err != nil {
+                    log.Println(err)
+                    d3event.Probability = 0.0
+                    sorted_events = append(sorted_events, d3event)
+                    continue
+                }
+            }
+            d3event.Probability = float64(numerator)/float64(denominator)
             sorted_events = append(sorted_events, d3event)
         }
         log.Println(len(sorted_events))
+        log.Println("Calculated Probability")
         json.NewEncoder(w).Encode(sorted_events)
     }
 }

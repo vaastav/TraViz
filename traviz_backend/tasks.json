@@ -1,4 +1,4 @@
-{[
+{"tasks":[
 {"source":"/social-network-microservices/src/HomeTimelineService/HomeTimelineHandler.h:53","task":"HomeTimelineHandler::ReadHomeTimeline"},
 {"source":"/tmp/xtrace-cpp/src/thread_local_baggage.cpp:31","task":"NginxWebServer"},
 {"source":"/social-network-microservices/src/PostStorageSerivce/PostStorageHandler.h:429","task":"PostStorageHandler::ReadPosts"},
