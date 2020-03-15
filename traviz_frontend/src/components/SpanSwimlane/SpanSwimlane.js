@@ -219,42 +219,6 @@ function sortTasks(tasks, spans) {
     return sortedTasks;
 }
 
-function spanMouseover(e, spanRectangles, molehillsOn, x, y2, lanes) {
-    spanRectangles.enter().append('rect')
-        .attr('x', (d) => { return x(d.start) })
-        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-        .attr('width', (d) => { return x(d.end) - x(d.start) })
-        .attr('height', 5)
-        .attr('class', (d) => {
-            if (d.id === e.id) {
-                return 'selected'
-            } else {
-                return 'normal'
-            }
-        })
-        .attr('stroke', spanColorString)
-        .attr('fill', spanColorString)
-        .on('mouseover', (e) => {
-            spanMouseover(e, spanRectangles, molehillsOn, x, y2, lanes)
-            // spanRectangles.enter().append('rect')
-            // .attr('x', (d) => { return x(d.start) })
-            // .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-            // .attr('width', (d) => { return x(d.end) - x(d.start) })
-            // .attr('height', 5)
-            // .attr('class', (d) => {
-            //     if (d.id === e.id) {
-            //         return 'selected'
-            //     } else {
-            //         return 'normal'
-            //     }
-            // })
-            // .attr('stroke', spanColorString)
-            // .attr('fill', spanColorString)
-        })
-
-    spanRectangles.exit().remove()
-}
-
 class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
@@ -422,12 +386,36 @@ class SpanSwimlane extends Component {
             .attr("class", "tooltip")
             .style("opacity", 0);
 
-        createHistograms();
+        drawHistograms();
         if (this.state.legendOn) {
             createLegend(); //This legend suckssss
         }
 
-        function createHistograms() {
+        function spanMouseover(e) {
+            spanRectangles.enter().append('rect')
+                .attr('x', (d) => { return x(d.start) })
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+                .attr('width', (d) => { return x(d.end) - x(d.start) })
+                .attr('height', 5)
+                .attr('class', (d) => {
+                    if (d.id === e.id) {
+                        return 'selected'
+                    } else {
+                        return 'normal'
+                    }
+                })
+                .attr('stroke', spanColorString)
+                .attr('fill', spanColorString)
+                .on('mouseover', (e) => {
+                    spanMouseover(e, spanRectangles, molehillsOn, x, y2, lanes)
+                    setSelectedSpan(spans, e.id, tasks)
+                })
+        
+            spanRectangles.exit().remove()
+        }
+
+        //DRAWING FUNCTIONS (next 4)
+        function drawHistograms() {
             // Define size of one histogram
             let histMargin = { top: 10, right: 10, bottom: 10, left: 10 }
             let histWidth = 100
@@ -508,26 +496,6 @@ class SpanSwimlane extends Component {
 
         }
 
-        function getPaths(items) {
-            var paths = {}
-            var d
-            //when adding molehills, makes sense to shift the spans down in the lane a little bit, replace first .5 with .7 or .75
-            var offset = .5 * y2(1) + 0.5
-            var result = [];
-            for (var i = 0; i < items.length; i++) {
-                d = items[i];
-                if (!paths[d.class]) paths[d.class] = '';
-                paths[d.class] += ['M', x(d.start), (y2(d.y_id) + offset), 'H', x(d.end)].join(' ');
-            }
-
-            for (var className in paths) {
-                result.push({ class: className, path: paths[className] });
-            }
-            return result;
-        }
-
-
-        //DRAWING FUNCTIONS (next 3)
         function initialiseChart() {
 
             chart = d3v3.select('#swimlane')
