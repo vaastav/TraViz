@@ -11,6 +11,6 @@ CREATE TABLE `traviz`.`events`(
     label varchar(256) NOT NULL,
     host varchar(64) NOT NULL,
     cycles BIGINT,
-    primary key(event_id),
+    primary key(event_id, trace_id, span_id, operation, linenum, fname, timestamp, label, host, cycles),
     foreign key(trace_id) references overview(trace_id)
 );

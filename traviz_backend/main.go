@@ -492,8 +492,51 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
+    err = server.InsertAggregates()
+    if err != nil {
+        return nil, err
+    }
     server.routes()
     return &server, nil
+}
+
+func (s * Server) InsertAggregates() error {
+    //return nil
+    log.Println("Inserting aggregates")
+    results, err := s.DB.Query("select DISTINCT fname, linenum, operation FROM events")
+    if err != nil {
+        return err
+    }
+    stmtIns, err := s.DB.Prepare("INSERT INTO events_aggregate VALUES( ?, ?, ?, ?)")
+    if err != nil {
+        return err
+    }
+    defer stmtIns.Close()
+    for results.Next() {
+        var fname string
+        var linenum int
+        var operation string
+        err = results.Scan(&fname, &linenum, &operation)
+        if err != nil {
+            return err
+        }
+        countRes, err := s.DB.Query("SELECT COUNT(DISTINCT span_id) FROM events where fname=? and linenum=? and operation=?", fname,linenum, operation)
+        if err != nil {
+            return err
+        }
+        var count int64
+        for countRes.Next() {
+            err = countRes.Scan(&count)
+            if err != nil {
+                return err
+            }
+        }
+        _, err = stmtIns.Exec(fname, linenum, operation, count)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
 }
 
 func (s * Server) LoadSpans() error {
@@ -595,6 +638,16 @@ func (s * Server) LoadSpans() error {
                 return err
             }
             for _, event := range span.Events {
+                var linenum int
+                var fname string
+                if event.Source == " " || event.Source == "" {
+                    linenum = 0
+                    fname = ""
+                } else {
+                    tokens := strings.Split(event.Source, ":")
+                    linenum, _ = strconv.Atoi(tokens[1])
+                    fname = tokens[0]
+                }
                 timestamp := time.Unix(0, event.Timestamp * 1000000)
                 _, err := event_stmtIns.Exec(event.EventID, trace.ID, span.SpanID, span.Operation, linenum, fname, timestamp, event.Label, event.Host, event.Cycles)
                 if err != nil {
@@ -984,62 +1037,55 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
             d3event.Source = event.Source
             d3event.Host = event.Host
             d3event.Cycles = event.Cycles
-            operationRes := s.DB.QueryRow("SELECT events.operation FROM events WHERE event_id=?",event.EventID)
+            var fname string
+            var linenum int
+            if d3event.Source == " " || d3event.Source == "" {
+                fname = ""
+                linenum = 0
+            } else {
+                tokens := strings.Split(d3event.Source, ":")
+                fname = tokens[0]
+                linenum,_ = strconv.Atoi(tokens[1])
+            }
+            operationRes := s.DB.QueryRow("SELECT events.operation FROM events WHERE event_id=? and fname=? and linenum=?",event.EventID, fname, linenum)
             var operation string
             err = operationRes.Scan(&operation)
             if err == sql.ErrNoRows {
-                log.Println(err)
-                d3event.Probability = 0.0
-                sorted_events = append(sorted_events, d3event)
-                continue
+                log.Println("No rows found")
             }
             if err != nil {
-                log.Println("Inside here")
                 log.Println(err)
-                d3event.Probability = 0.0
-                sorted_events = append(sorted_events, d3event)
-                continue
             }
-            log.Println("Looking at operation : ", operation, "for event : ", d3event.EventID)
             // Probability is calculated as COUNT(Tasks with this operation that have this event)/COUNT(Tasks with this operation)
             allTasks, err := s.DB.Query("SELECT COUNT(*) FROM tasks where operation=?",operation)
             if err != nil {
                 log.Println(err)
-                d3event.Probability = 0.0
-                sorted_events = append(sorted_events, d3event)
-                continue
             }
             var denominator int
             for allTasks.Next() {
                 err = allTasks.Scan(&denominator)
                 if err != nil {
                     log.Println(err)
-                    d3event.Probability = 0.0
-                    sorted_events = append(sorted_events, d3event)
-                    continue
                 }
             }
-            tokens := strings.Split(d3event.Source, ":")
-            fname := tokens[0]
-            linenum := tokens[1]
-            tasksWithThisEvent, err := s.DB.Query("SELECT COUNT(DISTINCT span_id) FROM events where operation=\"" + operation + "\" and fname=\"" + fname + "\" and linenum=" + linenum)
+            tasksWithThisEvent, err := s.DB.Query("SELECT taskCount FROM events_aggregate where operation=? and fname=? and linenum=?", operation, fname, linenum)
             if err != nil {
                 log.Println(err)
                 d3event.Probability = 0.0
-                sorted_events = append(sorted_events, d3event)
-                continue
             }
-            var numerator int
+            var numerator int64
             for tasksWithThisEvent.Next() {
-                err = allTasks.Scan(&numerator)
+                err = tasksWithThisEvent.Scan(&numerator)
                 if err != nil {
+                    log.Println(operation, fname, linenum)
                     log.Println(err)
                     d3event.Probability = 0.0
-                    sorted_events = append(sorted_events, d3event)
-                    continue
                 }
             }
             d3event.Probability = float64(numerator)/float64(denominator)
+            if d3event.Probability == 0.0 {
+                log.Println(operation, fname, linenum, d3event.EventID)
+            }
             sorted_events = append(sorted_events, d3event)
         }
         log.Println(len(sorted_events))
