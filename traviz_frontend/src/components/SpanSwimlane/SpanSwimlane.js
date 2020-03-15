@@ -275,54 +275,15 @@ class SpanSwimlane extends Component {
         var molehillsOn = this.state.molehillsOn;
         var legendOn = this.state.legendOn;
 
-        var chart = d3v3.select('#swimlane')
-            .append('svg')
-            .attr('width', width + margin.right + margin.left)
-            .attr('height', miniHeight + margin.top + margin.bottom)
-            .attr('class', 'chart');
+        var chart;
+        var mini;
 
-        var mini = chart.append('g')
-            .attr('transform', 'translate(' + margin.left + ',' + 60 + ')')
-            .attr('width', width)
-            .attr('height', miniHeight)
-            .attr('class', 'mini');
+        initialiseChart()
 
-        // draw the lanes for the mini chart
-        mini.append('g').selectAll('.laneLines')
-            .data(lanes)
-            .enter().append('line')
-            .attr('x1', 0)
-            .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-            .attr('x2', width)
-            .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-            .attr('stroke', "#979797");
 
-        // Draw the last lane so we have a box
-        let lastLane = lanes[lanes.length - 1]
-        mini.append('g').selectAll('.laneLines')
-            .data(lanes)
-            .enter().append('line')
-            .attr('x1', 0)
-            .attr('y1', d3v3.round(y2(lastLane.id + 1)) + 0.5)
-            .attr('x2', width)
-            .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
-            .attr('stroke', "#979797");
+        let spanRectangles
 
-        let spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
-            .data(spans)
-            .attr('x', (d) => { return x(d.start) })
-            .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-            .attr('width', (d) => { return x(d.end) - x(d.start) })
-            .attr('class', (d) => { return d.class })
-
-        spanRectangles.enter().append('rect')
-            .attr('x', (d) => { return x(d.start) })
-            .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-            .attr('width', (d) => { return x(d.end) - x(d.start) })
-            .attr('height', 5)
-            .attr('class', (d) => { return d.class })
-            .attr('stroke', spanColorString)
-            .attr('fill', spanColorString)
+        drawSpans()
 
 
         // Add Toolbar
@@ -333,47 +294,11 @@ class SpanSwimlane extends Component {
             .on("click", function () {
                 molehillsOn = !molehillsOn;
                 if (molehillsOn) {
-                    console.log('removing spans')
                     mini.selectAll('.gSpans').remove();
 
-                    spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
-                        .data(spans)
-                        .attr('x', (d) => { return x(d.start) })
-                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                        .attr('width', (d) => { return x(d.end) - x(d.start) })
-                        .attr('class', (d) => { return d.class })
+                    drawSpans()
 
-                    spanRectangles.enter().append('rect')
-                        .attr('x', (d) => { return x(d.start) })
-                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                        .attr('width', (d) => { return x(d.end) - x(d.start) })
-                        .attr('height', 5)
-                        .attr('class', (d) => { return d.class })
-                        .attr('stroke', spanColorString)
-                        .attr('fill', spanColorString)
-
-                    for (var i = 0; i < spans.length; i++) {
-                        var mhWidth = (x(spans[i].end) - x(spans[i].start)) / spans[i].molehills.length;
-                        var spanStartPoint = x(spans[i].start);
-                        let molehillRectangles = mini.append('g').attr('class', 'gMolehillRectangles').selectAll('rect')
-                            .data(spans[i].molehills)
-                            .attr('x', 0)
-                            .attr('y', 0)
-                            .attr('width', 10)
-
-
-                        molehillRectangles.enter().append('rect')
-                            .attr("class", 'molehillRect')
-                            .attr('x', (d) => {
-                                return spanStartPoint + d.id * mhWidth;
-                            })
-                            .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5) - molehillY(d.val) })
-                            .attr('width', mhWidth)
-                            .attr('height', (d) => molehillY(d.val))
-                            .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
-                            .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
-
-                    }
+                    drawMolehills()
 
                     createLegend()
 
@@ -384,23 +309,9 @@ class SpanSwimlane extends Component {
                     mini.selectAll('.gSpans').remove();
 
                     //need to redraw the spans to put them back in the middle of the lane
-                    spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
-                        .data(spans)
-                        .attr('x', (d) => { return x(d.start) })
-                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                        .attr('width', (d) => { return x(d.end) - x(d.start) })
-                        .attr('class', (d) => { return d.class })
+                    drawSpans()
 
-                    spanRectangles.enter().append('rect')
-                        .attr('x', (d) => { return x(d.start) })
-                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                        .attr('width', (d) => { return x(d.end) - x(d.start) })
-                        .attr('height', 5)
-                        .attr('class', (d) => { return d.class })
-                        .attr('stroke', spanColorString)
-                        .attr('fill', spanColorString)
-
-                        createLegend()
+                    createLegend()
                 }
             });
 
@@ -415,190 +326,56 @@ class SpanSwimlane extends Component {
             .on("click", function () {
                 legendOn = !legendOn;
                 if (legendOn) {
-                     margin = { top: 20, right: 10, bottom: 100, left: 175}
-                         width = 1870 - margin.left - margin.right
+                    margin = { top: 20, right: 10, bottom: 100, left: 175 }
+                    width = 1870 - margin.left - margin.right
 
-                        x = d3v3.scale.linear().domain([start, end]).range([0, width]);
+                    x = d3v3.scale.linear().domain([start, end]).range([0, width]);
 
-                        ext = d3v3.extent(lanes, function (d) { return d.id; });
-                        y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
+                    ext = d3v3.extent(lanes, function (d) { return d.id; });
+                    y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
 
                     chart.remove()
 
-                    chart = d3v3.select('#swimlane')
-                        .append('svg')
-                        .attr('width', width + margin.right + margin.left)
-                        .attr('height', miniHeight + margin.top + margin.bottom)
-                        .attr('class', 'chart');
+                    initialiseChart()
 
-                    mini = chart.append('g')
-                        .attr('transform', 'translate(' + margin.left + ',' + 60 + ')')
-                        .attr('width', width)
-                        .attr('height', miniHeight)
-                        .attr('class', 'mini');
+                    drawSpans()
 
-                    // draw the lanes for the mini chart
-                    mini.append('g').selectAll('.laneLines')
-                        .data(lanes)
-                        .enter().append('line')
-                        .attr('x1', 0)
-                        .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-                        .attr('x2', width)
-                        .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-                        .attr('stroke', "#979797");
+                    if (molehillsOn) {
 
-                    // Draw the last lane so we have a box
-                    let lastLane = lanes[lanes.length - 1]
-                    mini.append('g').selectAll('.laneLines')
-                        .data(lanes)
-                        .enter().append('line')
-                        .attr('x1', 0)
-                        .attr('y1', d3v3.round(y2(lastLane.id + 1)) + 0.5)
-                        .attr('x2', width)
-                        .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
-                        .attr('stroke', "#979797");
-
-                    
-                    spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
-                        .data(spans)
-                        .attr('x', (d) => { return x(d.start) })
-                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                        .attr('width', (d) => { return x(d.end) - x(d.start) })
-                        .attr('class', (d) => { return d.class })
-
-                    spanRectangles.enter().append('rect')
-                        .attr('x', (d) => { return x(d.start) })
-                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                        .attr('width', (d) => { return x(d.end) - x(d.start) })
-                        .attr('height', 5)
-                        .attr('class', (d) => { return d.class })
-                        .attr('stroke', spanColorString)
-                        .attr('fill', spanColorString)
-
-                    if(molehillsOn){
-                    
-                        for (var i = 0; i < spans.length; i++) {
-                            var mhWidth = (x(spans[i].end) - x(spans[i].start)) / spans[i].molehills.length;
-                            var spanStartPoint = x(spans[i].start);
-                            let molehillRectangles = mini.append('g').attr('class', 'gMolehillRectangles').selectAll('rect')
-                                .data(spans[i].molehills)
-                                .attr('x', 0)
-                                .attr('y', 0)
-                                .attr('width', 10)
-    
-    
-                            molehillRectangles.enter().append('rect')
-                                .attr("class", 'molehillRect')
-                                .attr('x', (d) => {
-                                    return spanStartPoint + d.id * mhWidth;
-                                })
-                                .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5) - molehillY(d.val) })
-                                .attr('width', mhWidth)
-                                .attr('height', (d) => molehillY(d.val))
-                                .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
-                                .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString));
-                    
-                    
-                            }
+                        drawMolehills()
                     }
-                    
-                    
+
+
                     createLegend()
                 } else {
 
 
-                     margin = { top: 20, right: 10, bottom: 100, left: 10}
-                         width = 1870 - margin.left - margin.right
+                    margin = { top: 20, right: 10, bottom: 100, left: 10 }
+                    width = 1870 - margin.left - margin.right
 
-                        x = d3v3.scale.linear().domain([start, end]).range([0, width]);
+                    x = d3v3.scale.linear().domain([start, end]).range([0, width]);
 
-                        ext = d3v3.extent(lanes, function (d) { return d.id; });
-                        y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
+                    ext = d3v3.extent(lanes, function (d) { return d.id; });
+                    y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
 
                     // Gives size of swimlane with mini lanes. 20 is the height of each lane
 
                     chart.remove()
 
-                    chart = d3v3.select('#swimlane')
-                        .append('svg')
-                        .attr('width', width + margin.right + margin.left)
-                        .attr('height', miniHeight + margin.top + margin.bottom)
-                        .attr('class', 'chart');
+                    initialiseChart()
 
-                    mini = chart.append('g')
-                        .attr('transform', 'translate(' + margin.left + ',' + 60 + ')')
-                        .attr('width', width)
-                        .attr('height', miniHeight)
-                        .attr('class', 'mini');
+                    drawSpans()
 
-                    // draw the lanes for the mini chart
-                    mini.append('g').selectAll('.laneLines')
-                        .data(lanes)
-                        .enter().append('line')
-                        .attr('x1', 0)
-                        .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-                        .attr('x2', width)
-                        .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-                        .attr('stroke', "#979797");
 
-                    // Draw the last lane so we have a box
-                    let lastLane = lanes[lanes.length - 1]
-                    mini.append('g').selectAll('.laneLines')
-                        .data(lanes)
-                        .enter().append('line')
-                        .attr('x1', 0)
-                        .attr('y1', d3v3.round(y2(lastLane.id + 1)) + 0.5)
-                        .attr('x2', width)
-                        .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
-                        .attr('stroke', "#979797");
+                    if (molehillsOn) {
+                        drawMolehills()
 
-                    spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
-                        .data(spans)
-                        .attr('x', (d) => { return x(d.start) })
-                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                        .attr('width', (d) => { return x(d.end) - x(d.start) })
-                        .attr('class', (d) => { return d.class })
-
-                    spanRectangles.enter().append('rect')
-                        .attr('x', (d) => { return x(d.start) })
-                        .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
-                        .attr('width', (d) => { return x(d.end) - x(d.start) })
-                        .attr('height', 5)
-                        .attr('class', (d) => { return d.class })
-                        .attr('stroke', spanColorString)
-                        .attr('fill', spanColorString)
-                    
-
-                        if(molehillsOn){
-                    
-                            for (var i = 0; i < spans.length; i++) {
-                                var mhWidth = (x(spans[i].end) - x(spans[i].start)) / spans[i].molehills.length;
-                                var spanStartPoint = x(spans[i].start);
-                                let molehillRectangles = mini.append('g').attr('class', 'gMolehillRectangles').selectAll('rect')
-                                    .data(spans[i].molehills)
-                                    .attr('x', 0)
-                                    .attr('y', 0)
-                                    .attr('width', 10)
-        
-        
-                                molehillRectangles.enter().append('rect')
-                                    .attr("class", 'molehillRect')
-                                    .attr('x', (d) => {
-                                        return spanStartPoint + d.id * mhWidth;
-                                    })
-                                    .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5) - molehillY(d.val) })
-                                    .attr('width', mhWidth)
-                                    .attr('height', (d) => molehillY(d.val))
-                                    .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
-                                    .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString));
-                        
-                        
-                                }
-                        }
+                    }
 
 
                 }
             });
+
 
         d3v3.select("#toolbar")
             .append('label').attr('for', 'legendCheckbox')
@@ -726,55 +503,140 @@ class SpanSwimlane extends Component {
             return result;
         }
 
-        function createLegend() {
 
-            if(legendOn){
+        //DRAWING FUNCTIONS (next 3)
+        function initialiseChart() {
 
-                chart.selectAll('.legend').remove()
-            // create a list of keys
-            var keys = ["Span", "Selected Span"]
-            var color = [spanColorString, highlightSpanColorString]
-            
-            if(molehillsOn){
-                keys.push("Resource Cont.")
-                keys.push("Above Threshold")
-                color.push(molehillColorString)
-                color.push(molehillThresholdColorString)
-            }
+            chart = d3v3.select('#swimlane')
+                .append('svg')
+                .attr('width', width + margin.right + margin.left)
+                .attr('height', miniHeight + margin.top + margin.bottom)
+                .attr('class', 'chart');
 
-       
+            mini = chart.append('g')
+                .attr('transform', 'translate(' + margin.left + ',' + 60 + ')')
+                .attr('width', width)
+                .attr('height', miniHeight)
+                .attr('class', 'mini');
 
-            // Add one dot in the legend for each name.
-            var box = 15
-            var width = 10
-            var height = 5
-            var startPoint = ((miniHeight + margin.top + margin.bottom) / 2) - (keys.length * (box + 5))
+            // draw the lanes for the mini chart
+            mini.append('g').selectAll('.laneLines')
+                .data(lanes)
+                .enter().append('line')
+                .attr('x1', 0)
+                .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
+                .attr('x2', width)
+                .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
+                .attr('stroke', "#979797");
 
-            var leg = chart.append('g').attr('class','legend')
+            // Draw the last lane so we have a box
+            let lastLane = lanes[lanes.length - 1]
+            mini.append('g').selectAll('.laneLines')
+                .data(lanes)
+                .enter().append('line')
+                .attr('x1', 0)
+                .attr('y1', d3v3.round(y2(lastLane.id + 1)) + 0.5)
+                .attr('x2', width)
+                .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
+                .attr('stroke', "#979797");
 
-            leg.selectAll("mydots")
-                .data(keys)
-                .enter()
-                .append("rect")
-                .attr("x", 5)
-                .attr("y", function (d, i) { return startPoint + i * (box + 5) }) // 100 is where the first dot appears. 25 is the distance between dots
-                .attr("width", function (d, i) { return keys[i].includes("Span") ? width : height })
-                .attr("height", function (d, i) { return keys[i].includes("Span") ? height : width })
-                .style("fill", function (d, i) { return color[i] })
-
-            // Add one dot in the legend for each name.
-            leg.selectAll("mylabels")
-                .data(keys)
-                .enter()
-                .append("text")
-                .attr("x", 15)
-                .attr("y", function (d, i) { return startPoint + i * (box + 5) + (box / 2) }) // 100 is where the first dot appears. 25 is the distance between dots
-                .style("fill", "white")
-                .text(function (d) { return d })
-                .attr("text-anchor", "left")
-                .style("alignment-baseline", "middle")
 
         }
+
+
+        function drawSpans() {
+            spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
+                .data(spans)
+                .attr('x', (d) => { return x(d.start) })
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+                .attr('width', (d) => { return x(d.end) - x(d.start) })
+                .attr('class', (d) => { return d.class })
+
+            spanRectangles.enter().append('rect')
+                .attr('x', (d) => { return x(d.start) })
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 10 - (molehillsOn ? -2.5 : 2.5) })
+                .attr('width', (d) => { return x(d.end) - x(d.start) })
+                .attr('height', 5)
+                .attr('class', (d) => { return d.class })
+                .attr('stroke', spanColorString)
+                .attr('fill', spanColorString)
+        }
+
+        function drawMolehills() {
+            for (var i = 0; i < spans.length; i++) {
+                var mhWidth = (x(spans[i].end) - x(spans[i].start)) / spans[i].molehills.length;
+                var spanStartPoint = x(spans[i].start);
+                let molehillRectangles = mini.append('g').attr('class', 'gMolehillRectangles').selectAll('rect')
+                    .data(spans[i].molehills)
+                    .attr('x', 0)
+                    .attr('y', 0)
+                    .attr('width', 10)
+
+
+                molehillRectangles.enter().append('rect')
+                    .attr("class", 'molehillRect')
+                    .attr('x', (d) => {
+                        return spanStartPoint + d.id * mhWidth;
+                    })
+                    .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + 10 + 2.5) - molehillY(d.val) })
+                    .attr('width', mhWidth)
+                    .attr('height', (d) => molehillY(d.val))
+                    .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
+                    .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString));
+
+
+            }
+        }
+
+        function createLegend() {
+
+            if (legendOn) {
+
+                chart.selectAll('.legend').remove()
+                // create a list of keys
+                var keys = ["Span", "Selected Span"]
+                var color = [spanColorString, highlightSpanColorString]
+
+                if (molehillsOn) {
+                    keys.push("Resource Cont.")
+                    keys.push("Above Threshold")
+                    color.push(molehillColorString)
+                    color.push(molehillThresholdColorString)
+                }
+
+
+
+                // Add one dot in the legend for each name.
+                var box = 15
+                var width = 10
+                var height = 5
+                var startPoint = ((miniHeight + margin.top + margin.bottom) / 2) - (keys.length * (box + 5))
+
+                var leg = chart.append('g').attr('class', 'legend')
+
+                leg.selectAll("mydots")
+                    .data(keys)
+                    .enter()
+                    .append("rect")
+                    .attr("x", 5)
+                    .attr("y", function (d, i) { return startPoint + i * (box + 5) }) // 100 is where the first dot appears. 25 is the distance between dots
+                    .attr("width", function (d, i) { return keys[i].includes("Span") ? width : height })
+                    .attr("height", function (d, i) { return keys[i].includes("Span") ? height : width })
+                    .style("fill", function (d, i) { return color[i] })
+
+                // Add one dot in the legend for each name.
+                leg.selectAll("mylabels")
+                    .data(keys)
+                    .enter()
+                    .append("text")
+                    .attr("x", 15)
+                    .attr("y", function (d, i) { return startPoint + i * (box + 5) + (box / 2) }) // 100 is where the first dot appears. 25 is the distance between dots
+                    .style("fill", "white")
+                    .text(function (d) { return d })
+                    .attr("text-anchor", "left")
+                    .style("alignment-baseline", "middle")
+
+            }
         }
 
 
