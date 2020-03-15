@@ -598,7 +598,7 @@ class SpanSwimlane extends Component {
                 var color = [spanColorString, highlightSpanColorString]
 
                 if (molehillsOn) {
-                    keys.push("Resource Cont.")
+                    keys.push("Contention")
                     keys.push("Above Threshold")
                     color.push(molehillColorString)
                     color.push(molehillThresholdColorString)
@@ -607,11 +607,12 @@ class SpanSwimlane extends Component {
 
 
                 // Add one dot in the legend for each name.
-                var box = 15
+                var box = 20
                 var width = 10
                 var height = 5
-                var startPoint = ((miniHeight + margin.top + margin.bottom) / 2) - (keys.length * (box + 5))
-
+                console.log(miniHeight + margin.top + margin.bottom)
+                var startPoint = ((miniHeight + margin.top + margin.bottom) / 2) - (keys.length/2 * (box + 5))
+                console.log(startPoint)
                 var leg = chart.append('g').attr('class', 'legend')
 
                 leg.selectAll("mydots")
@@ -619,7 +620,7 @@ class SpanSwimlane extends Component {
                     .enter()
                     .append("rect")
                     .attr("x", 5)
-                    .attr("y", function (d, i) { return startPoint + i * (box + 5) }) // 100 is where the first dot appears. 25 is the distance between dots
+                    .attr("y", function (d, i) { return startPoint + i * (box) }) // 100 is where the first dot appears. 25 is the distance between dots
                     .attr("width", function (d, i) { return keys[i].includes("Span") ? width : height })
                     .attr("height", function (d, i) { return keys[i].includes("Span") ? height : width })
                     .style("fill", function (d, i) { return color[i] })
@@ -629,8 +630,8 @@ class SpanSwimlane extends Component {
                     .data(keys)
                     .enter()
                     .append("text")
-                    .attr("x", 15)
-                    .attr("y", function (d, i) { return startPoint + i * (box + 5) + (box / 2) }) // 100 is where the first dot appears. 25 is the distance between dots
+                    .attr("x", 20)
+                    .attr("y", function (d, i) { return (startPoint + (i * box) + (keys[i].includes("Span") ? height/2 : width/2 + 1) )}) // 100 is where the first dot appears. 25 is the distance between dots
                     .style("fill", "white")
                     .text(function (d) { return d })
                     .attr("text-anchor", "left")
