@@ -128,6 +128,23 @@ type D3AggLink struct {
     Target string `json:"target"`
 }
 
+type D3Event struct {
+    ProcessName string `json:"ProcessName"`
+    Label string `json:Label"`
+    Timestamp int64 `json:"Timestamp"`
+    HRT uint64 `json:"HRT"`
+    EventID string `json:"EventID"`
+    Parents []string `json:"ParentEventID"`
+    ThreadID int `json:"ThreadID"`
+    Agent string `json:"Agent"`
+    ProcessID int `json:"ProcessID"`
+    Tags []string `json:"Tag"`
+    Source string `json:"Source"`
+    Host string `json:"Host"`
+    Cycles int `json:"Cycles"`
+    Probability float64 `json:"Probability"`
+}
+
 type DependencyResponse struct {
     Nodes []D3Node `json:"nodes"`
     Links []D3Link `json:"links"`
@@ -949,6 +966,24 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
         //sorted_events := xtrace.Sort_events(traces[0].Events)
         sorted_events := traces[0].Events
+        var sorted_events []D3Event
+        for _, event := range traces[0].Events {
+            var d3event D3Event
+            d3event.ProcessName = event.ProcessName
+            d3event.Label = event.Label
+            d3event.Timestamp = event.Timestamp
+            d3event.HRT = event.HRT
+            d3event.EventID = event.EventID
+            d3event.Parents = event.Parents
+            d3event.ThreadID = event.ThreadID
+            d3event.Agent = event.Agent
+            d3event.ProcessID = event.ProcessID
+            d3event.Tags = event.Tags
+            d3event.Source = event.Source
+            d3event.Host = event.Host
+            d3event.Cycles = event.Cycles
+            sorted_events = append(sorted_events, d3event)
+        }
         log.Println(len(sorted_events))
         json.NewEncoder(w).Encode(sorted_events)
     }
