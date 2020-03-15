@@ -610,9 +610,7 @@ class SpanSwimlane extends Component {
                 var box = 20
                 var width = 10
                 var height = 5
-                console.log(miniHeight + margin.top + margin.bottom)
                 var startPoint = ((miniHeight + margin.top + margin.bottom) / 2) - (keys.length/2 * (box + 5))
-                console.log(startPoint)
                 var leg = chart.append('g').attr('class', 'legend')
 
                 leg.selectAll("mydots")
