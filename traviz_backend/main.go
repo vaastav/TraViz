@@ -45,11 +45,17 @@ type Span struct {
     ThreadID int
     StartTime time.Time
     EndTime time.Time
+    Events []xtrace.Event
 }
 
 type Swap struct {
     Src string `json:"src"`
-    Dst string `json:"dst`
+    Dst string `json:"dst"`
+}
+
+type SourceTask struct {
+    Source string `json:"source"`
+    TaskName string `json:"task"`
 }
 
 //Struct that represents the Config with which the server should be started
@@ -61,6 +67,7 @@ type Config struct {
     IP string `json:"ip"`
     Repo string `json:"repo"`
     Swaps []Swap `json:"swaps"`
+    TasksFile string `json:"tasks_file"`
 }
 
 type SourceCodeRow struct {
@@ -252,6 +259,7 @@ func processSpan(events []xtrace.Event, traceID string, key string) Span {
     span.ThreadID, _ = strconv.Atoi(pieces[2])
     span.StartTime = time.Unix(0, earliest_timestamp * 1000000)
     span.EndTime = time.Unix(0, latest_timestamp * 1000000)
+    span.Events = events
 
     return span
 }
@@ -394,6 +402,30 @@ func aggregate(traces []xtrace.XTrace) AggregationResponse {
     return AggregationResponse{Nodes: nodes, Links: links}
 }
 
+func parseTasksFile(filename string) (map[string]string, error) {
+    jsonFile, err := os.Open(filename)
+    if err != nil {
+        return nil, err
+    }
+
+    defer jsonFile.Close()
+
+    bytes, err := ioutil.ReadAll(jsonFile)
+    if err != nil {
+        return nil, err
+    }
+
+    var tasks []SourceTask
+    json.Unmarshal(bytes, &tasks)
+
+    task_map := make(map[string]string)
+    for _, task := range tasks{
+        task_map[task.Source] = task.TaskName
+    }
+
+    return task_map, nil
+}
+
 //Parses config from a json file and returns the parsed Config struct
 func parseConfig(filename string) (Config, error) {
     jsonFile, err := os.Open(filename)
@@ -463,7 +495,7 @@ func (s * Server) LoadSpans() error {
         seen_traces[tid] = true
         locations[loc] = true
     }
-    span_stmtIns, err := s.DB.Prepare("INSERT INTO tasks VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    span_stmtIns, err := s.DB.Prepare("INSERT INTO tasks VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     if err != nil {
         return err
     }
@@ -514,6 +546,15 @@ func (s * Server) LoadSpans() error {
         return err
     }
     log.Println("New traces to be processed for spans :", len(newTraces))
+    tasks, err := parseTasksFile(s.Config.TasksFile)
+    if err != nil {
+	    return err
+    }
+    event_stmtIns, err := s.DB.Prepare("INSERT INTO events VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    if err != nil {
+        return err
+    }
+    defer event_stmtIns.Close()
     for _, trace := range newTraces {
         spans := processSpans(trace)
         for _, span := range spans {
@@ -527,10 +568,19 @@ func (s * Server) LoadSpans() error {
                 linenum, _ = strconv.Atoi(tokens[1])
                 fname = tokens[0]
             }
-            _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID, span.StartTime, span.EndTime)
+            span.Operation = tasks[span.Source]
+            _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID, span.StartTime)
             if err != nil {
                 log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
                 return err
+            }
+            log.Println("New traces to be processed for events :", len(newTraces))
+            for _, event := range span.Events {
+                timestamp := time.Unix(0, event.Timestamp * 1000000)
+                _, err := event_stmtIns.Exec(event.EventID, trace.ID, span.SpanID, span.Operation, linenum, fname, timestamp, event.Label, event.Host, event.Cycles)
+                if err != nil {
+                    log.Println(err)
+                }
             }
         }
     }

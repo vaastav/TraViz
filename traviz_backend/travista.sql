@@ -11,7 +11,5 @@ CREATE TABLE `traviz`.`tasks`(
     processID int,
     threadID BIGINT,
     startTime TIMESTAMP,
-    endTime TIMESTAMP,
-    primary key(trace_id, span_id, operation),
-    foreign key(trace_id) references overview(trace_id)
+    primary key(trace_id, span_id, operation)
 );
