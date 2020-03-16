@@ -16,6 +16,9 @@ var highlightSpanColorString
 var molehillColorString
 var molehillThresholdColorString
 var histogramPlainColorString
+var eventsLowProbColorString
+var eventsHighProbColorString
+var textColorString
 
 function initialiseColours() {
     spanColorString = getComputedStyle(document.documentElement).getPropertyValue('--span-color');
@@ -23,10 +26,13 @@ function initialiseColours() {
     molehillColorString = getComputedStyle(document.documentElement).getPropertyValue('--molehill-color');
     molehillThresholdColorString = getComputedStyle(document.documentElement).getPropertyValue('--molehill-threshold-color');
     histogramPlainColorString = getComputedStyle(document.documentElement).getPropertyValue('--histogram-plain-color');
+    eventsLowProbColorString = getComputedStyle(document.documentElement).getPropertyValue('--events-low-prob-color');
+    eventsHighProbColorString = getComputedStyle(document.documentElement).getPropertyValue('--events-high-prob-color');
+    textColorString = getComputedStyle(document.documentElement).getPropertyValue('--text-color')
+
 }
 
 function createLanes(events) {
-    initialiseColours()
     let lanes = []
     let count = 0
     events.forEach(event => {
@@ -296,6 +302,7 @@ class SpanSwimlane extends Component {
     }
 
     createSwimlane() {
+        initialiseColours()
 
         // Define events, lanes, spand and connecting lines
         let events = this.state.trace.sort((a, b) => { return a.Timestamp - b.Timestamp })
@@ -527,7 +534,6 @@ class SpanSwimlane extends Component {
                         drawSpans()
                     })
 
-
                 // Create actual histogram
                 let histX = d3v3.scale.linear()
                     .domain([minDur, maxDur])
@@ -666,7 +672,9 @@ class SpanSwimlane extends Component {
                 let colourScheme = d3v3.scale.linear()
                     .domain([0, 1])
                     .interpolate(d3v3.interpolateHcl)
-                    .range([d3v3.rgb("white"), d3v3.rgb("black")])
+                    .range([d3v3.rgb(eventsLowProbColorString), d3v3.rgb(eventsHighProbColorString)])
+
+                console.log(eventsHighProbColorString)
 
 
                 let eventRectangles = mini.append('g').attr('class', 'gEvents').selectAll('rect')
@@ -732,12 +740,10 @@ class SpanSwimlane extends Component {
                     .append("text")
                     .attr("x", function (d, i) { return keys[i].includes("Scale") ? 5 : 20 })
                     .attr("y", function (d, i) { return (startPoint + (i * box) + (keys[i].includes("Span") ? height / 2 : width / 2 + 1)) }) // 100 is where the first dot appears. 25 is the distance between dots
-                    .style("fill", "white")
+                    .style("fill", textColorString)
                     .text(function (d) { return d })
                     .attr("text-anchor", "left")
                     .style("alignment-baseline", "middle")
-
-
 
                 if (eventsOn) {
                     leg.append("text")
@@ -751,7 +757,7 @@ class SpanSwimlane extends Component {
                     let colourScheme = d3v3.scale.linear()
                         .domain([0, 1])
                         .interpolate(d3v3.interpolateHcl)
-                        .range([d3v3.rgb("white"), d3v3.rgb("black")])
+                        .range([d3v3.rgb(eventsLowProbColorString), d3v3.rgb(eventsHighProbColorString)])
 
                     let miniRecWidth = 150 / probabilityRange.length
 
@@ -769,14 +775,14 @@ class SpanSwimlane extends Component {
                         .attr("x", 5)
                         .attr("y", startPoint + ((keys.length + 1) * box) + (6 * height))
                         .text("low prob")
-                        .style("fill", "white")
+                        .style("fill", textColorString)
                         .style("font-size", "10px")
 
                     leg.append("text")
                         .attr("x", 110)
                         .attr("y", startPoint + ((keys.length + 1) * box) + (6 * height))
                         .text("high prob")
-                        .style("fill", "white")
+                        .style("fill", textColorString)
                         .style("font-size", "10px")
 
                 }
