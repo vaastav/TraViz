@@ -5,9 +5,9 @@
 	--histogram-plain-color: #888888;
 	--molehill-color: var(--histogram-plain-color);
 	--molehill-threshold-color: #FFA0A1;
-	--events-low-prob-color: "white";
-	--events-high-prob-color: "black";
-	--text-color: "white";
+	--events-low-prob-color: white;
+	--events-high-prob-color: black;
+	--text-color: white;
 }
 
 .chart {

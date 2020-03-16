@@ -26,9 +26,9 @@ function initialiseColours() {
     molehillColorString = getComputedStyle(document.documentElement).getPropertyValue('--molehill-color');
     molehillThresholdColorString = getComputedStyle(document.documentElement).getPropertyValue('--molehill-threshold-color');
     histogramPlainColorString = getComputedStyle(document.documentElement).getPropertyValue('--histogram-plain-color');
-    eventsLowProbColorString = getComputedStyle(document.documentElement).getPropertyValue('--events-low-prob-color');
-    eventsHighProbColorString = getComputedStyle(document.documentElement).getPropertyValue('--events-high-prob-color');
-    textColorString = getComputedStyle(document.documentElement).getPropertyValue('--text-color')
+    eventsLowProbColorString = getComputedStyle(document.documentElement).getPropertyValue('--events-low-prob-color').trim();
+    eventsHighProbColorString = getComputedStyle(document.documentElement).getPropertyValue('--events-high-prob-color').trim();
+    textColorString = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
 
 }
 
@@ -673,10 +673,14 @@ class SpanSwimlane extends Component {
                     .domain([0, 1])
                     .interpolate(d3v3.interpolateHcl)
                     .range([d3v3.rgb(eventsLowProbColorString), d3v3.rgb(eventsHighProbColorString)])
+<<<<<<< HEAD
 
                 console.log(eventsHighProbColorString)
 
 
+=======
+                
+>>>>>>> Fix annoying whitespace added to colour string
                 let eventRectangles = mini.append('g').attr('class', 'gEvents').selectAll('rect')
                     .data(events)
                     .attr('x', 0)
