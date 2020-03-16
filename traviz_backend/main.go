@@ -954,7 +954,9 @@ func (s * Server) Overview(w http.ResponseWriter, r *http.Request) {
     var responseRows []OverviewRow
     for rows.Next() {
         var responseRow OverviewRow
-        err = rows.Scan(&responseRow.ID, &responseRow.Date, &responseRow.Duration, &responseRow.NumEvents)
+        var date time.Time
+        err = rows.Scan(&responseRow.ID, &date, &responseRow.Duration, &responseRow.NumEvents)
+        responseRow.Date = date.Format("2006-01-02 15:04:05")
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
@@ -1438,6 +1440,7 @@ func (s * Server) FilterTraces(w http.ResponseWriter, r *http.Request) {
         for rows.Next() {
             var responseRow OverviewRow
             err = rows.Scan(&responseRow.ID, &responseRow.Date, &responseRow.Duration, &responseRow.NumEvents)
+            log.Println(responseRow.Date)
             if err != nil {
                 w.WriteHeader(http.StatusInternalServerError)
                 json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
