@@ -95,33 +95,33 @@ function createSpans(events) {
         }
     });
 
-    
-    
+
+
     return spans
 }
 
-function addMolehills(spans,tasks){
+function addMolehills(spans, tasks) {
     let superMaxCount = 0;
-    for(var i = 0; i<spans.length; i++){
-        
+    for (var i = 0; i < spans.length; i++) {
+
         let molehills = new Array();
         let durationMS = Math.round((spans[i].end - spans[i].start) / 1000000);
 
         for (var j = 0; j < durationMS; j++) {
             //Making sure value varies by no more than 10% each time
             var procCount = 0;
-            
-            for(var k = 0; k<tasks[i].MolehillData.length; k++){
+
+            for (var k = 0; k < tasks[i].MolehillData.length; k++) {
                 let curr = tasks[i].MolehillData[k];
-                if(curr.Start<=j*1000000){
-                    if(curr.End>=j*1000000){
+                if (curr.Start <= j * 1000000) {
+                    if (curr.End >= j * 1000000) {
                         procCount++
                     }
                 }
-                
+
             }
 
-            if(procCount>superMaxCount){
+            if (procCount > superMaxCount) {
                 superMaxCount = procCount
             }
             let molehill = {
@@ -130,14 +130,14 @@ function addMolehills(spans,tasks){
             }
             molehills.push(molehill);
         }
-        
-        spans[i].molehills=molehills;
-        
+
+        spans[i].molehills = molehills;
+
     }
 
     spans.forEach(s => {
         s.molehills.forEach(m => {
-            m.val = Math.round((m.val/superMaxCount)*100);
+            m.val = Math.round((m.val / superMaxCount) * 100);
         })
     })
 
@@ -280,7 +280,7 @@ class SpanSwimlane extends Component {
         let spans = createSpans(this.state.trace);
         let tasks = sortTasks(this.state.tasks, spans);
         this.state.tasks = tasks;
-        spans = addMolehills(spans,tasks);
+        spans = addMolehills(spans, tasks);
 
         let lanes = createLanes(this.state.trace);
         let laneMap = makeLaneMap(lanes);
@@ -298,8 +298,8 @@ class SpanSwimlane extends Component {
         // Gives size of swimlane with mini lanes. 20 is the height of each lane
         var laneHeight = 20.0;
         var spanHeight = 8;
-        var molehillShift = (laneHeight-2)/2 - spanHeight;
-        var maxMolehillHeight = laneHeight-spanHeight-5;
+        var molehillShift = (laneHeight - 2) / 2 - spanHeight;
+        var maxMolehillHeight = laneHeight - spanHeight - 5;
 
         var miniHeight = lanes.length * laneHeight;
 
@@ -318,7 +318,6 @@ class SpanSwimlane extends Component {
         initialiseChart()
 
         let spanRectangles
-        let circles = mini.append("g")
 
         drawSpans();
 
@@ -330,7 +329,7 @@ class SpanSwimlane extends Component {
             .on("click", function () {
                 molehillsOn = !molehillsOn;
                 if (molehillsOn) {
-                  
+
                     drawSpans()
 
                     drawMolehills()
@@ -340,7 +339,7 @@ class SpanSwimlane extends Component {
                 } else {
                     //this removes the <g> containing all the molehill rectangles
                     mini.selectAll('.gMolehillRectangles').remove()
-                    
+
                     //need to redraw the spans to put them back in the middle of the lane
                     drawSpans()
 
@@ -361,7 +360,7 @@ class SpanSwimlane extends Component {
                 eventsOn = !eventsOn;
                 mini.selectAll('.gEvents').remove();
                 if (eventsOn) {
-                    
+
                     drawSpans()
 
                     if (molehillsOn) {
@@ -372,11 +371,11 @@ class SpanSwimlane extends Component {
 
                 } else {
                     //this removes the <g> containing all the event markers
-                    
+
 
                     //this removes the <g> containing all the molehill rectangles
                     mini.selectAll('.gMolehillRectangles').remove()
-                    
+
 
                     //need to redraw the spans to put them back in the middle of the lane
                     drawSpans()
@@ -537,7 +536,7 @@ class SpanSwimlane extends Component {
                         let min = Math.min.apply(Math, d);
                         let max = Math.max.apply(Math, d);
                         if (task.Duration !== null && task.Duration >= min && task.Duration <= max) {
-                            return spanColorString 
+                            return spanColorString
                         } else {
                             return histogramPlainColorString
                         }
@@ -602,13 +601,13 @@ class SpanSwimlane extends Component {
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
-                    setSelectedSpan(spans,e.id,tasks)
+                    setSelectedSpan(spans, e.id, tasks)
                     drawSpans()
                 })
 
-            drawCircles()
+            drawEvents()
         }
-        
+
 
         function drawMolehills() {
             for (var i = 0; i < spans.length; i++) {
@@ -625,7 +624,7 @@ class SpanSwimlane extends Component {
                     .attr('x', (d) => {
                         return spanStartPoint + d.id * mhWidth;
                     })
-                    .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + (laneHeight / 2) + (molehillShift-1)) - molehillY(d.val) })
+                    .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + (laneHeight / 2) + (molehillShift - 1)) - molehillY(d.val) })
                     .attr('width', mhWidth)
                     .attr('height', (d) => molehillY(d.val))
                     .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
@@ -633,36 +632,33 @@ class SpanSwimlane extends Component {
             }
         }
 
-        function drawCircles() {
+        function drawEvents() {
             mini.selectAll('.gEvents').remove();
-            
-            if (eventsOn) {
-                if (circles !== undefined) {
-                    circles.remove()
-                }
 
-                let eventSize = spanHeight/2;
+            if (eventsOn) {
+
+                let eventSize = spanHeight / 2;
 
                 let colourScheme = d3v3.scale.linear()
                     .domain([0, 1])
                     .interpolate(d3v3.interpolateHcl)
                     .range([d3v3.rgb("white"), d3v3.rgb("black")])
 
-                
+
                 let eventRectangles = mini.append('g').attr('class', 'gEvents').selectAll('rect')
                     .data(events)
                     .attr('x', 0)
                     .attr('y', 0)
 
-                    eventRectangles.enter().append("rect")
+                eventRectangles.enter().append("rect")
                     .attr("fill", d => colourScheme(d.Probability))
                     .attr("stroke", d => {
                         return colourScheme(d.Probability)
                     })
-                    .attr('width',1)
-                    .attr('height',spanHeight)
+                    .attr('width', 1)
+                    .attr('height', spanHeight)
                     .attr("x", function (d) { return x(d.HRT) })
-                    .attr("y", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) - (molehillsOn ? -( molehillShift ) : (spanHeight / 2))); })
+                    .attr("y", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
 
                 eventRectangles.exit().remove();
             }
@@ -717,36 +713,49 @@ class SpanSwimlane extends Component {
                     .attr("text-anchor", "left")
                     .style("alignment-baseline", "middle")
 
-                let colourScheme = d3v3.scale.linear()
-                    .domain([0, 1])
-                    .interpolate(d3v3.interpolateHcl)
-                    .range([d3v3.rgb("white"), d3v3.rgb("black")])
 
-                let miniRecWidth = 150 / probabilityRange.length
-                leg.selectAll("colourScale")
-                    .data(probabilityRange)
-                    .enter()
-                    .append("rect")
-                    .attr("x", (d, i) => 5 + i * miniRecWidth)
-                    .attr("y", startPoint + (keys.length * box) + (height / 2))
-                    .attr("width", miniRecWidth)
-                    .attr("height", height * 2)
-                    .style("fill", d => colourScheme(d))
 
-                leg.append("text")
-                    .attr("x", 5)
-                    .attr("y", startPoint + (keys.length * box) + (6 * height))
-                    .text("low prob")
-                    .style("fill", "white")
-                    .style("font-size", "10px")
+                if (eventsOn) {
+                    leg.append("text")
+                        .attr("x", 75)
+                        .attr("y", startPoint + (keys.length * box) + (height * 2))
+                        .style("fill", "white")
+                        .text("Events")
+                        .attr("text-anchor", "middle")
+                        .style("alignment-baseline", "middle")
 
-                leg.append("text")
-                    .attr("x", 110)
-                    .attr("y", startPoint + (keys.length * box) + (6 * height))
-                    .text("high prob")
-                    .style("fill", "white")
-                    .style("font-size", "10px")
+                    let colourScheme = d3v3.scale.linear()
+                        .domain([0, 1])
+                        .interpolate(d3v3.interpolateHcl)
+                        .range([d3v3.rgb("white"), d3v3.rgb("black")])
 
+                    let miniRecWidth = 150 / probabilityRange.length
+
+                    leg.selectAll("colourScale")
+                        .data(probabilityRange)
+                        .enter()
+                        .append("rect")
+                        .attr("x", (d, i) => 5 + i * miniRecWidth)
+                        .attr("y", startPoint + ((keys.length + 1) * box) + (height / 2))
+                        .attr("width", miniRecWidth)
+                        .attr("height", height * 2)
+                        .style("fill", d => colourScheme(d))
+
+                    leg.append("text")
+                        .attr("x", 5)
+                        .attr("y", startPoint + ((keys.length + 1) * box) + (6 * height))
+                        .text("low prob")
+                        .style("fill", "white")
+                        .style("font-size", "10px")
+
+                    leg.append("text")
+                        .attr("x", 110)
+                        .attr("y", startPoint + ((keys.length + 1) * box) + (6 * height))
+                        .text("high prob")
+                        .style("fill", "white")
+                        .style("font-size", "10px")
+
+                }
             }
         }
 
