@@ -140,34 +140,6 @@ function addMolehills(spans,tasks){
             m.val = Math.round((m.val/superMaxCount)*100);
         })
     })
-    //generating some random molehills for each span
-    // spans.forEach(s => {
-    //     let molehills = new Array();
-    //     let durationMS = Math.round((s.end - s.start) / 1000000);
-    //     //adding random values to molehills - one for every millisecond
-
-    //     var prevValue = Math.round(Math.random() * 100);
-    //     let molehill = {
-    //         id: 0,
-    //         val: prevValue
-    //     };
-    //     molehills.push(molehill);
-    //     for (var i = 1; i < durationMS; i++) {
-    //         //Making sure value varies by no more than 10% each time
-    //         var randomInt = Math.round(Math.random() * (20)) + prevValue - 10;
-
-    //         randomInt = Math.max(0, randomInt);
-    //         randomInt = Math.min(100, randomInt);
-    //         let molehill = {
-    //             id: i,
-    //             val: randomInt
-    //         }
-    //         molehills.push(molehill);
-    //         prevValue = randomInt;
-    //     }
-    //     s.molehills = molehills;
-        
-    // })
 
     return spans;
 
@@ -309,7 +281,6 @@ class SpanSwimlane extends Component {
         let tasks = sortTasks(this.state.tasks, spans);
         this.state.tasks = tasks;
         spans = addMolehills(spans,tasks);
-        console.log(spans);
 
         let lanes = createLanes(this.state.trace);
         let laneMap = makeLaneMap(lanes);
@@ -325,15 +296,18 @@ class SpanSwimlane extends Component {
             , width = 1870 - margin.left - margin.right
 
         // Gives size of swimlane with mini lanes. 20 is the height of each lane
-        var laneHeight = 20.0
-        var spanHeight = 8
-        var miniHeight = lanes.length * laneHeight
+        var laneHeight = 20.0;
+        var spanHeight = 8;
+        var molehillShift = (laneHeight-2)/2 - spanHeight;
+        var maxMolehillHeight = laneHeight-spanHeight-5;
+
+        var miniHeight = lanes.length * laneHeight;
 
         var x = d3v3.scale.linear().domain([start, end]).range([0, width]);
 
         var ext = d3v3.extent(lanes, function (d) { return d.id; });
         var y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
-        var molehillY = d3v3.scale.linear().domain([0, 100]).range([0, 10]);
+        var molehillY = d3v3.scale.linear().domain([0, 100]).range([0, maxMolehillHeight]);
         var molehillsOn = this.state.molehillsOn;
         var legendOn = this.state.legendOn;
         var eventsOn = this.state.eventsOn;
@@ -385,6 +359,7 @@ class SpanSwimlane extends Component {
 
             .on("click", function () {
                 eventsOn = !eventsOn;
+                mini.selectAll('.gEvents').remove();
                 if (eventsOn) {
                     
                     drawSpans()
@@ -396,8 +371,8 @@ class SpanSwimlane extends Component {
                     createLegend()
 
                 } else {
-                    //this removes the <g> containing all the molehill rectangles
-                    mini.selectAll('.circles').remove()
+                    //this removes the <g> containing all the event markers
+                    
 
                     //this removes the <g> containing all the molehill rectangles
                     mini.selectAll('.gMolehillRectangles').remove()
@@ -489,29 +464,6 @@ class SpanSwimlane extends Component {
         drawHistograms();
         if (this.state.legendOn) {
             createLegend(); //This legend suckssss
-        }
-
-        function spanMouseover(e) {
-            spanRectangles.enter().append('rect')
-                .attr('x', (d) => { return x(d.start) })
-                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -2.5 : 2.5) })
-                .attr('width', (d) => { return x(d.end) - x(d.start) })
-                .attr('height', spanHeight)
-                .attr('class', (d) => {
-                    if (d.id === e.id) {
-                        return 'selected'
-                    } else {
-                        return 'normal'
-                    }
-                })
-                .attr('stroke', spanColorString)
-                .attr('fill', spanColorString)
-                .on('mouseover', (e) => {
-                    setSelectedSpan(spans, e.id, tasks)
-                    spanMouseover(e)
-                })
-
-            spanRectangles.exit().remove()
         }
 
         //DRAWING FUNCTIONS (next 5)
@@ -637,13 +589,13 @@ class SpanSwimlane extends Component {
             spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
                 .data(spans)
                 .attr('x', (d) => { return x(d.start) })
-                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -(spanHeight / 2) : (spanHeight / 2)) })
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)) })
                 .attr('width', (d) => { return x(d.end) - x(d.start) })
                 .attr('class', (d) => { return d.class })
 
             spanRectangles.enter().append('rect')
                 .attr('x', (d) => { return x(d.start) })
-                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -(spanHeight / 2) : (spanHeight / 2)) })
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)) })
                 .attr('width', (d) => { return x(d.end) - x(d.start) })
                 .attr('height', spanHeight)
                 .attr('class', (d) => { return d.class })
@@ -652,7 +604,6 @@ class SpanSwimlane extends Component {
                 .on('mouseover', (e) => {
                     setSelectedSpan(spans,e.id,tasks)
                     drawSpans()
-                    //spanMouseover(e)
                 })
 
             drawCircles()
@@ -674,7 +625,7 @@ class SpanSwimlane extends Component {
                     .attr('x', (d) => {
                         return spanStartPoint + d.id * mhWidth;
                     })
-                    .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + (laneHeight / 2) + (spanHeight / 2)) - molehillY(d.val) })
+                    .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === spans[i].id).id) + (laneHeight / 2) + (molehillShift-1)) - molehillY(d.val) })
                     .attr('width', mhWidth)
                     .attr('height', (d) => molehillY(d.val))
                     .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
@@ -688,7 +639,7 @@ class SpanSwimlane extends Component {
                 if (circles !== undefined) {
                     circles.remove()
                 }
-                circles = mini.append("g")
+                circles = mini.append("g").attr('class', 'gEvents')
 
                 let colourScheme = d3v3.scale.linear()
                     .domain([0, 1])
@@ -701,7 +652,7 @@ class SpanSwimlane extends Component {
                     .attr("fill", d => colourScheme(d.Probability))
                     .attr("stroke", d => colourScheme(d.Probability))
                     .attr("cx", function (d) { return x(d.HRT) })
-                    .attr("cy", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) + (spanHeight / 2)) - (molehillsOn ? -(spanHeight / 2) : (spanHeight / 2)); })
+                    .attr("cy", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) + (spanHeight / 2)) - (molehillsOn ? -( molehillShift ) : (spanHeight / 2)); })
                     .attr("class", "circ")
 
                 circs.enter().append("circle")
@@ -711,7 +662,7 @@ class SpanSwimlane extends Component {
                         return colourScheme(d.Probability)
                     })
                     .attr("cx", function (d) { return x(d.HRT) })
-                    .attr("cy", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) + (spanHeight / 2)) - (molehillsOn ? -(spanHeight / 2) : (spanHeight / 2)); })
+                    .attr("cy", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) + (spanHeight / 2)) - (molehillsOn ? -( molehillShift ) : (spanHeight / 2)); })
                     .attr("class", "circ");
 
                 circs.exit().remove();
