@@ -1,6 +1,7 @@
 import React, { Component } from "react"
 import * as d3v3 from "d3-v3"
 import './SpanSwimlane.css'
+import { range } from 'lodash';
 import TraceService from "../../services/TraceService/TraceService";
 import TaskService from "../../services/TaskService/TaskService";
 
@@ -671,8 +672,10 @@ class SpanSwimlane extends Component {
             if (legendOn) {
 
                 chart.selectAll('.legend').remove()
+                chart.selectAll('.scaleSvg').remove()
                 // create a list of keys
-                var keys = ["Span", "Selected Span", "Y-axis scale: Log base 2"]
+                var keys = ["Span", "Selected Span"]
+                var probabilityRange = range(0, 1, 0.01)
                 var color = [spanColorString, highlightSpanColorString]
 
                 if (molehillsOn) {
@@ -682,7 +685,7 @@ class SpanSwimlane extends Component {
                     color.push(molehillThresholdColorString)
                 }
 
-
+                // keys.push("Hist Scale: log₂")
 
                 // Add one dot in the legend for each name.
                 var box = 20
@@ -706,12 +709,42 @@ class SpanSwimlane extends Component {
                     .data(keys)
                     .enter()
                     .append("text")
-                    .attr("x", 20)
+                    .attr("x", function (d, i) { return keys[i].includes("Scale") ? 5 : 20 })
                     .attr("y", function (d, i) { return (startPoint + (i * box) + (keys[i].includes("Span") ? height / 2 : width / 2 + 1)) }) // 100 is where the first dot appears. 25 is the distance between dots
                     .style("fill", "white")
                     .text(function (d) { return d })
                     .attr("text-anchor", "left")
                     .style("alignment-baseline", "middle")
+
+                let colourScheme = d3v3.scale.linear()
+                    .domain([0, 1])
+                    .interpolate(d3v3.interpolateHcl)
+                    .range([d3v3.rgb("white"), d3v3.rgb("black")])
+
+                let miniRecWidth = 150 / probabilityRange.length
+                leg.selectAll("colourScale")
+                    .data(probabilityRange)
+                    .enter()
+                    .append("rect")
+                    .attr("x", (d, i) => 5 + i * miniRecWidth)
+                    .attr("y", startPoint + (keys.length * box) + (height / 2))
+                    .attr("width", miniRecWidth)
+                    .attr("height", height * 2)
+                    .style("fill", d => colourScheme(d))
+
+                leg.append("text")
+                    .attr("x", 5)
+                    .attr("y", startPoint + (keys.length * box) + (6 * height))
+                    .text("low prob")
+                    .style("fill", "white")
+                    .style("font-size", "10px")
+
+                leg.append("text")
+                    .attr("x", 110)
+                    .attr("y", startPoint + (keys.length * box) + (6 * height))
+                    .text("high prob")
+                    .style("fill", "white")
+                    .style("font-size", "10px")
 
             }
         }
