@@ -139,6 +139,14 @@ function makeSpanMap(spans) {
     return spanMap;
 }
 
+function makeLaneMap(lanes) {
+    let laneMap = new Map();
+    lanes.forEach(lane => {
+        laneMap.set(lane.ThreadID, lane);
+    })
+    return laneMap;
+}
+
 // For each span, find and set the direct children of that span.
 function setChildSpans(spanMap, eventMap) {
     spanMap.forEach(span => {
@@ -251,6 +259,7 @@ class SpanSwimlane extends Component {
         let tasks = sortTasks(this.state.tasks, spans);
         this.state.tasks = tasks;
         let lanes = createLanes(this.state.trace);
+        let laneMap = makeLaneMap(lanes);
         let spanMap = makeSpanMap(spans);
         let eventMap = makeEventMap(events);
 
@@ -278,11 +287,10 @@ class SpanSwimlane extends Component {
 
         initialiseChart()
 
-
         let spanRectangles
+        
 
-        drawSpans()
-
+        drawSpans();
 
         // Add Toolbar
         d3v3.select("#toolbar").append('input')
@@ -310,6 +318,7 @@ class SpanSwimlane extends Component {
                     drawSpans()
 
                     createLegend()
+
                 }
             });
 
@@ -337,7 +346,6 @@ class SpanSwimlane extends Component {
                     initialiseChart()
 
                     drawSpans()
-
                     if (molehillsOn) {
 
                         drawMolehills()
@@ -407,14 +415,14 @@ class SpanSwimlane extends Component {
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
-                    spanMouseover(e, spanRectangles, molehillsOn, x, y2, lanes)
                     setSelectedSpan(spans, e.id, tasks)
+                    spanMouseover(e)
                 })
-        
+
             spanRectangles.exit().remove()
         }
 
-        //DRAWING FUNCTIONS (next 4)
+        //DRAWING FUNCTIONS (next 5)
         function drawHistograms() {
             // Define size of one histogram
             let histMargin = { top: 10, right: 10, bottom: 10, left: 10 }
@@ -493,7 +501,6 @@ class SpanSwimlane extends Component {
                     .style("align", "center")
                 task.bar = rect
             })
-
         }
 
         function initialiseChart() {
@@ -530,10 +537,7 @@ class SpanSwimlane extends Component {
                 .attr('x2', width)
                 .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
                 .attr('stroke', "#979797");
-
-
         }
-
 
         function drawSpans() {
             spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
@@ -552,8 +556,10 @@ class SpanSwimlane extends Component {
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
-                    spanMouseover(e, spanRectangles, molehillsOn, x, y2, lanes)
+                    spanMouseover(e)
                 })
+
+            drawCircles()
         }
 
         function drawMolehills() {
@@ -577,9 +583,36 @@ class SpanSwimlane extends Component {
                     .attr('height', (d) => molehillY(d.val))
                     .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
                     .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString));
-
-
             }
+        }
+
+        function drawCircles() {
+            let circles = mini.append("g")
+
+            let colourScheme = d3v3.scale.linear()
+            .domain([0,1])
+            .interpolate(d3v3.interpolateHcl)
+            .range([d3v3.rgb("#c9add4"), d3v3.rgb("#cd5bfa")])
+            console.log(colourScheme(0.3))
+
+            let circs = circles.selectAll(".circ")
+            .data(events)
+            .attr("r", 1)
+            .attr("fill", d => colourScheme(d.Probability))
+            .attr("stroke",  d => colourScheme(d.Probability))
+            .attr("cx", function (d) { return x(d.HRT) })
+            .attr("cy", function (d) { return y2(laneMap.get(d.ThreadID).id) + 10 - (molehillsOn ? -2.5 : 2.5); })
+            .attr("class", "circ")
+
+            circs.enter().append("circle")
+                .attr("r", 1)
+                .attr("fill",  d => colourScheme(d.Probability))
+                .attr("stroke",  d => colourScheme(d.Probability))
+                .attr("cx", function (d) { return x(d.HRT) })
+                .attr("cy", function (d) { return y2(laneMap.get(d.ThreadID).id) + 10 - (molehillsOn ? -2.5 : 2.5); })
+                .attr("class", "circ");
+
+            circs.exit().remove();
         }
 
         function createLegend() {
@@ -604,7 +637,7 @@ class SpanSwimlane extends Component {
                 var box = 20
                 var width = 10
                 var height = 5
-                var startPoint = ((miniHeight + margin.top + margin.bottom) / 2) - (keys.length/2 * (box + 5))
+                var startPoint = ((miniHeight + margin.top + margin.bottom) / 2) - (keys.length / 2 * (box + 5))
                 var leg = chart.append('g').attr('class', 'legend')
 
                 leg.selectAll("mydots")
@@ -623,7 +656,7 @@ class SpanSwimlane extends Component {
                     .enter()
                     .append("text")
                     .attr("x", 20)
-                    .attr("y", function (d, i) { return (startPoint + (i * box) + (keys[i].includes("Span") ? height/2 : width/2 + 1) )}) // 100 is where the first dot appears. 25 is the distance between dots
+                    .attr("y", function (d, i) { return (startPoint + (i * box) + (keys[i].includes("Span") ? height / 2 : width / 2 + 1)) }) // 100 is where the first dot appears. 25 is the distance between dots
                     .style("fill", "white")
                     .text(function (d) { return d })
                     .attr("text-anchor", "left")
