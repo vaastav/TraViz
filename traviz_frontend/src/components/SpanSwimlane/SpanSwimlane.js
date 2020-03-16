@@ -94,34 +94,83 @@ function createSpans(events) {
             count++
         }
     });
-    //generating some random molehills for each span
-    spans.forEach(s => {
+
+    
+    
+    return spans
+}
+
+function addMolehills(spans,tasks){
+    let superMaxCount = 0;
+    for(var i = 0; i<spans.length; i++){
+        
         let molehills = new Array();
-        let durationMS = Math.round((s.end - s.start) / 1000000);
-        //adding random values to molehills - one for every millisecond
+        let durationMS = Math.round((spans[i].end - spans[i].start) / 1000000);
 
-        var prevValue = Math.round(Math.random() * 100);
-        let molehill = {
-            id: 0,
-            val: prevValue
-        };
-        molehills.push(molehill);
-        for (var i = 1; i < durationMS; i++) {
+        for (var j = 0; j < durationMS; j++) {
             //Making sure value varies by no more than 10% each time
-            var randomInt = Math.round(Math.random() * (20)) + prevValue - 10;
+            var procCount = 0;
+            
+            for(var k = 0; k<tasks[i].MolehillData.length; k++){
+                let curr = tasks[i].MolehillData[k];
+                if(curr.Start<=j*1000000){
+                    if(curr.End>=j*1000000){
+                        procCount++
+                    }
+                }
+                
+            }
 
-            randomInt = Math.max(0, randomInt);
-            randomInt = Math.min(100, randomInt);
+            if(procCount>superMaxCount){
+                superMaxCount = procCount
+            }
             let molehill = {
-                id: i,
-                val: randomInt
+                id: j,
+                val: procCount
             }
             molehills.push(molehill);
-            prevValue = randomInt;
         }
-        s.molehills = molehills;
+        
+        spans[i].molehills=molehills;
+        
+    }
+
+    spans.forEach(s => {
+        s.molehills.forEach(m => {
+            m.val = Math.round((m.val/superMaxCount)*100);
+        })
     })
-    return spans
+    //generating some random molehills for each span
+    // spans.forEach(s => {
+    //     let molehills = new Array();
+    //     let durationMS = Math.round((s.end - s.start) / 1000000);
+    //     //adding random values to molehills - one for every millisecond
+
+    //     var prevValue = Math.round(Math.random() * 100);
+    //     let molehill = {
+    //         id: 0,
+    //         val: prevValue
+    //     };
+    //     molehills.push(molehill);
+    //     for (var i = 1; i < durationMS; i++) {
+    //         //Making sure value varies by no more than 10% each time
+    //         var randomInt = Math.round(Math.random() * (20)) + prevValue - 10;
+
+    //         randomInt = Math.max(0, randomInt);
+    //         randomInt = Math.min(100, randomInt);
+    //         let molehill = {
+    //             id: i,
+    //             val: randomInt
+    //         }
+    //         molehills.push(molehill);
+    //         prevValue = randomInt;
+    //     }
+    //     s.molehills = molehills;
+        
+    // })
+
+    return spans;
+
 }
 
 function makeEventMap(events) {
@@ -259,6 +308,9 @@ class SpanSwimlane extends Component {
         let spans = createSpans(this.state.trace);
         let tasks = sortTasks(this.state.tasks, spans);
         this.state.tasks = tasks;
+        spans = addMolehills(spans,tasks);
+        console.log(spans);
+
         let lanes = createLanes(this.state.trace);
         let laneMap = makeLaneMap(lanes);
         let spanMap = makeSpanMap(spans);
@@ -304,8 +356,7 @@ class SpanSwimlane extends Component {
             .on("click", function () {
                 molehillsOn = !molehillsOn;
                 if (molehillsOn) {
-                    mini.selectAll('.gSpans').remove();
-
+                  
                     drawSpans()
 
                     drawMolehills()
@@ -315,9 +366,7 @@ class SpanSwimlane extends Component {
                 } else {
                     //this removes the <g> containing all the molehill rectangles
                     mini.selectAll('.gMolehillRectangles').remove()
-                    //this removes the <g> containing all the span rectangles
-                    mini.selectAll('.gSpans').remove();
-
+                    
                     //need to redraw the spans to put them back in the middle of the lane
                     drawSpans()
 
@@ -337,8 +386,7 @@ class SpanSwimlane extends Component {
             .on("click", function () {
                 eventsOn = !eventsOn;
                 if (eventsOn) {
-                    mini.selectAll('.gSpans').remove();
-
+                    
                     drawSpans()
 
                     if (molehillsOn) {
@@ -353,8 +401,7 @@ class SpanSwimlane extends Component {
 
                     //this removes the <g> containing all the molehill rectangles
                     mini.selectAll('.gMolehillRectangles').remove()
-                    //this removes the <g> containing all the span rectangles
-                    mini.selectAll('.gSpans').remove();
+                    
 
                     //need to redraw the spans to put them back in the middle of the lane
                     drawSpans()
@@ -621,7 +668,6 @@ class SpanSwimlane extends Component {
                     .attr('x', 0)
                     .attr('y', 0)
                     .attr('width', 10)
-
 
                 molehillRectangles.enter().append('rect')
                     .attr("class", 'molehillRect')
