@@ -10,5 +10,6 @@
             "src" : "social-network-microservices",
             "dst" : "socialNetwork"
         }
-    ]
+    ],
+    "tasks_file" : "tasks.json"
 }

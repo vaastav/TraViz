@@ -538,7 +538,7 @@ class SpanSwimlane extends Component {
                         let min = Math.min.apply(Math, d);
                         let max = Math.max.apply(Math, d);
                         if (task.Duration !== null && task.Duration >= min && task.Duration <= max) {
-                            return spanColorString // Same colour as span - A2CB00 - slightly brighter possibility
+                            return spanColorString 
                         } else {
                             return histogramPlainColorString
                         }
@@ -585,6 +585,8 @@ class SpanSwimlane extends Component {
         }
 
         function drawSpans() {
+            mini.selectAll('.gSpans').remove();
+
             spanRectangles = mini.append('g').attr('class', 'gSpans').selectAll('rect')
                 .data(spans)
                 .attr('x', (d) => { return x(d.start) })
@@ -601,11 +603,14 @@ class SpanSwimlane extends Component {
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
-                    spanMouseover(e)
+                    setSelectedSpan(spans,e.id,tasks)
+                    drawSpans()
+                    //spanMouseover(e)
                 })
 
             drawCircles()
         }
+        
 
         function drawMolehills() {
             for (var i = 0; i < spans.length; i++) {
