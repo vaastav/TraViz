@@ -468,7 +468,7 @@ func parseConfig(filename string) (Config, error) {
 //Sets up the server with the given config
 //Also updates the database if the database needs to be updated
 func setupServer(config Config) (*Server, error) {
-    connString := config.Username + ":" + config.Password + "@tcp(127.0.0.1:3306)/" + config.DB
+    connString := config.Username + ":" + config.Password + "@tcp(127.0.0.1:3306)/" + config.DB + "?parseTime=true"
     db, err := sql.Open("mysql", connString)
     if err != nil {
         return nil, err
@@ -496,12 +496,74 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
+    err = server.InsertSpanTimes()
+    if err != nil {
+        return nil, err
+    }
     server.routes()
     return &server, nil
 }
 
+func (s * Server) InsertSpanTimes() error {
+    log.Println("Inserting span times")
+    initResults, err := s.DB.Query("SELECT COUNT(span_id) from span_times")
+    if err != nil {
+        return err
+    }
+    var count int
+    for initResults.Next() {
+        err = initResults.Scan(&count)
+        if err != nil {
+            return err
+        }
+    }
+    if count != 0 {
+        return nil
+    }
+    stmtIns, err := s.DB.Prepare("INSERT INTO span_times VALUES( ?, ?, ?)")
+    if err != nil {
+        return err
+    }
+    defer stmtIns.Close()
+    results, err := s.DB.Query("select span_id, startTime, duration from tasks")
+    if err != nil {
+        return err
+    }
+    for results.Next() {
+        var span_id string
+        var startTime time.Time
+        var duration int64
+        err = results.Scan(&span_id, &startTime, &duration)
+        if err != nil {
+            log.Println(err)
+            continue
+        }
+        endTime := startTime.Add(time.Duration(duration) * time.Millisecond)
+        _, err := stmtIns.Exec(span_id, startTime, endTime)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
 func (s * Server) InsertAggregates() error {
-    //return nil
+    initResults, err := s.DB.Query("SELECT operation from events_aggregate")
+    if err != nil {
+        return err
+    }
+    numResults := 0
+    for initResults.Next() {
+        var operation string
+        err = initResults.Scan(&operation)
+        if err != nil {
+            continue
+        }
+        numResults += 1
+    }
+    if numResults != 0 {
+        return nil
+    }
     log.Println("Inserting aggregates")
     results, err := s.DB.Query("select DISTINCT fname, linenum, operation FROM events")
     if err != nil {
