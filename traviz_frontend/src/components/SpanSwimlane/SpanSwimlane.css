@@ -1,10 +1,10 @@
 :root {
 	--span-color: #5BB6FA;
-	--highlight-span-color: #F0FE0F;
+	--highlight-span-color: #E18100;
 	--prev-highlight-color: var(--span-color);
 	--histogram-plain-color: #888888;
 	--molehill-color: var(--histogram-plain-color);
-	--molehill-threshold-color: #FE5E60;
+	--molehill-threshold-color: #FFA0A1;
 }
 
 .chart {

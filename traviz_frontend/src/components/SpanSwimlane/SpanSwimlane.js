@@ -8,7 +8,7 @@ import TaskService from "../../services/TaskService/TaskService";
 // TODO: Find best way to partition bins in x-axis
 //         - Static 20 bins at the moment. Make it dynamic to input.
 
-var molehillThreshold = 95; //set a threshold to highlight values above (set to 100 if not wanted)
+var molehillThreshold = 99; //set a threshold to highlight values above (set to 100 if not wanted)
 
 //set the colour options up here
 var spanColorString
@@ -634,38 +634,37 @@ class SpanSwimlane extends Component {
         }
 
         function drawCircles() {
-
+            mini.selectAll('.gEvents').remove();
+            
             if (eventsOn) {
                 if (circles !== undefined) {
                     circles.remove()
                 }
-                circles = mini.append("g").attr('class', 'gEvents')
+
+                let eventSize = spanHeight/2;
 
                 let colourScheme = d3v3.scale.linear()
                     .domain([0, 1])
                     .interpolate(d3v3.interpolateHcl)
                     .range([d3v3.rgb("white"), d3v3.rgb("black")])
 
-                let circs = circles.selectAll(".circ")
+                
+                let eventRectangles = mini.append('g').attr('class', 'gEvents').selectAll('rect')
                     .data(events)
-                    .attr("r", 2.5)
-                    .attr("fill", d => colourScheme(d.Probability))
-                    .attr("stroke", d => colourScheme(d.Probability))
-                    .attr("cx", function (d) { return x(d.HRT) })
-                    .attr("cy", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) + (spanHeight / 2)) - (molehillsOn ? -( molehillShift ) : (spanHeight / 2)); })
-                    .attr("class", "circ")
+                    .attr('x', 0)
+                    .attr('y', 0)
 
-                circs.enter().append("circle")
-                    .attr("r", 2.5)
+                    eventRectangles.enter().append("rect")
                     .attr("fill", d => colourScheme(d.Probability))
                     .attr("stroke", d => {
                         return colourScheme(d.Probability)
                     })
-                    .attr("cx", function (d) { return x(d.HRT) })
-                    .attr("cy", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) + (spanHeight / 2)) - (molehillsOn ? -( molehillShift ) : (spanHeight / 2)); })
-                    .attr("class", "circ");
+                    .attr('width',1)
+                    .attr('height',spanHeight)
+                    .attr("x", function (d) { return x(d.HRT) })
+                    .attr("y", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) - (molehillsOn ? -( molehillShift ) : (spanHeight / 2))); })
 
-                circs.exit().remove();
+                eventRectangles.exit().remove();
             }
         }
 
