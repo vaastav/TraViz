@@ -66,6 +66,16 @@ function getEndTime(events) {
     return lastEnd
 }
 
+function filterZerosFromHistData(data) {
+    let filteredData = new Array()
+    data.forEach(a => {
+        if (a.length !== 0) {
+            filteredData.push(a)
+        }
+    })
+    return filteredData
+}
+
 function createSpans(events) {
     //if we are going to try add molehills into the frontend then this is personally where I would add it - as an array on the span and then should be able to edit the drawing method too
     let spans = new Array();
@@ -247,6 +257,18 @@ function sortTasks(tasks, spans) {
         task.bar = null;
     }
     return sortedTasks;
+}
+
+function countEvents(data) {
+    let sum = 0
+    data.forEach(d => {
+        d.forEach(e => {
+            if (e === 0) {
+                sum += 1
+            }
+        })
+    })
+    return sum
 }
 
 class SpanSwimlane extends Component {
@@ -513,6 +535,8 @@ class SpanSwimlane extends Component {
 
                 let data = d3v3.layout.histogram()
                     .bins(histX.ticks(15))(task.Data);
+
+                data = filterZerosFromHistData(data)
 
                 let histYMax = d3v3.max(data, function (d) { return d.length });
 
