@@ -1262,7 +1262,7 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
             }
             if conendTime.Before(endTime) {
                 dur := endTime.Sub(conendTime)
-                end = int64(end/1000000) - int64(dur.Nanoseconds() /  1000000)
+                end = end - int64(dur.Nanoseconds() /  1000000)
             }
             var concTask ConcurrentTask
             concTask.Start = start
