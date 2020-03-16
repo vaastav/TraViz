@@ -673,14 +673,7 @@ class SpanSwimlane extends Component {
                     .domain([0, 1])
                     .interpolate(d3v3.interpolateHcl)
                     .range([d3v3.rgb(eventsLowProbColorString), d3v3.rgb(eventsHighProbColorString)])
-<<<<<<< HEAD
 
-                console.log(eventsHighProbColorString)
-
-
-=======
-                
->>>>>>> Fix annoying whitespace added to colour string
                 let eventRectangles = mini.append('g').attr('class', 'gEvents').selectAll('rect')
                     .data(events)
                     .attr('x', 0)
