@@ -89,6 +89,11 @@ type OverviewRow struct {
     Tags []string
 }
 
+type ConcurrentTask struct {
+    Start int64
+    End int64
+}
+
 type TaskRow struct {
     Operation string
     ProcessName string
@@ -96,6 +101,7 @@ type TaskRow struct {
     ThreadID int
     Duration uint64
     Data []uint64
+    MolehillData []ConcurrentTask
 }
 
 type D3Node struct {
@@ -1172,7 +1178,7 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID"})
         return
     }
-    lotasks, err := s.DB.Query("SELECT tasks.ProcessName, tasks.ProcessID, tasks.ThreadID, tasks.duration, tasks.operation FROM tasks WHERE trace_id=\"" + traceID + "\"")
+    lotasks, err := s.DB.Query("SELECT tasks.ProcessName, tasks.ProcessID, tasks.ThreadID, tasks.duration, tasks.operation, tasks.span_id FROM tasks WHERE trace_id=\"" + traceID + "\"")
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
         json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
@@ -1182,7 +1188,8 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
     var taskRows []TaskRow
     for lotasks.Next() {
         var task TaskRow
-        err = lotasks.Scan(&task.ProcessName, &task.ProcessID, &task.ThreadID, &task.Duration, &task.Operation)
+        var spanID string
+        err = lotasks.Scan(&task.ProcessName, &task.ProcessID, &task.ThreadID, &task.Duration, &task.Operation, &spanID)
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
@@ -1207,6 +1214,61 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
             all_data = append(all_data, data)
         }
         task.Data = all_data
+        ///*
+        spanIDTimes, err := s.DB.Query("SELECT startTime, endTime FROM span_times WHERE span_id=?",spanID)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            return
+        }
+        var startTime time.Time
+        var endTime time.Time
+        for spanIDTimes.Next() {
+            err = spanIDTimes.Scan(&startTime, &endTime)
+            if err != nil {
+                log.Println(err)
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            }
+        }
+        allConcurrentSpanTimes, err := s.DB.Query("SELECT span_times.startTime, span_times.endTime FROM span_times, tasks WHERE span_times.span_id=tasks.span_id and tasks.ProcessName=? and tasks.ProcessID=? and (span_times.startTime >=? or span_times.endTime <= ?) and tasks.Operation=?", task.ProcessName, task.ProcessID, startTime, endTime, task.Operation)
+        if err != nil {
+            log.Println(err)
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+        }
+        var moleHilldata []ConcurrentTask
+        //moleHilldata := make([]uint64, task.Duration)
+        for allConcurrentSpanTimes.Next() {
+            var constartTime time.Time
+            var conendTime time.Time
+            err = allConcurrentSpanTimes.Scan(&constartTime, &conendTime)
+            if err == sql.ErrNoRows {
+                // No concurrent spans means no molehill data. YAY.
+                continue
+            }
+            if err != nil {
+                log.Println(err)
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            }
+            start := int64(0)
+            end := int64(task.Duration)
+            if constartTime.After(startTime) {
+                dur := constartTime.Sub(startTime)
+                start = int64(dur.Nanoseconds() / 1000000)
+            }
+            if conendTime.Before(endTime) {
+                dur := endTime.Sub(conendTime)
+                end = end - int64(dur.Nanoseconds() / 1000000)
+            }
+            var concTask ConcurrentTask
+            concTask.Start = start
+            concTask.End = end
+            moleHilldata = append(moleHilldata, concTask)
+        }
+        task.MolehillData = moleHilldata
+        //*/
         taskRows = append(taskRows, task)
     }
     w.WriteHeader(http.StatusOK)
