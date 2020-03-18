@@ -281,7 +281,7 @@ class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false, eventsOn: false, legendOn: false };
+        this.state = { trace: [], tasks: null, molehillsOn: false, eventsOn: false, legendOn: false };
         this.traceService = new TraceService();
         this.taskService = new TaskService();
     }
@@ -365,6 +365,8 @@ class SpanSwimlane extends Component {
 
                     createLegend()
 
+                   drawEvents()
+
                 } else {
                     //this removes the <g> containing all the molehill rectangles
                     mini.selectAll('.gMolehillRectangles').remove()
@@ -373,6 +375,8 @@ class SpanSwimlane extends Component {
                     drawSpans()
 
                     createLegend()
+
+                    drawEvents()
 
                 }
             });
@@ -391,6 +395,8 @@ class SpanSwimlane extends Component {
                 if (eventsOn) {
 
                     drawSpans()
+                    drawEvents();
+
 
                     if (molehillsOn) {
                         drawMolehills()
@@ -447,7 +453,7 @@ class SpanSwimlane extends Component {
                         drawMolehills()
                     }
 
-
+                    drawEvents()                    
                     createLegend()
                 } else {
 
@@ -472,6 +478,8 @@ class SpanSwimlane extends Component {
                         drawMolehills()
 
                     }
+
+                    drawEvents()
 
 
                 }
@@ -531,7 +539,7 @@ class SpanSwimlane extends Component {
 
                         setSelectedSpan(spans, task.ThreadID, tasks)
 
-                        drawSpans()
+                        redrawHighlightedSpan()
                     })
 
                 // Create actual histogram
@@ -612,6 +620,38 @@ class SpanSwimlane extends Component {
                 .attr('stroke', "#979797");
         }
 
+        function redrawHighlightedSpan() {
+            let rectanglesToRedraw = mini.selectAll('.gSpans')
+            .selectAll('rect')
+            .filter((d) => {
+                return d.class === "selected" || d.class === "prevselected"
+            })
+
+            let dataToRedraw = rectanglesToRedraw.data()
+            rectanglesToRedraw.remove()
+
+            spanRectangles
+                .data(dataToRedraw)
+                .attr('x', (d) => { return x(d.start) })
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)) })
+                .attr('width', (d) => { return x(d.end) - x(d.start) })
+                .attr('class', (d) => { return d.class })
+
+                spanRectangles.enter().append('rect')
+                .attr('x', (d) => { return x(d.start) })
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)) })
+                .attr('width', (d) => { return x(d.end) - x(d.start) })
+                .attr('height', spanHeight)
+                .attr('class', (d) => { return d.class })
+                .attr('stroke', spanColorString)
+                .attr('fill', spanColorString)
+                .on('mouseover', (e) => {
+                    setSelectedSpan(spans, e.id, tasks)
+                    redrawHighlightedSpan()
+                })                       
+
+        }
+
         function drawSpans() {
             mini.selectAll('.gSpans').remove();
 
@@ -632,12 +672,9 @@ class SpanSwimlane extends Component {
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
                     setSelectedSpan(spans, e.id, tasks)
-                    drawSpans()
+                    redrawHighlightedSpan()
                 })
-
-            drawEvents()
         }
-
 
         function drawMolehills() {
             for (var i = 0; i < spans.length; i++) {
