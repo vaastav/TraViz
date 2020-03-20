@@ -536,6 +536,8 @@ class SpanSwimlane extends Component {
                     setSelectedSpan(spans, e.id, tasks)
                     redrawHighlightedSpan()
                 })
+
+            drawEvents()
         }
 
         function drawMolehills() {
@@ -566,7 +568,7 @@ class SpanSwimlane extends Component {
 
             if (eventsOn) {
 
-                let eventSize = spanHeight;
+                let eventSize = spanHeight-2;
 
                 let colourScheme = d3v3.scale.linear()
                     .domain([0, 1])
