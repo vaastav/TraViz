@@ -4,11 +4,10 @@ import './SpanSwimlane.css'
 import { range } from 'lodash';
 import TraceService from "../../services/TraceService/TraceService";
 import TaskService from "../../services/TaskService/TaskService";
+import { stratify } from "d3";
 
 // TODO: Find best way to partition bins in x-axis
 //         - Static 20 bins at the moment. Make it dynamic to input.
-
-var molehillThreshold = 99; //set a threshold to highlight values above (set to 100 if not wanted)
 
 //set the colour options up here
 var spanColorString
@@ -281,7 +280,7 @@ class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [], tasks: null, molehillsOn: false, eventsOn: false, legendOn: false };
+        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false, molehillThreshold: 95, eventsOn: false, legendOn: false };
         this.traceService = new TraceService();
         this.taskService = new TaskService();
     }
@@ -340,6 +339,7 @@ class SpanSwimlane extends Component {
         var molehillsOn = this.state.molehillsOn;
         var legendOn = this.state.legendOn;
         var eventsOn = this.state.eventsOn;
+        var molehillThreshold = this.state.molehillThreshold;
 
         var chart;
         var mini;
@@ -350,145 +350,7 @@ class SpanSwimlane extends Component {
 
         drawSpans();
 
-        // Add Toolbar
-        d3v3.select("#toolbar").append('input')
-            .attr('type', 'checkbox')
-            .attr('id', 'molehillCheckbox')
-
-            .on("click", function () {
-                molehillsOn = !molehillsOn;
-                if (molehillsOn) {
-
-                    drawSpans()
-
-                    drawMolehills()
-
-                    createLegend()
-
-                   drawEvents()
-
-                } else {
-                    //this removes the <g> containing all the molehill rectangles
-                    mini.selectAll('.gMolehillRectangles').remove()
-
-                    //need to redraw the spans to put them back in the middle of the lane
-                    drawSpans()
-
-                    createLegend()
-
-                    drawEvents()
-
-                }
-            });
-
-        d3v3.select("#toolbar")
-            .append('label').attr('for', 'molehillCheckbox')
-            .text('Molehills On');
-
-        d3v3.select("#toolbar").append('input')
-            .attr('type', 'checkbox')
-            .attr('id', 'eventsCheckbox')
-
-            .on("click", function () {
-                eventsOn = !eventsOn;
-                mini.selectAll('.gEvents').remove();
-                if (eventsOn) {
-
-                    drawSpans()
-                    drawEvents();
-
-
-                    if (molehillsOn) {
-                        drawMolehills()
-                    }
-
-                    createLegend()
-
-                } else {
-                    //this removes the <g> containing all the event markers
-
-
-                    //this removes the <g> containing all the molehill rectangles
-                    mini.selectAll('.gMolehillRectangles').remove()
-
-
-                    //need to redraw the spans to put them back in the middle of the lane
-                    drawSpans()
-
-                    if (molehillsOn) {
-                        drawMolehills()
-                    }
-
-                    createLegend()
-
-                }
-            });
-
-        d3v3.select("#toolbar")
-            .append('label').attr('for', 'eventsCheckbox')
-            .text('Events On');
-
-        d3v3.select("#toolbar").append('input')
-            .attr('type', 'checkbox')
-            .attr('id', 'legendCheckbox')
-
-            .on("click", function () {
-                legendOn = !legendOn;
-                if (legendOn) {
-                    margin = { top: 20, right: 10, bottom: 100, left: 175 }
-                    width = 1870 - margin.left - margin.right
-
-                    x = d3v3.scale.linear().domain([start, end]).range([0, width]);
-
-                    ext = d3v3.extent(lanes, function (d) { return d.id; });
-                    y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
-
-                    chart.remove()
-
-                    initialiseChart()
-
-                    drawSpans()
-                    if (molehillsOn) {
-
-                        drawMolehills()
-                    }
-
-                    drawEvents()                    
-                    createLegend()
-                } else {
-
-
-                    margin = { top: 20, right: 10, bottom: 100, left: 10 }
-                    width = 1870 - margin.left - margin.right
-
-                    x = d3v3.scale.linear().domain([start, end]).range([0, width]);
-                    ext = d3v3.extent(lanes, function (d) { return d.id; });
-                    y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
-
-                    // Gives size of swimlane with mini lanes. 20 is the height of each lane
-
-                    chart.remove()
-
-                    initialiseChart()
-
-                    drawSpans()
-
-
-                    if (molehillsOn) {
-                        drawMolehills()
-
-                    }
-
-                    drawEvents()
-
-
-                }
-            });
-
-
-        d3v3.select("#toolbar")
-            .append('label').attr('for', 'legendCheckbox')
-            .text('Legend On')
+        createToolbar();
 
         mini.selectAll('rect.background').remove();
 
@@ -704,7 +566,7 @@ class SpanSwimlane extends Component {
 
             if (eventsOn) {
 
-                let eventSize = spanHeight / 2;
+                let eventSize = spanHeight;
 
                 let colourScheme = d3v3.scale.linear()
                     .domain([0, 1])
@@ -722,9 +584,9 @@ class SpanSwimlane extends Component {
                         return colourScheme(d.Probability)
                     })
                     .attr('width', 1)
-                    .attr('height', spanHeight)
+                    .attr('height', eventSize)
                     .attr("x", function (d) { return x(d.HRT) })
-                    .attr("y", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
+                    .attr("y", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
 
                 eventRectangles.exit().remove();
             }
@@ -821,6 +683,172 @@ class SpanSwimlane extends Component {
 
                 }
             }
+        }
+
+        function createToolbar() {
+            d3v3.select("#toolbar").append('input')
+                .attr('type', 'checkbox')
+                .attr('id', 'molehillCheckbox')
+
+                .on("click", function () {
+                    molehillsOn = !molehillsOn;
+                    if (molehillsOn) {
+
+                        var s = document.createElement('label')
+                        s.id = "thresholdLabel"
+                        var text = document.createTextNode(' Highlight Threshold: '+molehillThreshold)
+                        s.appendChild(text)
+
+                        this.parentNode.insertBefore(s, this.nextSibling.nextSibling)
+
+                        //add slider
+                        var t = document.createElement('input')
+                        t.type = 'range'
+                        t.min = '0'
+                        t.max = '100'
+                        t.value = molehillThreshold
+                        t.class = "slider"
+                        t.id = "thresholdRange"
+                        t.onchange = function () {
+                                 molehillThreshold = this.value
+                                 if (molehillsOn) {
+                                     drawMolehills()
+                                 }
+                             }
+                        t.oninput = function () {
+                            d3v3.select("#thresholdLabel").text(' Highlight Threshold: '+this.value )
+                        }
+                        
+
+                        this.parentNode.insertBefore(t, this.nextSibling.nextSibling.nextSibling)
+                        
+                        
+                        
+                        
+                        drawSpans()
+
+                        drawMolehills()
+
+                        createLegend()
+
+                    } else {
+                        d3v3.select("#thresholdRange").remove()
+                        d3v3.select("#thresholdLabel").remove()
+                        //this removes the <g> containing all the molehill rectangles
+                        mini.selectAll('.gMolehillRectangles').remove()
+
+                        //need to redraw the spans to put them back in the middle of the lane
+                        drawSpans()
+
+                        createLegend()
+
+                    }
+                });
+
+            d3v3.select("#toolbar")
+                .append('label').attr('for', 'molehillCheckbox')
+                .text('Molehills');
+
+            d3v3.select("#toolbar").append('input')
+                .attr('type', 'checkbox')
+                .attr('id', 'eventsCheckbox')
+
+                .on("click", function () {
+                    eventsOn = !eventsOn;
+                    mini.selectAll('.gEvents').remove();
+                    if (eventsOn) {
+
+                        drawSpans()
+
+                        if (molehillsOn) {
+                            drawMolehills()
+                        }
+
+                        createLegend()
+
+                    } else {
+                        //this removes the <g> containing all the event markers
+
+
+                        //this removes the <g> containing all the molehill rectangles
+                        mini.selectAll('.gMolehillRectangles').remove()
+
+
+                        //need to redraw the spans to put them back in the middle of the lane
+                        drawSpans()
+
+                        if (molehillsOn) {
+                            drawMolehills()
+                        }
+
+                        createLegend()
+
+                    }
+                });
+
+            d3v3.select("#toolbar")
+                .append('label').attr('for', 'eventsCheckbox')
+                .text('Events');
+
+            d3v3.select("#toolbar").append('input')
+                .attr('type', 'checkbox')
+                .attr('id', 'legendCheckbox')
+
+                .on("click", function () {
+                    legendOn = !legendOn;
+                    if (legendOn) {
+                        margin = { top: 20, right: 10, bottom: 100, left: 175 }
+                        width = 1870 - margin.left - margin.right
+
+                        x = d3v3.scale.linear().domain([start, end]).range([0, width]);
+
+                        ext = d3v3.extent(lanes, function (d) { return d.id; });
+                        y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
+
+                        chart.remove()
+
+                        initialiseChart()
+
+                        drawSpans()
+                        if (molehillsOn) {
+
+                            drawMolehills()
+                        }
+
+
+                        createLegend()
+                    } else {
+
+
+                        margin = { top: 20, right: 10, bottom: 100, left: 10 }
+                        width = 1870 - margin.left - margin.right
+
+                        x = d3v3.scale.linear().domain([start, end]).range([0, width]);
+                        ext = d3v3.extent(lanes, function (d) { return d.id; });
+                        y2 = d3v3.scale.linear().domain([ext[0], ext[1] + 1]).range([0, miniHeight]);
+
+                        // Gives size of swimlane with mini lanes. 20 is the height of each lane
+
+                        chart.remove()
+
+                        initialiseChart()
+
+                        drawSpans()
+
+
+                        if (molehillsOn) {
+                            drawMolehills()
+
+                        }
+
+
+                    }
+                });
+
+
+            d3v3.select("#toolbar")
+                .append('label').attr('for', 'legendCheckbox')
+                .text('Legend')
         }
 
 
