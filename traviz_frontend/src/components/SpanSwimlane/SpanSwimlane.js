@@ -386,7 +386,8 @@ class SpanSwimlane extends Component {
                         "translate(" + histMargin.left + "," + histMargin.top + ")")
 
                 // Append highlight rectangle to each histogram svg
-                histSvg.append("rect")
+                histSvg.selectAll("rect.bars")
+                    .data([task]).enter().append("rect")
                     .attr("width", histWidth + histMargin.left + histMargin.right)
                     .attr("height", histHeight + histMargin.top + histMargin.bottom)
                     .attr("class", "bars")
@@ -484,10 +485,10 @@ class SpanSwimlane extends Component {
 
         function redrawHighlightedSpan() {
             let rectanglesToRedraw = mini.selectAll('.gSpans')
-            .selectAll('rect')
-            .filter((d) => {
-                return d.class === "selected" || d.class === "prevselected"
-            })
+                .selectAll('rect')
+                .filter((d) => {
+                    return d.class === "selected" || d.class === "prevselected"
+                })
 
             let dataToRedraw = rectanglesToRedraw.data()
             rectanglesToRedraw.remove()
@@ -499,7 +500,7 @@ class SpanSwimlane extends Component {
                 .attr('width', (d) => { return x(d.end) - x(d.start) })
                 .attr('class', (d) => { return d.class })
 
-                spanRectangles.enter().append('rect')
+            spanRectangles.enter().append('rect')
                 .attr('x', (d) => { return x(d.start) })
                 .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)) })
                 .attr('width', (d) => { return x(d.end) - x(d.start) })
@@ -508,9 +509,15 @@ class SpanSwimlane extends Component {
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
+                    d3v3.selectAll("rect.bars")
+                        .style("opacity", 0)
+
+                    d3v3.selectAll("rect.bars").filter((d) => d.ThreadID === e.id)
+                        .style("opacity", 0.1)
+
                     setSelectedSpan(spans, e.id, tasks)
                     redrawHighlightedSpan()
-                })                       
+                })
 
         }
 
@@ -533,6 +540,12 @@ class SpanSwimlane extends Component {
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
+                    d3v3.selectAll("rect.bars")
+                        .style("opacity", 0)
+
+                    d3v3.selectAll("rect.bars").filter((d) => d.ThreadID === e.id)
+                        .style("opacity", 0.1)
+
                     setSelectedSpan(spans, e.id, tasks)
                     redrawHighlightedSpan()
                 })
@@ -568,7 +581,7 @@ class SpanSwimlane extends Component {
 
             if (eventsOn) {
 
-                let eventSize = spanHeight-2;
+                let eventSize = spanHeight - 2;
 
                 let colourScheme = d3v3.scale.linear()
                     .domain([0, 1])
@@ -698,7 +711,7 @@ class SpanSwimlane extends Component {
 
                         var s = document.createElement('label')
                         s.id = "thresholdLabel"
-                        var text = document.createTextNode(' Highlight Threshold: '+molehillThreshold)
+                        var text = document.createTextNode(' Highlight Threshold: ' + molehillThreshold)
                         s.appendChild(text)
 
                         this.parentNode.insertBefore(s, this.nextSibling.nextSibling)
@@ -712,21 +725,21 @@ class SpanSwimlane extends Component {
                         t.class = "slider"
                         t.id = "thresholdRange"
                         t.onchange = function () {
-                                 molehillThreshold = this.value
-                                 if (molehillsOn) {
-                                     drawMolehills()
-                                 }
-                             }
-                        t.oninput = function () {
-                            d3v3.select("#thresholdLabel").text(' Highlight Threshold: '+this.value )
+                            molehillThreshold = this.value
+                            if (molehillsOn) {
+                                drawMolehills()
+                            }
                         }
-                        
+                        t.oninput = function () {
+                            d3v3.select("#thresholdLabel").text(' Highlight Threshold: ' + this.value)
+                        }
+
 
                         this.parentNode.insertBefore(t, this.nextSibling.nextSibling.nextSibling)
-                        
-                        
-                        
-                        
+
+
+
+
                         drawSpans()
 
                         drawMolehills()
