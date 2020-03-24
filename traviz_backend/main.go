@@ -180,6 +180,7 @@ type Server struct {
     Router *mux.Router
     Traces map[string]string
     Config Config
+    TotalTaskCounts map[string]int
 }
 
 //Processes a given XTrace and returns the statistics collected
@@ -506,8 +507,26 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
+    err = server.LoadTaskCounts()
+    if err != nil {
+        return nil, err
+    }
     server.routes()
     return &server, nil
+}
+
+func (s * Server) LoadTaskCounts() error {
+    s.TotalTaskCounts = make(map[string]int)
+    taskResults, err := s.DB.Query("SELECT operation, COUNT(*) FROM tasks GROUP BY operation");
+    if err != nil {
+        return err
+    }
+    for taskResults.Next() {
+        var operation string
+        var count int
+        s.TotalTaskCounts[operation] = count
+    }
+    return nil
 }
 
 func (s * Server) InsertSpanTimes() error {
@@ -1061,6 +1080,7 @@ func (s * Server) CompareOneVsOne(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
+    reqStartTime := time.Now()
     setupResponse(&w, r)
     w.Header().Set("Content-Type", "application/json")
     params := mux.Vars(r)
@@ -1080,6 +1100,7 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            return
         }
         defer f.Close()
         dec := json.NewDecoder(f)
@@ -1087,10 +1108,35 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
             json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            return
         }
+        reqLoadTraceTime := time.Since(reqStartTime)
+        log.Println("Time to load just trace", reqLoadTraceTime.Seconds(), "seconds")
         w.WriteHeader(http.StatusOK)
         //sorted_events := xtrace.Sort_events(traces[0].Events)
         //sorted_events := traces[0].Events
+        reqEventsStartTime := time.Now()
+        eventCountRows, err := s.DB.Query("select events_aggregate.taskCount, events.operation, events.event_id FROM events_aggregate, events WHERE events.trace_id=? AND events_aggregate.operation=events.operation AND events_aggregate.fname=events.fname AND events_aggregate.linenum=events.linenum", traceID)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+            return
+        }
+        eventCountMap := make(map[string]int)
+        eventOperationMap := make(map[string]string)
+        for eventCountRows.Next() {
+            var taskCount int
+            var operation string
+            var id string
+            err = eventCountRows.Scan(&taskCount, &operation, &id)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+                return
+            }
+            eventCountMap[id] = taskCount
+            eventOperationMap[id] = operation
+        }
         var sorted_events []D3Event
         for _, event := range traces[0].Events {
             var d3event D3Event
@@ -1107,57 +1153,23 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
             d3event.Source = event.Source
             d3event.Host = event.Host
             d3event.Cycles = event.Cycles
-            var fname string
-            var linenum int
-            if d3event.Source == " " || d3event.Source == "" {
-                fname = ""
-                linenum = 0
-            } else {
-                tokens := strings.Split(d3event.Source, ":")
-                fname = tokens[0]
-                linenum,_ = strconv.Atoi(tokens[1])
-            }
-            operationRes := s.DB.QueryRow("SELECT events.operation FROM events WHERE event_id=? and fname=? and linenum=?",event.EventID, fname, linenum)
-            var operation string
-            err = operationRes.Scan(&operation)
-            if err == sql.ErrNoRows {
-                log.Println("No rows found")
-            }
-            if err != nil {
-                log.Println(err)
-            }
-            // Probability is calculated as COUNT(Tasks with this operation that have this event)/COUNT(Tasks with this operation)
-            allTasks, err := s.DB.Query("SELECT COUNT(*) FROM tasks where operation=?",operation)
-            if err != nil {
-                log.Println(err)
-            }
+            var numerator int
             var denominator int
-            for allTasks.Next() {
-                err = allTasks.Scan(&denominator)
-                if err != nil {
-                    log.Println(err)
-                }
+            var operation string
+            if val, ok := eventCountMap[event.EventID]; ok {
+                numerator = val
             }
-            tasksWithThisEvent, err := s.DB.Query("SELECT taskCount FROM events_aggregate where operation=? and fname=? and linenum=?", operation, fname, linenum)
-            if err != nil {
-                log.Println(err)
-                d3event.Probability = 0.0
-            }
-            var numerator int64
-            for tasksWithThisEvent.Next() {
-                err = tasksWithThisEvent.Scan(&numerator)
-                if err != nil {
-                    log.Println(operation, fname, linenum)
-                    log.Println(err)
-                    d3event.Probability = 0.0
+            if val, ok := eventOperationMap[event.EventID]; ok {
+                operation = val
+                if val2, ok2 := s.TotalTaskCounts[operation]; ok2 {
+                    denominator = val2
                 }
             }
             d3event.Probability = float64(numerator)/float64(denominator)
-            if d3event.Probability == 0.0 {
-                log.Println(operation, fname, linenum, d3event.EventID)
-            }
             sorted_events = append(sorted_events, d3event)
         }
+        reqEventsTime := time.Since(reqEventsStartTime)
+        log.Println("Time taken for events", reqEventsTime.Seconds(), "seconds")
         log.Println(len(sorted_events))
         log.Println("Calculated Probability")
         json.NewEncoder(w).Encode(sorted_events)
@@ -1165,6 +1177,7 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
+    reqStartTime := time.Now()
     setupResponse(&w, r)
     log.Println(r)
     w.Header().Set("Content-Type", "application/json")
@@ -1273,6 +1286,8 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
         //*/
         taskRows = append(taskRows, task)
     }
+    reqMoleHilltime := time.Since(reqStartTime)
+    log.Println("Getting tasks took",reqMoleHilltime.Seconds(), "seconds")
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(taskRows)
 }
