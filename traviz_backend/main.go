@@ -524,6 +524,10 @@ func (s * Server) LoadTaskCounts() error {
     for taskResults.Next() {
         var operation string
         var count int
+        err = taskResults.Scan(&operation, &count)
+        if err != nil {
+            return err
+        }
         s.TotalTaskCounts[operation] = count
     }
     return nil
@@ -1173,6 +1177,7 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         log.Println(len(sorted_events))
         log.Println("Calculated Probability")
         json.NewEncoder(w).Encode(sorted_events)
+        return
     }
 }
 
