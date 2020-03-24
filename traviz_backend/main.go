@@ -567,7 +567,7 @@ func (s * Server) InsertSpanTimes() error {
             log.Println(err)
             continue
         }
-        endTime := startTime.Add(time.Duration(duration) * time.Millisecond)
+        endTime := startTime.Add(time.Duration(duration))
         _, err := stmtIns.Exec(span_id, startTime, endTime)
         if err != nil {
             return err
@@ -1252,10 +1252,10 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
             }
         }
         queryStarttime := time.Now()
-        allConcurrentSpanTimes, err := s.DB.Query("SELECT span_times.startTime, span_times.endTime FROM span_times, tasks WHERE span_times.span_id=tasks.span_id and tasks.ProcessName=? and tasks.ProcessID=? and (span_times.startTime >=? or span_times.endTime <= ?) and tasks.Operation=?", task.ProcessName, task.ProcessID, startTime, endTime, task.Operation)
+        allConcurrentSpanTimes, err := s.DB.Query("SELECT span_times.startTime, span_times.endTime FROM span_times, tasks WHERE span_times.span_id=tasks.span_id AND tasks.ProcessName=? and tasks.ProcessID=? and ((span_times.startTime >=? AND span_times.startTime <=?) or (span_times.endTime >= ? AND span_times.endTime <= ?)) and tasks.Operation=?", task.ProcessName, task.ProcessID, startTime, endTime, startTime, endTime, task.Operation)
         queryEndtime := time.Since(queryStarttime)
-        queryProcessingTime := time.Now()
         log.Println("Molehills sql query took", queryEndtime.Seconds(), "seconds")
+        queryProcessingTime := time.Now()
         if err != nil {
             log.Println(err)
             w.WriteHeader(http.StatusInternalServerError)
