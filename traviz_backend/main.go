@@ -1251,7 +1251,11 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
                 json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
             }
         }
+        queryStarttime := time.Now()
         allConcurrentSpanTimes, err := s.DB.Query("SELECT span_times.startTime, span_times.endTime FROM span_times, tasks WHERE span_times.span_id=tasks.span_id and tasks.ProcessName=? and tasks.ProcessID=? and (span_times.startTime >=? or span_times.endTime <= ?) and tasks.Operation=?", task.ProcessName, task.ProcessID, startTime, endTime, task.Operation)
+        queryEndtime := time.Since(queryStarttime)
+        queryProcessingTime := time.Now()
+        log.Println("Molehills sql query took", queryEndtime.Seconds(), "seconds")
         if err != nil {
             log.Println(err)
             w.WriteHeader(http.StatusInternalServerError)
@@ -1288,6 +1292,8 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
             moleHilldata = append(moleHilldata, concTask)
         }
         task.MolehillData = moleHilldata
+        queryProcEndTime := time.Since(queryProcessingTime)
+        log.Println("Processing took", queryProcEndTime.Seconds(), "s")
         //*/
         taskRows = append(taskRows, task)
     }
