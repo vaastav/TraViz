@@ -31,6 +31,19 @@ function initialiseColours() {
 
 }
 
+function linspace(start, end, num_bins) {
+    let diff = end - start;
+    let interval = diff / num_bins;
+    let a = new Array(num_bins);
+    let val = start;
+    for (let i = 0; i <= num_bins; i++) {
+        a[i] = val;
+        val += interval;
+    }
+    a[num_bins] = end
+    return a;
+}
+
 function createLanes(events) {
     let lanes = []
     let count = 0
@@ -177,7 +190,7 @@ function makeSpanMap(spans) {
 }
 
 function makeLaneMap(lanes) {
-    let laneMap = new Map();
+    let laneMap = new Map();let numberOfBins = new Array(15).fill(0)
     lanes.forEach(lane => {
         laneMap.set(lane.ThreadID, lane);
     })
@@ -410,8 +423,9 @@ class SpanSwimlane extends Component {
                     .domain([minDur, maxDur])
                     .range([histMargin.left, histWidth - histMargin.right]);
 
+                let bins = linspace(minDur, maxDur, 12);
                 let data = d3v3.layout.histogram()
-                    .bins(histX.ticks(15))(task.Data);
+                    .bins(bins)(task.Data);
 
                 data = filterZerosFromHistData(data)
 
