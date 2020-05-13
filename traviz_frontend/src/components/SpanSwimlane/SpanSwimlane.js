@@ -480,6 +480,8 @@ class SpanSwimlane extends Component {
         }
 
         function drawLines() {
+            mini.selectAll('.lin').remove();
+            if(structureOn){
             let eventSize = spanHeight - 2;
 
             let lines = mini.append("svg")
@@ -490,21 +492,23 @@ class SpanSwimlane extends Component {
             let lins = lines.selectAll(".lin")
                 .data(connectingLines)
                 .attr("width", 200)
-                .attr("x1", function (d) { return x(d.origin.HRT) })
-                .attr("y1", function (d) { return y2(laneMap.get(d.origin.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
-                .attr("x2", function (d) { return x(d.destination.HRT) })
-                .attr("y2", function (d) { return y2(laneMap.get(d.destination.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
+                .attr("x1", function (d) { return 0 })
+                .attr("y1", function (d) { return 0 })
+                .attr("x2", function (d) { return 0 })
+                .attr("y2", function (d) { return 0 })
                 .attr("class", "lin");
 
             lins.enter().append("line")
                 .attr("width", 200)
                 .attr("x1", function (d) { return x(d.origin.HRT) })
-                .attr("y1", function (d) { return y2(laneMap.get(d.origin.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
+                .attr("y1", function (d) { return y2(laneMap.get(d.origin.ThreadID).id) + ((laneHeight/2) + (spanHeight/2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
                 .attr("x2", function (d) { return x(d.destination.HRT) })
-                .attr("y2", function (d) { return y2(laneMap.get(d.destination.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
+                .attr("y2", function (d) { return y2(laneMap.get(d.destination.ThreadID).id) + ((laneHeight/2) + (spanHeight/2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
                 .attr("class", "lin");
 
             lins.exit().remove();
+
+        }
         }
 
         function initialiseChart() {
@@ -611,6 +615,7 @@ class SpanSwimlane extends Component {
                 })
 
             drawEvents()
+            drawLines()
         }
 
         function drawMolehills() {
@@ -799,10 +804,10 @@ class SpanSwimlane extends Component {
 
 
 
-
+                        drawMolehills()
                         drawSpans()
 
-                        drawMolehills()
+                        
 
                         createLegend()
 
@@ -833,11 +838,13 @@ class SpanSwimlane extends Component {
                     mini.selectAll('.gEvents').remove();
                     if (eventsOn) {
 
-                        drawSpans()
+                        
 
                         if (molehillsOn) {
                             drawMolehills()
                         }
+
+                        drawSpans()
 
                         createLegend()
 
@@ -850,11 +857,13 @@ class SpanSwimlane extends Component {
 
 
                         //need to redraw the spans to put them back in the middle of the lane
-                        drawSpans()
+                        
 
                         if (molehillsOn) {
                             drawMolehills()
                         }
+
+                        drawSpans()
 
                         createLegend()
 
@@ -884,13 +893,13 @@ class SpanSwimlane extends Component {
 
                         initialiseChart()
 
-                        drawSpans()
+                        
                         if (molehillsOn) {
 
                             drawMolehills()
                         }
 
-
+                        drawSpans()
                         createLegend()
                     } else {
 
@@ -908,13 +917,15 @@ class SpanSwimlane extends Component {
 
                         initialiseChart()
 
-                        drawSpans()
+                        
 
 
                         if (molehillsOn) {
                             drawMolehills()
 
                         }
+
+                        drawSpans()
 
 
                     }
@@ -934,12 +945,14 @@ class SpanSwimlane extends Component {
                     mini.selectAll('.lin').remove();
                     if (structureOn) {
 
-                        drawSpans()
-                        drawLines()
+                        
+                        
 
                         if (molehillsOn) {
                             drawMolehills()
                         }
+
+                        drawSpans()
 
                         createLegend()
 
@@ -952,12 +965,13 @@ class SpanSwimlane extends Component {
 
 
                         //need to redraw the spans to put them back in the middle of the lane
-                        drawSpans()
+                        
 
                         if (molehillsOn) {
                             drawMolehills()
                         }
 
+                        drawSpans()
                         createLegend()
 
                     }
