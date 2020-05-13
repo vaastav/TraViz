@@ -123,8 +123,6 @@ function createSpans(events) {
         }
     });
 
-
-
     return spans
 }
 
@@ -277,23 +275,42 @@ function sortTasks(tasks, spans) {
     return sortedTasks;
 }
 
-function countEvents(data) {
-    let sum = 0
-    data.forEach(d => {
-        d.forEach(e => {
-            if (e === 0) {
-                sum += 1
-            }
-        })
+function getConnectingLines(events) {
+    let mapOfEvents = new Map()
+    events.forEach(event => {
+        mapOfEvents.set(event.EventID, event)
     })
-    return sum
+
+    let connectingLines = new Array()
+    events.forEach(event => {
+        if (event.ParentEventID !== null) {
+            event.ParentEventID.forEach(pid => {
+                let parentEvent = mapOfEvents.get(pid)
+                if (event.ThreadID != parentEvent.ThreadID) {
+                    let line = { origin: parentEvent, destination: event }
+                    connectingLines.push(line)
+                }
+            })
+
+        }
+    })
+    return connectingLines
+}
+
+
+function mapThreadsIdsToLane(spans) {
+    let threadToLaneMap = new Map()
+    spans.forEach(span => {
+        threadToLaneMap.set(span.id, span.y_id)
+    });
+    return threadToLaneMap
 }
 
 class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false, molehillThreshold: 95, eventsOn: false, legendOn: false };
+        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false, molehillThreshold: 95, eventsOn: false, legendOn: false, structureOn: false };
         this.traceService = new TraceService();
         this.taskService = new TaskService();
     }
@@ -320,13 +337,13 @@ class SpanSwimlane extends Component {
         let events = this.state.trace.sort((a, b) => { return a.Timestamp - b.Timestamp })
         let spans = createSpans(this.state.trace);
         let tasks = sortTasks(this.state.tasks, spans);
+        let connectingLines = getConnectingLines(events)
+        let threadToLaneMap = mapThreadsIdsToLane(spans)
         this.state.tasks = tasks;
         spans = addMolehills(spans, tasks);
 
         let lanes = createLanes(this.state.trace);
         let laneMap = makeLaneMap(lanes);
-        let spanMap = makeSpanMap(spans);
-        let eventMap = makeEventMap(events);
 
         // Get start, end and duration
         let start = getStartTime(this.state.trace);
@@ -352,6 +369,7 @@ class SpanSwimlane extends Component {
         var molehillsOn = this.state.molehillsOn;
         var legendOn = this.state.legendOn;
         var eventsOn = this.state.eventsOn;
+        var structureOn = this.state.structureOn;
         var molehillThreshold = this.state.molehillThreshold;
 
         var chart;
@@ -377,7 +395,7 @@ class SpanSwimlane extends Component {
             createLegend(); //This legend suckssss
         }
 
-        //DRAWING FUNCTIONS (next 5)
+        //DRAWING FUNCTIONS (next 6)
         function drawHistograms() {
             // Define size of one histogram
             let histMargin = { top: 10, right: 10, bottom: 10, left: 10 }
@@ -459,6 +477,34 @@ class SpanSwimlane extends Component {
                     .style("align", "center")
                 task.bar = rect
             })
+        }
+
+        function drawLines() {
+            let eventSize = spanHeight - 2;
+
+            let lines = mini.append("svg")
+            .attr("stroke-width", 2)
+            .attr("stroke", "#ffd800")
+
+            // draw the lines between parent and child events
+            let lins = lines.selectAll(".lin")
+                .data(connectingLines)
+                .attr("width", 200)
+                .attr("x1", function (d) { return x(d.origin.HRT) })
+                .attr("y1", function (d) { return y2(laneMap.get(d.origin.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
+                .attr("x2", function (d) { return x(d.destination.HRT) })
+                .attr("y2", function (d) { return y2(laneMap.get(d.destination.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
+                .attr("class", "lin");
+
+            lins.enter().append("line")
+                .attr("width", 200)
+                .attr("x1", function (d) { return x(d.origin.HRT) })
+                .attr("y1", function (d) { return y2(laneMap.get(d.origin.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
+                .attr("x2", function (d) { return x(d.destination.HRT) })
+                .attr("y2", function (d) { return y2(laneMap.get(d.destination.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
+                .attr("class", "lin");
+
+            lins.exit().remove();
         }
 
         function initialiseChart() {
@@ -883,9 +929,38 @@ class SpanSwimlane extends Component {
             d3v3.select("#toolbar").append('input')
                 .attr('type', 'checkbox')
                 .attr('id', 'eventsCheckbox')
-
                 .on("click", function () {
+                    structureOn = !structureOn;
+                    mini.selectAll('.lin').remove();
+                    if (structureOn) {
 
+                        drawSpans()
+                        drawLines()
+
+                        if (molehillsOn) {
+                            drawMolehills()
+                        }
+
+                        createLegend()
+
+                    } else {
+                        //this removes the <g> containing all the event markers
+
+
+                        //this removes the <g> containing all the molehill rectangles
+                        mini.selectAll('.lin').remove()
+
+
+                        //need to redraw the spans to put them back in the middle of the lane
+                        drawSpans()
+
+                        if (molehillsOn) {
+                            drawMolehills()
+                        }
+
+                        createLegend()
+
+                    }
                 });
 
 
