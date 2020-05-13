@@ -190,7 +190,7 @@ function makeSpanMap(spans) {
 }
 
 function makeLaneMap(lanes) {
-    let laneMap = new Map();let numberOfBins = new Array(15).fill(0)
+    let laneMap = new Map(); let numberOfBins = new Array(15).fill(0)
     lanes.forEach(lane => {
         laneMap.set(lane.ThreadID, lane);
     })
@@ -878,6 +878,21 @@ class SpanSwimlane extends Component {
             d3v3.select("#toolbar")
                 .append('label').attr('for', 'legendCheckbox')
                 .text('Legend')
+
+
+            d3v3.select("#toolbar").append('input')
+                .attr('type', 'checkbox')
+                .attr('id', 'eventsCheckbox')
+
+                .on("click", function () {
+
+                });
+
+
+            d3v3.select('#toolbar')
+                .append('label').attr('for', 'structureCheckbox')
+                .text('Structure')
+
         }
 
 
