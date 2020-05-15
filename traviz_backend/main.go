@@ -988,6 +988,7 @@ func (s * Server) SaveTraceIDs(w http.ResponseWriter, r *http.Request) {
     for id, _ := range s.Traces {
         f.WriteString("curl -s http://198.162.52.119:9000/traces/" + id + " > /dev/null \n")
         f.WriteString("curl -s http://198.162.52.119:9000/tasks/" + id + " > /dev/null \n")
+        f.WriteString("curl -s http://198.162.52.119:9000/tasklinks/" + id + " > /dev/null \n")
     }
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(map[string]string{"response" : "Done boss"})
