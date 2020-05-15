@@ -82,10 +82,3 @@ CREATE TABLE `traviz`.`events`(
     foreign key(trace_id) references overview(trace_id)
 );
 
-CREATE TABLE `traviz`.`events_aggregate`(
-    fname varchar(256),
-    linenum int,
-    operation varchar(64) NOT NULL,
-    taskCount BIGINT,
-    primary key(fname, linenum, operation)
-);

@@ -202,6 +202,7 @@ type Server struct {
     Traces map[string]string
     Config Config
     TotalTaskCounts map[string]int
+    TotalRelationshipCounts map[string]int
     TraceResults []TraceResult
     TaskResults []TaskResult
 }
@@ -302,9 +303,6 @@ func processSpan(events []xtrace.Event, traceID string, key string, rev_event_ma
             }
         }
     }
-    if operationName == "" {
-        log.Println("Empty operation name for trace", traceID, key)
-    }
     duration = latest_time_hrt - earliest_time_hrt
     pieces := strings.Split(key, ":")
 
@@ -341,8 +339,17 @@ func processSpans(trace xtrace.XTrace) map[string]Span {
     }
 
     spanInfos := make(map[string]Span)
+    // Maps key to calculate spanID so that we can fix parent span IDs.
+    spanIDs := make(map[string]string)
     for key, events := range spans {
         span := processSpan(events, id, key, rev_event_map)
+        spanIDs[key] = span.SpanID
+        spanInfos[key] = span
+    }
+
+    // Correctly reset parent spanIDs
+    for key, span := range spanInfos {
+        span.ParentSpanID = spanIDs[span.ParentSpanID]
         spanInfos[key] = span
     }
 
@@ -526,15 +533,15 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
-    err = server.InsertAggregates()
-    if err != nil {
-        return nil, err
-    }
     err = server.InsertSpanTimes()
     if err != nil {
         return nil, err
     }
     err = server.LoadTaskCounts()
+    if err != nil {
+        return nil, err
+    }
+    err = server.LoadRelationshipCounts()
     if err != nil {
         return nil, err
     }
@@ -566,6 +573,25 @@ func (s * Server) LoadTaskCounts() error {
             return err
         }
         s.TotalTaskCounts[operation] = count
+    }
+    return nil
+}
+
+func (s * Server) LoadRelationshipCounts() error {
+    s.TotalRelationshipCounts = make(map[string]int)
+    results, err := s.DB.Query("SELECT src_operation, dst_operation, COUNT(*) FROM span_links GROUP BY src_operation, dst_operation");
+    if err != nil {
+        return err
+    }
+    for results.Next() {
+        var src_operation string
+        var dst_operation string
+        var count int
+        err = results.Scan(&src_operation, &dst_operation, &count)
+        if err != nil {
+            return err
+        }
+        s.TotalRelationshipCounts[src_operation + "-" + dst_operation] = count
     }
     return nil
 }
@@ -606,60 +632,6 @@ func (s * Server) InsertSpanTimes() error {
         }
         endTime := startTime.Add(time.Duration(duration))
         _, err := stmtIns.Exec(span_id, startTime, endTime)
-        if err != nil {
-            return err
-        }
-    }
-    return nil
-}
-
-func (s * Server) InsertAggregates() error {
-    initResults, err := s.DB.Query("SELECT operation from events_aggregate")
-    if err != nil {
-        return err
-    }
-    numResults := 0
-    for initResults.Next() {
-        var operation string
-        err = initResults.Scan(&operation)
-        if err != nil {
-            continue
-        }
-        numResults += 1
-    }
-    if numResults != 0 {
-        return nil
-    }
-    log.Println("Inserting aggregates")
-    results, err := s.DB.Query("select DISTINCT fname, linenum, operation FROM events")
-    if err != nil {
-        return err
-    }
-    stmtIns, err := s.DB.Prepare("INSERT INTO events_aggregate VALUES( ?, ?, ?, ?)")
-    if err != nil {
-        return err
-    }
-    defer stmtIns.Close()
-    for results.Next() {
-        var fname string
-        var linenum int
-        var operation string
-        err = results.Scan(&fname, &linenum, &operation)
-        if err != nil {
-            return err
-        }
-        countRes, err := s.DB.Query("SELECT COUNT(DISTINCT span_id) FROM events where fname=? and linenum=? and operation=?", fname,linenum, operation)
-        if err != nil {
-            return err
-        }
-        var count int64
-        for countRes.Next() {
-            err = countRes.Scan(&count)
-            if err != nil {
-                return err
-            }
-        }
-        _, err = stmtIns.Exec(fname, linenum, operation, count)
         if err != nil {
             return err
         }
