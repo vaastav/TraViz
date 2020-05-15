@@ -4,6 +4,7 @@ import (
     "database/sql"
     "encoding/json"
     "flag"
+    "fmt"
     "io/ioutil"
     "log"
     "math"
@@ -46,6 +47,7 @@ type Span struct {
     StartTime time.Time
     EndTime time.Time
     Events []xtrace.Event
+    ParentSpanID string
 }
 
 type Swap struct {
@@ -182,6 +184,17 @@ type ErrorResponse struct {
     Error string
 }
 
+type TraceResult struct {
+    ID string
+    Trace float64
+    Event float64
+}
+
+type TaskResult struct {
+    ID string
+    Task float64
+}
+
 //Struct that represents the Server
 type Server struct {
     DB *sql.DB
@@ -189,6 +202,8 @@ type Server struct {
     Traces map[string]string
     Config Config
     TotalTaskCounts map[string]int
+    TraceResults []TraceResult
+    TaskResults []TaskResult
 }
 
 //Processes a given XTrace and returns the statistics collected
@@ -244,7 +259,7 @@ func processDependencies(trace xtrace.XTrace) map[Dependency]int {
     return depMap
 }
 
-func processSpan(events []xtrace.Event, traceID string, key string) Span {
+func processSpan(events []xtrace.Event, traceID string, key string, rev_event_map map[string]string) Span {
     var span Span
 
     var duration uint64
@@ -257,6 +272,7 @@ func processSpan(events []xtrace.Event, traceID string, key string) Span {
     var source string
     var earliest_timestamp int64
     var latest_timestamp int64
+    var parentSpanID string
 
     for _, event :=  range events {
         if event.HRT < earliest_time_hrt {
@@ -264,6 +280,13 @@ func processSpan(events []xtrace.Event, traceID string, key string) Span {
             earliest_timestamp = event.Timestamp
             eventID = event.EventID
             source = event.Source
+            for _, parent_event := range event.Parents {
+                if v, ok := rev_event_map[parent_event]; ok {
+                    if v != key {
+                        parentSpanID = key
+                    }
+                }
+            }
         }
         if event.HRT > latest_time_hrt {
             latest_time_hrt = event.HRT
@@ -296,15 +319,19 @@ func processSpan(events []xtrace.Event, traceID string, key string) Span {
     span.StartTime = time.Unix(0, earliest_timestamp * 1000000)
     span.EndTime = time.Unix(0, latest_timestamp * 1000000)
     span.Events = events
+    span.ParentSpanID = parentSpanID
 
     return span
 }
 
-func processSpans(trace xtrace.XTrace) []Span {
+func processSpans(trace xtrace.XTrace) map[string]Span {
     id := trace.ID
     spans := make(map[string][]xtrace.Event)
+    // Maps each event to the span ID
+    rev_event_map := make(map[string]string)
     for _, event := range trace.Events {
         key := event.ProcessName + ":" + strconv.Itoa(event.ProcessID) + ":" + strconv.Itoa(event.ThreadID)
+        rev_event_map[event.EventID] = key
         if v, ok := spans[key]; !ok {
             spans[key] = []xtrace.Event{event}
         } else {
@@ -313,10 +340,10 @@ func processSpans(trace xtrace.XTrace) []Span {
         }
     }
 
-    var spanInfos []Span
+    spanInfos := make(map[string]Span)
     for key, events := range spans {
-        span := processSpan(events, id, key)
-        spanInfos = append(spanInfos, span)
+        span := processSpan(events, id, key, rev_event_map)
+        spanInfos[key] = span
     }
 
     return spanInfos
@@ -519,8 +546,18 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
+    server.TraceResults = make([]TraceResult, 0)
+    server.TaskResults = make([]TaskResult, 0)
     server.routes()
     return &server, nil
+}
+
+func (server * Server) AddTraceResult(result TraceResult) {
+    server.TraceResults = append(server.TraceResults, result)
+}
+
+func (server * Server) AddTaskResult(result TaskResult) {
+    server.TaskResults = append(server.TaskResults, result)
 }
 
 func (s * Server) LoadTaskCounts() error {
@@ -718,7 +755,9 @@ func (s * Server) LoadSpans() error {
     }
     defer event_stmtIns.Close()
     for _, trace := range newTraces {
+        spanLoadingTime := time.Now()
         spans := processSpans(trace)
+        opMap := make(map[string]string)
         for _, span := range spans {
             var linenum int
             var fname string
@@ -731,6 +770,7 @@ func (s * Server) LoadSpans() error {
                 fname = tokens[0]
             }
             span.Operation = tasks[span.Source]
+            opMap[span.SpanID] = span.Operation
             _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID, span.StartTime)
             if err != nil {
                 log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
@@ -754,6 +794,26 @@ func (s * Server) LoadSpans() error {
                 }
             }
         }
+
+        // Bulk insert the links
+        // Bulk inserting code adapted from: https://stackoverflow.com/questions/12486436/how-do-i-batch-sql-statements-with-package-database-sql
+        valueStrings := make([]string, 0, len(spans))
+        valueArgs := make([]interface{}, 0, len(spans) * 5)
+        for _, span := range spans {
+            valueStrings = append(valueStrings, "(?, ?, ?, ?, ?)")
+            valueArgs = append(valueArgs, trace)
+            valueArgs = append(valueArgs, span.SpanID)
+            valueArgs = append(valueArgs, opMap[span.SpanID])
+            valueArgs = append(valueArgs, span.ParentSpanID)
+            valueArgs = append(valueArgs, opMap[span.ParentSpanID])
+        }
+        stmt := fmt.Sprintf("INSERT INTO span_links (trace_id, src_span_id, src_operation, dst_span_id, dst_operation) VALUES %s", strings.Join(valueStrings, ","))
+        _, err := s.DB.Exec(stmt, valueArgs...)
+        if err != nil {
+            return err
+        }
+        spanEndingTime := time.Since(spanLoadingTime)
+        log.Println("Span loading took", spanEndingTime.Seconds(), "s")
     }
     return nil
 }
@@ -918,6 +978,7 @@ func (s * Server) LoadTraces() error {
     const createdFormat = "2006-01-02 15:04:05"
     for _, trace := range newTraces {
         log.Println("Processing", trace.ID)
+        traceLoadingTime := time.Now()
         stats := processTrace(trace)
         _, err = overview_stmtIns.Exec( trace.ID, stats.Duration, stats.DOC.Format(createdFormat), s.Traces[trace.ID], stats.NumEvents)
         if err != nil {
@@ -945,6 +1006,8 @@ func (s * Server) LoadTraces() error {
                 return err
             }
         }
+        traceLoadEndTime := time.Since(traceLoadingTime)
+        log.Println("Trace loading took", traceLoadEndTime.Seconds(), "s")
     }
     return nil
 }
@@ -963,12 +1026,82 @@ func (s * Server) routes() {
     s.Router.HandleFunc("/traces", s.FilterTraces)
     s.Router.HandleFunc("/tags", s.Tags)
     s.Router.HandleFunc("/tasks/{id}", s.Tasks)
+    s.Router.HandleFunc("/savetraceids", s.SaveTraceIDs)
+    s.Router.HandleFunc("/saveresults", s.SaveResults)
 }
 
 func setupResponse(w *http.ResponseWriter, r *http.Request) {
     (*w).Header().Set("Access-Control-Allow-Origin", "*")
     (*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
     (*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
+func (s * Server) SaveResults(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
+    log.Println(r)
+    w.Header().Set("Content-Type", "application/json")
+    f, err := os.Create("trace_results.csv")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+        return
+    }
+    defer f.Close()
+    _, err = f.WriteString("ID,Trace,Event\n")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Cant write trace results"})
+        return
+    }
+    for _, result := range s.TraceResults {
+        _, err := f.WriteString(result.ID + "," + strconv.FormatFloat(result.Trace, 'f', -1, 64) + "," + strconv.FormatFloat(result.Event, 'f', -1, 64) + "\n")
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Cant write trace results"})
+            return
+        }
+    }
+    f2, err := os.Create("task_results.csv")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+        return
+    }
+    _, err = f2.WriteString("ID,Task\n")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Cant write task results"})
+        return
+    }
+    for _, result := range s.TaskResults {
+        _, err := f2.WriteString(result.ID + "," + strconv.FormatFloat(result.Task, 'f', -1, 64) + "\n")
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Cant write trace results"})
+            return
+        }
+    }
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{"response" : "Done boss"})
+}
+
+func (s * Server) SaveTraceIDs(w http.ResponseWriter, r *http.Request) {
+    setupResponse(&w, r)
+    log.Println(r)
+    w.Header().Set("Content-Type", "application/json")
+    f, err := os.Create("trace_list.txt")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+        return
+    }
+    defer f.Close()
+    for id, _ := range s.Traces {
+        f.WriteString("curl -s http://198.162.52.119:9000/traces/" + id + " > /dev/null \n")
+        f.WriteString("curl -s http://198.162.52.119:9000/tasks/" + id + " > /dev/null \n")
+    }
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{"response" : "Done boss"})
 }
 
 //Returns the overview of the traces
@@ -1182,6 +1315,8 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         }
         reqEventsTime := time.Since(reqEventsStartTime)
         log.Println("Time taken for events", reqEventsTime.Seconds(), "seconds")
+        result := TraceResult{traceID, reqLoadTraceTime.Seconds(), reqEventsTime.Seconds()}
+        s.AddTraceResult(result)
         log.Println(len(sorted_events))
         log.Println("Calculated Probability")
         json.NewEncoder(w).Encode(sorted_events)
@@ -1333,6 +1468,8 @@ func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
     }
     reqMoleHilltime := time.Since(reqStartTime)
     log.Println("Getting tasks took",reqMoleHilltime.Seconds(), "seconds")
+    result := TaskResult{traceID, reqMoleHilltime.Seconds()}
+    s.AddTaskResult(result)
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(taskRows)
 }
