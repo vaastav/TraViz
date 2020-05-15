@@ -114,6 +114,14 @@ type TaskRow struct {
     MolehillData []ConcurrentTask
 }
 
+type LinkRow struct {
+    Src_ID string
+    Dst_ID string
+    Src_Operation string
+    Dst_Operation string
+    Percentage float64
+}
+
 type D3Node struct {
     ID string `json:"id"`
     Group int `json:"group"`
@@ -195,6 +203,11 @@ type TaskResult struct {
     Task float64
 }
 
+type LinkResult struct {
+    ID string
+    Link float64
+}
+
 //Struct that represents the Server
 type Server struct {
     DB *sql.DB
@@ -205,6 +218,7 @@ type Server struct {
     TotalRelationshipCounts map[string]int
     TraceResults []TraceResult
     TaskResults []TaskResult
+    LinkResults []LinkResult
 }
 
 //Processes a given XTrace and returns the statistics collected
@@ -547,6 +561,7 @@ func setupServer(config Config) (*Server, error) {
     }
     server.TraceResults = make([]TraceResult, 0)
     server.TaskResults = make([]TaskResult, 0)
+    server.LinkResults = make([]LinkResult, 0)
     server.routes()
     return &server, nil
 }
@@ -557,6 +572,10 @@ func (server * Server) AddTraceResult(result TraceResult) {
 
 func (server * Server) AddTaskResult(result TaskResult) {
     server.TaskResults = append(server.TaskResults, result)
+}
+
+func (server * Server) AddLinkResult(result LinkResult) {
+    server.LinkResults = append(server.LinkResults, result)
 }
 
 func (s * Server) LoadTaskCounts() error {
@@ -875,6 +894,7 @@ func (s * Server) routes() {
     s.Router.HandleFunc("/traces", s.FilterTraces)
     s.Router.HandleFunc("/tags", s.Tags)
     s.Router.HandleFunc("/tasks/{id}", s.Tasks)
+    s.Router.HandleFunc("/tasklinks/{id}", s.TaskLinks)
     s.Router.HandleFunc("/savetraceids", s.SaveTraceIDs)
     s.Router.HandleFunc("/saveresults", s.SaveResults)
 }
@@ -926,7 +946,27 @@ func (s * Server) SaveResults(w http.ResponseWriter, r *http.Request) {
         _, err := f2.WriteString(result.ID + "," + strconv.FormatFloat(result.Task, 'f', -1, 64) + "\n")
         if err != nil {
             w.WriteHeader(http.StatusInternalServerError)
-            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Cant write trace results"})
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Cant write task results"})
+            return
+        }
+    }
+    f3, err := os.Create("link_results.csv")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Internal Server Error"})
+        return
+    }
+    _, err = f3.WriteString("ID,Link\n")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Cant write link results"})
+        return
+    }
+    for _, result := range s.LinkResults {
+        _, err := f3.WriteString(result.ID + "," + strconv.FormatFloat(result.Link, 'f', -1, 64) + "\n")
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Cant write link results"})
             return
         }
     }
@@ -1171,6 +1211,56 @@ func (s *Server) GetTrace(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(sorted_events)
         return
     }
+}
+
+func (s * Server) TaskLinks(w http.ResponseWriter, r *http.Request) {
+    reqStartTime := time.Now()
+    setupResponse(&w, r)
+    w.Header().Set("Content-Type", "application/json")
+    params := mux.Vars(r)
+    if len(params) != 1 {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Request"})
+        return
+    }
+    traceID := params["id"]
+    if _, ok := s.Traces[traceID]; !ok {
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID"})
+        return
+    }
+    allLinkRows, err := s.DB.Query("SELECT src_span_id, dst_span_id, src_operation, dst_operation FROM span_links WHERE trace_id=?",traceID)
+    if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        log.Println(err)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Failed to load links data from database"})
+        return
+    }
+    var links []LinkRow
+    for allLinkRows.Next() {
+        var src_span_id string
+        var dst_span_id string
+        var src_operation string
+        var dst_operation string
+        err = allLinkRows.Scan(&src_span_id, &dst_span_id, &src_operation, &dst_operation)
+        if err != nil {
+            log.Println(err)
+            w.WriteHeader(http.StatusBadRequest)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Failed to load links data from database"})
+            return
+        }
+        var percentage float64
+        if v, ok := s.TotalRelationshipCounts[src_operation + "-" + dst_operation]; ok {
+            percentage = float64(v) / float64(len(s.Traces))
+        }
+        row := LinkRow{src_span_id, dst_span_id, src_operation, dst_operation, percentage}
+        links = append(links, row)
+    }
+    reqEndTime := time.Since(reqStartTime)
+    result := LinkResult{traceID, reqEndTime.Seconds()}
+    s.AddLinkResult(result)
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(links)
 }
 
 func (s * Server) Tasks(w http.ResponseWriter, r *http.Request) {
