@@ -526,14 +526,6 @@ func setupServer(config Config) (*Server, error) {
     if err != nil {
         return nil, err
     }
-    err = server.LoadDependencies()
-    if err != nil {
-        return nil, err
-    }
-    err = server.LoadSpans()
-    if err != nil {
-        return nil, err
-    }
     err = server.InsertAggregates()
     if err != nil {
         return nil, err
@@ -675,232 +667,6 @@ func (s * Server) InsertAggregates() error {
     return nil
 }
 
-func (s * Server) LoadSpans() error {
-    log.Println("Loading spans")
-    results, err := s.DB.Query("SELECT overview.trace_id, loc FROM overview, tasks WHERE overview.trace_id = tasks.trace_id")
-    if err != nil {
-        return err
-    }
-    locations := make(map[string]bool)
-    seen_traces := make(map[string]bool)
-
-    for results.Next() {
-        var tid string
-        var loc string
-        err = results.Scan(&tid, &loc)
-        if err!= nil {
-            return err
-        }
-        seen_traces[tid] = true
-        locations[loc] = true
-    }
-    span_stmtIns, err := s.DB.Prepare("INSERT INTO tasks VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    if err != nil {
-        return err
-    }
-    defer span_stmtIns.Close()
-    var newTraces []xtrace.XTrace
-    log.Println("Walking trace directory")
-    err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
-        if fi.IsDir() {
-            return nil
-        }
-
-        matched, err :=  filepath.Match("*.json", fi.Name())
-        if err != nil {
-            log.Fatal(err)
-        }
-        if matched {
-            if _, ok := locations[fp] ; !ok{
-                var traces []xtrace.XTrace
-                f, err := os.Open(fp)
-                if err != nil {
-                    return err
-                }
-                defer f.Close()
-                dec := json.NewDecoder(f)
-                err = dec.Decode(&traces)
-                if err != nil {
-                    return err
-                }
-                if len(traces) != 1 {
-                    //Multiple traces in 1 file not handled yet
-                    return nil
-                }
-                if _, ok := seen_traces[traces[0].ID]; !ok {
-                    // This trace is not in the database yet
-                    seen_traces[traces[0].ID] = true
-                    newTraces = append(newTraces, traces[0])
-                }
-            }
-        }
-        return nil
-    })
-    log.Println("Finished walking")
-    if err != nil {
-        log.Println("Error in walking")
-        return err
-    }
-    log.Println("New traces to be processed for spans :", len(newTraces))
-    tasks, err := parseTasksFile(s.Config.TasksFile)
-    if err != nil {
-	    return err
-    }
-    event_stmtIns, err := s.DB.Prepare("INSERT INTO events VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    if err != nil {
-        return err
-    }
-    defer event_stmtIns.Close()
-    for _, trace := range newTraces {
-        spanLoadingTime := time.Now()
-        spans := processSpans(trace)
-        opMap := make(map[string]string)
-        for _, span := range spans {
-            var linenum int
-            var fname string
-            if span.Source == " " || span.Source == "" {
-                linenum = 0
-                fname = ""
-            } else {
-                tokens := strings.Split(span.Source, ":")
-                linenum, _ = strconv.Atoi(tokens[1])
-                fname = tokens[0]
-            }
-            span.Operation = tasks[span.Source]
-            opMap[span.SpanID] = span.Operation
-            _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID, span.StartTime)
-            if err != nil {
-                log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
-                return err
-            }
-            for _, event := range span.Events {
-                var linenum int
-                var fname string
-                if event.Source == " " || event.Source == "" {
-                    linenum = 0
-                    fname = ""
-                } else {
-                    tokens := strings.Split(event.Source, ":")
-                    linenum, _ = strconv.Atoi(tokens[1])
-                    fname = tokens[0]
-                }
-                timestamp := time.Unix(0, event.Timestamp * 1000000)
-                _, err := event_stmtIns.Exec(event.EventID, trace.ID, span.SpanID, span.Operation, linenum, fname, timestamp, event.Label, event.Host, event.Cycles)
-                if err != nil {
-                    log.Println(err)
-                }
-            }
-        }
-
-        // Bulk insert the links
-        // Bulk inserting code adapted from: https://stackoverflow.com/questions/12486436/how-do-i-batch-sql-statements-with-package-database-sql
-        valueStrings := make([]string, 0, len(spans))
-        valueArgs := make([]interface{}, 0, len(spans) * 5)
-        for _, span := range spans {
-            valueStrings = append(valueStrings, "(?, ?, ?, ?, ?)")
-            valueArgs = append(valueArgs, trace)
-            valueArgs = append(valueArgs, span.SpanID)
-            valueArgs = append(valueArgs, opMap[span.SpanID])
-            valueArgs = append(valueArgs, span.ParentSpanID)
-            valueArgs = append(valueArgs, opMap[span.ParentSpanID])
-        }
-        stmt := fmt.Sprintf("INSERT INTO span_links (trace_id, src_span_id, src_operation, dst_span_id, dst_operation) VALUES %s", strings.Join(valueStrings, ","))
-        _, err := s.DB.Exec(stmt, valueArgs...)
-        if err != nil {
-            return err
-        }
-        spanEndingTime := time.Since(spanLoadingTime)
-        log.Println("Span loading took", spanEndingTime.Seconds(), "s")
-    }
-    return nil
-}
-
-func (s * Server) LoadDependencies() error {
-    results, err := s.DB.Query("SELECT overview.trace_id, loc FROM overview, dependencies WHERE overview.trace_id = dependencies.trace_id")
-    if err != nil {
-        return err
-    }
-    locations := make(map[string]bool)
-    seen_traces := make(map[string]bool)
-
-    for results.Next() {
-        var tid string
-        var loc string
-        err = results.Scan(&tid, &loc)
-        if err != nil {
-            return err
-        }
-        seen_traces[tid] = true
-        locations[loc] = true
-    }
-
-    log.Println(len(locations))
-
-    dep_stmtIns, err := s.DB.Prepare("INSERT INTO dependencies VALUES( ?, ?, ?, ?)")
-    if err != nil {
-        return err
-    }
-    defer dep_stmtIns.Close()
-
-    var newTraces []xtrace.XTrace
-    err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
-        if fi.IsDir() {
-            return nil
-        }
-
-        matched, err :=  filepath.Match("*.json", fi.Name())
-        if err != nil {
-            log.Fatal(err)
-        }
-        if matched {
-            if _, ok := locations[fp] ; !ok{
-                var traces []xtrace.XTrace
-                f, err := os.Open(fp)
-                if err != nil {
-                    return err
-                }
-                defer f.Close()
-                dec := json.NewDecoder(f)
-                err = dec.Decode(&traces)
-                if err != nil {
-                    return err
-                }
-                if len(traces) != 1 {
-                    //Multiple traces in 1 file not handled yet
-                    return nil
-                }
-                if _, ok := seen_traces[traces[0].ID]; !ok {
-                    // This trace is not in the database yet
-                    seen_traces[traces[0].ID] = true
-                    newTraces = append(newTraces, traces[0])
-                }
-            }
-        }
-        return nil
-    })
-    if err != nil {
-        return err
-    }
-    log.Println("New traces to be processed for dependencies :", len(newTraces))
-    for _, trace := range newTraces {
-        deps := processDependencies(trace)
-        for dep, num := range deps {
-            _, err = dep_stmtIns.Exec( trace.ID, dep.Source, dep.Destination, num)
-            if err != nil {
-                log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
-                return err
-            }
-        }
-    }
-    return nil
-}
-
 //Checks and loads any new traces that are available
 func (s * Server) LoadTraces() error {
     results, err := s.DB.Query("SELECT trace_id, loc FROM overview;")
@@ -930,7 +696,29 @@ func (s * Server) LoadTraces() error {
         return err
     }
     defer tags_stmtIns.Close()
+
     srccode_stmtIns, err := s.DB.Prepare("INSERT INTO sourcecode VALUES( ?, ?, ?, ? )")
+    if err != nil {
+        return err
+    }
+    defer srccode_stmtIns.Close()
+
+    dep_stmtIns, err := s.DB.Prepare("INSERT INTO dependencies VALUES( ?, ?, ?, ?)")
+    if err != nil {
+        return err
+    }
+    defer dep_stmtIns.Close()
+
+    span_stmtIns, err := s.DB.Prepare("INSERT INTO tasks VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    if err != nil {
+        return err
+    }
+    defer span_stmtIns.Close()
+
+    event_stmtIns, err := s.DB.Prepare("INSERT INTO events VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    if err != nil {
+        return err
+    }
 
     var newTraces []xtrace.XTrace
     err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
@@ -976,10 +764,23 @@ func (s * Server) LoadTraces() error {
     }
     log.Println("New traces to be processed", len(newTraces))
     const createdFormat = "2006-01-02 15:04:05"
+    tasks, err := parseTasksFile(s.Config.TasksFile)
+    if err != nil {
+	    return err
+    }
+    var traceLoadingTimes []time.Duration
     for _, trace := range newTraces {
-        log.Println("Processing", trace.ID)
+        //log.Println("Processing", trace.ID)
         traceLoadingTime := time.Now()
+        // Process all the relevant data
         stats := processTrace(trace)
+        deps := processDependencies(trace)
+        spans := processSpans(trace)
+        traceLoadEndTime := time.Since(traceLoadingTime)
+        traceLoadingTimes = append(traceLoadingTimes, traceLoadEndTime)
+        //log.Println("Trace loading took", traceLoadEndTime.Seconds(), "s")
+
+        // Store the data in database
         _, err = overview_stmtIns.Exec( trace.ID, stats.Duration, stats.DOC.Format(createdFormat), s.Traces[trace.ID], stats.NumEvents)
         if err != nil {
             log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
@@ -1006,8 +807,84 @@ func (s * Server) LoadTraces() error {
                 return err
             }
         }
-        traceLoadEndTime := time.Since(traceLoadingTime)
-        log.Println("Trace loading took", traceLoadEndTime.Seconds(), "s")
+
+        for dep, num := range deps {
+            _, err = dep_stmtIns.Exec( trace.ID, dep.Source, dep.Destination, num)
+            if err != nil {
+                log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
+                return err
+            }
+        }
+
+        opMap := make(map[string]string)
+        for _, span := range spans {
+            var linenum int
+            var fname string
+            if span.Source == " " || span.Source == "" {
+                linenum = 0
+                fname = ""
+            } else {
+                tokens := strings.Split(span.Source, ":")
+                linenum, _ = strconv.Atoi(tokens[1])
+                fname = tokens[0]
+            }
+            span.Operation = tasks[span.Source]
+            opMap[span.SpanID] = span.Operation
+            _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID, span.StartTime)
+            if err != nil {
+                log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
+                return err
+            }
+            for _, event := range span.Events {
+                var linenum int
+                var fname string
+                if event.Source == " " || event.Source == "" {
+                    linenum = 0
+                    fname = ""
+                } else {
+                    tokens := strings.Split(event.Source, ":")
+                    linenum, _ = strconv.Atoi(tokens[1])
+                    fname = tokens[0]
+                }
+                timestamp := time.Unix(0, event.Timestamp * 1000000)
+                _, err := event_stmtIns.Exec(event.EventID, trace.ID, span.SpanID, span.Operation, linenum, fname, timestamp, event.Label, event.Host, event.Cycles)
+                if err != nil {
+                    log.Println(err)
+                }
+            }
+        }
+
+        // Bulk insert the links
+        // Bulk inserting code adapted from: https://stackoverflow.com/questions/12486436/how-do-i-batch-sql-statements-with-package-database-sql
+        valueStrings := make([]string, 0, len(spans))
+        valueArgs := make([]interface{}, 0, len(spans) * 5)
+        for _, span := range spans {
+            valueStrings = append(valueStrings, "(?, ?, ?, ?, ?)")
+            valueArgs = append(valueArgs, trace.ID)
+            valueArgs = append(valueArgs, span.SpanID)
+            valueArgs = append(valueArgs, opMap[span.SpanID])
+            valueArgs = append(valueArgs, span.ParentSpanID)
+            valueArgs = append(valueArgs, opMap[span.ParentSpanID])
+        }
+
+        stmt := fmt.Sprintf("INSERT INTO span_links (trace_id, src_span_id, src_operation, dst_span_id, dst_operation) VALUES %s", strings.Join(valueStrings, ","))
+        _, err := s.DB.Exec(stmt, valueArgs...)
+        if err != nil {
+            return err
+        }
+
+    }
+    log.Println("Finished processing traces")
+    f, err := os.Create("trace_loading.txt")
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+    for _, loadingTime := range traceLoadingTimes {
+        _, err := f.WriteString(fmt.Sprintf("%f\n",loadingTime.Seconds()))
+        if err != nil {
+            return err
+        }
     }
     return nil
 }
