@@ -310,7 +310,7 @@ class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false, molehillThreshold: 95, eventsOn: false, legendOn: false, structureOn: false };
+        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false, molehillThreshold: 95, eventsOn: false, legendOn: false, structureOn: false, relationships: null };
         this.traceService = new TraceService();
         this.taskService = new TaskService();
     }
@@ -321,9 +321,14 @@ class SpanSwimlane extends Component {
             this.state.trace = trace
             this.taskService.getTasks(id).then(tasks => {
                 this.state.tasks = tasks;
-                this.createSwimlane();
+                this.taskService.getRelationships(id).then(relationships => {
+                    this.state.relationships = relationships;
+                    this.createSwimlane();
+                })
+
             })
         });
+
     }
 
     componentDidUpdate() {
@@ -485,8 +490,8 @@ class SpanSwimlane extends Component {
             let eventSize = spanHeight - 2;
 
             let lines = mini.append("svg")
-            .attr("stroke-width", 2)
-            .attr("stroke", "#ffd800")
+                .attr("stroke-width", 2)
+                .attr("stroke", "#ffd800")
 
             // draw the lines between parent and child events
             let lins = lines.selectAll(".lin")

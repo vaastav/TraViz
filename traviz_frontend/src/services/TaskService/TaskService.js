@@ -10,6 +10,11 @@ class TaskService {
         const url = `${API_URL}/tasks/${traceId}`;
         return axios.get(url).then(response => response.data)
     }
+
+    async getRelationships(traceId) {
+        const url = `${API_URL}/tasklinks/${traceId}`;
+        return axios.get(url).then(response => response.data)
+    }
 }
 
 export default TaskService
