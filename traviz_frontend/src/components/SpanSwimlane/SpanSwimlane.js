@@ -348,6 +348,7 @@ class SpanSwimlane extends Component {
         let tasks = sortTasks(this.state.tasks, spans);
         let connectingLines = getConnectingLines(events)
         let threadToLaneMap = mapThreadsIdsToLane(spans)
+        let relationships = this.state.relationships
         this.state.tasks = tasks;
         spans = addMolehills(spans, tasks);
 
