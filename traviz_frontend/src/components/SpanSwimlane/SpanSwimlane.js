@@ -18,8 +18,11 @@ var histogramPlainColorString
 var eventsLowProbColorString
 var eventsHighProbColorString
 var textColorString
+var linkColorString
+var laneColorString
 
 function initialiseColours() {
+    laneColorString = getComputedStyle(document.documentElement).getPropertyValue('--lane-color');
     spanColorString = getComputedStyle(document.documentElement).getPropertyValue('--span-color');
     highlightSpanColorString = getComputedStyle(document.documentElement).getPropertyValue('--highlight-span-color');
     molehillColorString = getComputedStyle(document.documentElement).getPropertyValue('--molehill-color');
@@ -28,6 +31,7 @@ function initialiseColours() {
     eventsLowProbColorString = getComputedStyle(document.documentElement).getPropertyValue('--events-low-prob-color').trim();
     eventsHighProbColorString = getComputedStyle(document.documentElement).getPropertyValue('--events-high-prob-color').trim();
     textColorString = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+    linkColorString = getComputedStyle(document.documentElement).getPropertyValue('--link-color');
 
 }
 
@@ -479,6 +483,7 @@ class SpanSwimlane extends Component {
                             return histogramPlainColorString
                         }
                     })
+             
                     .style("align", "center")
                 task.bar = rect
             })
@@ -491,7 +496,7 @@ class SpanSwimlane extends Component {
 
             let lines = mini.append("svg")
                 .attr("stroke-width", 2)
-                .attr("stroke", "#ffd800")
+                .attr("stroke", linkColorString)
 
             // draw the lines between parent and child events
             let lins = lines.selectAll(".lin")
@@ -538,7 +543,7 @@ class SpanSwimlane extends Component {
                 .attr('y1', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
                 .attr('x2', width)
                 .attr('y2', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
-                .attr('stroke', "#979797");
+                .attr('stroke', laneColorString);
 
             // Draw the last lane so we have a box
             let lastLane = lanes[lanes.length - 1]
@@ -549,7 +554,7 @@ class SpanSwimlane extends Component {
                 .attr('y1', d3v3.round(y2(lastLane.id + 1)) + 0.5)
                 .attr('x2', width)
                 .attr('y2', d3v3.round(y2(lastLane.id + 1)) + 0.5)
-                .attr('stroke', "#979797");
+                .attr('stroke', laneColorString);
         }
 
         function redrawHighlightedSpan() {

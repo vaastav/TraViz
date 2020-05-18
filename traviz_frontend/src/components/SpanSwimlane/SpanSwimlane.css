@@ -1,4 +1,20 @@
 :root {
+
+	/* NEW COLOURS */
+	--lane-color: #979797;
+	--span-color: #3d98dc;
+	--highlight-span-color: #94efff;
+	--prev-highlight-color: var(--span-color);
+	--histogram-plain-color: #888888;
+	--molehill-color: var(--histogram-plain-color);
+	--molehill-threshold-color: #872829;
+	--events-low-prob-color: white;
+	--events-high-prob-color: black;
+	--text-color: white;
+	--link-color: #c0c6a0; 
+
+	/* OLD COLOURS
+	--lane-color: #979797;
 	--span-color: #5BB6FA;
 	--highlight-span-color: #E18100;
 	--prev-highlight-color: var(--span-color);
@@ -8,7 +24,25 @@
 	--events-low-prob-color: white;
 	--events-high-prob-color: black;
 	--text-color: white;
+	--link-color: #ffd800; */
+
+	/* MONOCHROME COLOUR VALUES FOR TESTING PURPOSES
+	--lane-color: #979797;
+	--span-color: #778899;
+	--highlight-span-color: #DCDCDC;
+	--prev-highlight-color: var(--span-color);
+	--histogram-plain-color: #696969;
+	--molehill-color: var(--histogram-plain-color);
+	--molehill-threshold-color: #2F4F4F;
+	--events-low-prob-color: white;
+	--events-high-prob-color: black;
+	--text-color: white;
+	--link-color: #C0C0C0;
+	*/
+
+
 }
+
 
 .chart {
 	shape-rendering: crispEdges;
@@ -54,8 +88,9 @@
 }
 
 .selected {
+	stroke-width: 2;
 	stroke: var(--highlight-span-color);
-	fill: var(--highlight-span-color);
+	fill: var(--span-color);
 	opacity: 1;
 }
 
