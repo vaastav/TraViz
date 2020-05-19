@@ -298,7 +298,7 @@ func processSpan(events []xtrace.Event, traceID string, key string, rev_event_ma
             for _, parent_event := range event.Parents {
                 if v, ok := rev_event_map[parent_event]; ok {
                     if v != key {
-                        parentSpanID = key
+                        parentSpanID = v
                     }
                 }
             }
