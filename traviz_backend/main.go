@@ -216,6 +216,7 @@ type Server struct {
     Config Config
     TotalTaskCounts map[string]int
     TotalRelationshipCounts map[string]int
+    TagCounts map[string]int
     TraceResults []TraceResult
     TaskResults []TaskResult
     LinkResults []LinkResult
@@ -598,19 +599,36 @@ func (s * Server) LoadTaskCounts() error {
 
 func (s * Server) LoadRelationshipCounts() error {
     s.TotalRelationshipCounts = make(map[string]int)
-    results, err := s.DB.Query("SELECT src_operation, dst_operation, COUNT(*) FROM span_links GROUP BY src_operation, dst_operation");
+    log.Println("Loading relationship counts")
+    results, err := s.DB.Query("select src_operation, dst_operation, tag, COUNT(*) FROM span_links, tags WHERE span_links.trace_id=tags.trace_id GROUP BY src_operation, dst_operation, tag");
     if err != nil {
         return err
     }
     for results.Next() {
         var src_operation string
         var dst_operation string
+        var tag string
         var count int
-        err = results.Scan(&src_operation, &dst_operation, &count)
+        err = results.Scan(&src_operation, &dst_operation, &tag, &count)
         if err != nil {
             return err
         }
-        s.TotalRelationshipCounts[src_operation + "-" + dst_operation] = count
+        s.TotalRelationshipCounts[src_operation + "-" + dst_operation + "-" + tag] = count
+    }
+    s.TagCounts = make(map[string]int)
+    log.Println("Loading tag counts")
+    tag_results, err := s.DB.Query("SELECT tag, COUNT(*) FROM tags GROUP BY tag")
+    if err != nil {
+        return err
+    }
+    for tag_results.Next() {
+        var tag string
+        var count int
+        err = tag_results.Scan(&tag, &count)
+        if err != nil {
+            return err
+        }
+        s.TagCounts[tag] = count
     }
     return nil
 }
@@ -852,10 +870,10 @@ func (s * Server) LoadTraces() error {
         for _, span := range spans {
             valueStrings = append(valueStrings, "(?, ?, ?, ?, ?)")
             valueArgs = append(valueArgs, trace.ID)
-            valueArgs = append(valueArgs, span.SpanID)
-            valueArgs = append(valueArgs, opMap[span.SpanID])
             valueArgs = append(valueArgs, span.ParentSpanID)
             valueArgs = append(valueArgs, opMap[span.ParentSpanID])
+            valueArgs = append(valueArgs, span.SpanID)
+            valueArgs = append(valueArgs, opMap[span.SpanID])
         }
 
         stmt := fmt.Sprintf("INSERT INTO span_links (trace_id, src_span_id, src_operation, dst_span_id, dst_operation) VALUES %s", strings.Join(valueStrings, ","))
@@ -1230,6 +1248,27 @@ func (s * Server) TaskLinks(w http.ResponseWriter, r *http.Request) {
         json.NewEncoder(w).Encode(&ErrorResponse{Error: "Invalid Trace ID"})
         return
     }
+    tagRows, err := s.DB.Query("SELECT tag FROM tags WHERE trace_id=?",traceID)
+    if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        log.Println(err)
+        json.NewEncoder(w).Encode(&ErrorResponse{Error: "Failed to load tags from database"})
+        return
+    }
+    var trace_type string
+    for tagRows.Next() {
+        var tag string
+        err = tagRows.Scan(&tag)
+        if err != nil {
+            log.Println(err)
+            w.WriteHeader(http.StatusBadRequest)
+            json.NewEncoder(w).Encode(&ErrorResponse{Error: "Failed to load tags data from database"})
+            return
+        }
+        if tag != "NginxWebServer" && tag != "NginxWebServer5" {
+            trace_type = tag
+        }
+    }
     allLinkRows, err := s.DB.Query("SELECT src_span_id, dst_span_id, src_operation, dst_operation FROM span_links WHERE trace_id=?",traceID)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
@@ -1251,8 +1290,12 @@ func (s * Server) TaskLinks(w http.ResponseWriter, r *http.Request) {
             return
         }
         var percentage float64
-        if v, ok := s.TotalRelationshipCounts[src_operation + "-" + dst_operation]; ok {
-            percentage = float64(v) / float64(len(s.Traces))
+        if v, ok := s.TotalRelationshipCounts[src_operation + "-" + dst_operation + "-" + trace_type]; ok {
+            if tagCount, ok2 := s.TagCounts[trace_type]; ok2 {
+                percentage = float64(v) / float64(tagCount)
+            } else {
+                percentage = 0.0
+            }
         }
         row := LinkRow{src_span_id, dst_span_id, src_operation, dst_operation, percentage}
         links = append(links, row)
