@@ -649,15 +649,13 @@ func (s * Server) InsertSpanTimes() error {
     if count != 0 {
         return nil
     }
-    stmtIns, err := s.DB.Prepare("INSERT INTO span_times VALUES( ?, ?, ?)")
-    if err != nil {
-        return err
-    }
-    defer stmtIns.Close()
     results, err := s.DB.Query("select span_id, startTime, duration from tasks")
     if err != nil {
         return err
     }
+    valueStrings := make([]string, 0)
+    valueArgs := make([]interface{}, 0)
+    current_count := 0
     for results.Next() {
         var span_id string
         var startTime time.Time
@@ -668,10 +666,25 @@ func (s * Server) InsertSpanTimes() error {
             continue
         }
         endTime := startTime.Add(time.Duration(duration))
-        _, err := stmtIns.Exec(span_id, startTime, endTime)
-        if err != nil {
-            return err
+        valueStrings = append(valueStrings, "(?, ?, ?)")
+        valueArgs = append(valueArgs, span_id)
+        valueArgs = append(valueArgs, startTime)
+        valueArgs = append(valueArgs, endTime)
+        current_count += 1
+        if current_count % 1000 == 0 {
+            stmt := fmt.Sprintf("INSERT INTO span_times VALUES %s", strings.Join(valueStrings, ","))
+            _, err = s.DB.Exec(stmt, valueArgs...)
+            if err != nil {
+                return err
+            }
+            valueStrings = make([]string, 0)
+            valueArgs = make([]interface{}, 0)
         }
+    }
+    stmt := fmt.Sprintf("INSERT INTO span_times VALUES %s", strings.Join(valueStrings, ","))
+    _, err = s.DB.Exec(stmt, valueArgs...)
+    if err != nil {
+        return err
     }
     return nil
 }
