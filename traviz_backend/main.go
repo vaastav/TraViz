@@ -1435,6 +1435,7 @@ func (s *Server) TaskLinks(w http.ResponseWriter, r *http.Request) {
 		links = append(links, row)
 	}
 	reqEndTime := time.Since(reqStartTime)
+    log.Println("Time taken for edges", reqEndTime.Seconds(), "seconds")
 	result := LinkResult{traceID, reqEndTime.Seconds()}
 	s.AddLinkResult(result)
 	w.WriteHeader(http.StatusOK)
