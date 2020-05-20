@@ -616,6 +616,10 @@ class SpanSwimlane extends Component {
                     redrawHighlightedSpan()
                 })
 
+            if(molehillsOn){
+                drawMolehills();
+            } 
+
         }
 
         function drawSpans() {
