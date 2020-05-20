@@ -696,329 +696,340 @@ func (s *Server) batchInsert(insertQuery string, valueStrings *[]string, valueAr
 }
 
 //Checks and loads any new traces that are available
-func (s *Server) LoadTraces() error {
-	results, err := s.DB.Query("SELECT trace_id, loc FROM overview;")
-	locations := make(map[string]bool)
-	if err != nil {
-		return err
-	}
+func (s * Server) LoadTraces() error {
+    results, err := s.DB.Query("SELECT trace_id, loc FROM overview;")
+    locations := make(map[string]bool)
+    if err != nil {
+        return err
+    }
 
-	for results.Next() {
-		var tid string
-		var loc string
-		err = results.Scan(&tid, &loc)
-		if err != nil {
-			return err
-		}
-		s.Traces[tid] = loc
-		locations[loc] = true
-	}
+    for results.Next() {
+        var tid string
+        var loc string
+        err = results.Scan(&tid, &loc)
+        if err != nil {
+            return err
+        }
+        s.Traces[tid] = loc
+        locations[loc] = true
+    }
 
-	var newTraces []xtrace.XTrace
-	err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if fi.IsDir() {
-			return nil
-		}
+    var newTraces []xtrace.XTrace
+    err = filepath.Walk(s.Config.Dir, func(fp string, fi os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+        if fi.IsDir() {
+            return nil
+        }
 
-		matched, err := filepath.Match("*.json", fi.Name())
-		if err != nil {
-			log.Fatal(err)
-		}
-		if matched {
-			if _, ok := locations[fp]; !ok {
-				var traces []xtrace.XTrace
-				f, err := os.Open(fp)
-				if err != nil {
-					return err
-				}
-				defer f.Close()
-				dec := json.NewDecoder(f)
-				err = dec.Decode(&traces)
-				if err != nil {
-					return err
-				}
-				if len(traces) != 1 {
-					//Multiple traces in 1 file not handled yet
-					return nil
-				}
-				if _, ok := s.Traces[traces[0].ID]; !ok {
-					// This trace is not in the database yet
-					s.Traces[traces[0].ID] = fp
-					newTraces = append(newTraces, traces[0])
-				}
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	log.Println("New traces to be processed", len(newTraces))
+        matched, err :=  filepath.Match("*.json", fi.Name())
+        if err != nil {
+            log.Fatal(err)
+        }
+        if matched {
+            if _, ok := locations[fp] ; !ok{
+                var traces []xtrace.XTrace
+                f, err := os.Open(fp)
+                if err != nil {
+                    return err
+                }
+                defer f.Close()
+                dec := json.NewDecoder(f)
+                err = dec.Decode(&traces)
+                if err != nil {
+                    return err
+                }
+                if len(traces) != 1 {
+                    //Multiple traces in 1 file not handled yet
+                    return nil
+                }
+                if _, ok := s.Traces[traces[0].ID]; !ok {
+                    // This trace is not in the database yet
+                    s.Traces[traces[0].ID] = fp
+                    newTraces = append(newTraces, traces[0])
+                }
+            }
+        }
+        return nil
+    })
+    if err != nil {
+        return err
+    }
+    log.Println("New traces to be processed", len(newTraces))
+    if len(newTraces) == 0 {
+        return nil
+    }
+    const createdFormat = "2006-01-02 15:04:05"
+    tasks, err := parseTasksFile(s.Config.TasksFile)
+    if err != nil {
+	    return err
+    }
+    overview_query := "INSERT IGNORE INTO overview VALUES"
+    tag_query := "INSERT IGNORE INTO tags VALUES"
+    src_query := "INSERT IGNORE INTO sourcecode VALUES"
+    dep_query := "INSERT IGNORE INTO dependencies VALUES"
+    task_query := "INSERT IGNORE INTO tasks VALUES"
+    event_query := "INSERT IGNORE INTO events VALUES"
+    links_query := "INSERT IGNORE INTO span_links VALUES"
 
-	const createdFormat = "2006-01-02 15:04:05"
-	tasks, err := parseTasksFile(s.Config.TasksFile)
+    overview_string := "(?, ?, ?, ?, ?)"
+    tag_string := "(?, ?)"
+    src_string := "(?, ?, ?, ?)"
+    dep_string := "(?, ?, ?, ?)"
+    task_string := "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    event_string := "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    links_string := "(?, ?, ?, ?, ?)"
 
-	if err != nil {
-		return err
-	}
+    overview_strings := make([]string, 0)
+    tag_strings := make([]string, 0)
+    src_strings := make([]string, 0)
+    dep_strings := make([]string, 0)
+    task_strings := make([]string, 0)
+    event_strings := make([]string, 0)
+    links_strings := make([]string, 0)
 
-	overview_query := "INSERT IGNORE INTO overview VALUES"
-	tag_query := "INSERT IGNORE INTO tags VALUES"
-	src_query := "INSERT IGNORE INTO sourcecode VALUES"
-	dep_query := "INSERT IGNORE INTO dependencies VALUES"
-	task_query := "INSERT IGNORE INTO tasks VALUES"
-	event_query := "INSERT IGNORE INTO events VALUES"
-	links_query := "INSERT IGNORE INTO span_links VALUES"
+    overview_args := make([]interface{}, 0)
+    tag_args := make([]interface{}, 0)
+    src_args := make([]interface{}, 0)
+    dep_args := make([]interface{}, 0)
+    task_args := make([]interface{}, 0)
+    event_args := make([]interface{}, 0)
+    links_args := make([]interface{}, 0)
 
-	overview_string := "(?, ?, ?, ?, ?)"
-	tag_string := "(?, ?)"
-	src_string := "(?, ?, ?, ?)"
-	dep_string := "(?, ?, ?, ?)"
-	task_string := "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-	event_string := "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-	links_string := "(?, ?, ?, ?, ?)"
+    current_count := 0
+    BATCH_ARGS_LIMIT := 50000 // Acutal mysql limit is 2^16 - 1 but lets be safe with 50K
+    var traceLoadingTimes []time.Duration
+    for _, trace := range newTraces {
+        //log.Println("Processing", trace.ID)
+        traceLoadingTime := time.Now()
+        // Process all the relevant data
+        stats := processTrace(trace)
+        deps := processDependencies(trace)
+        spans := processSpans(trace)
+        traceLoadEndTime := time.Since(traceLoadingTime)
+        traceLoadingTimes = append(traceLoadingTimes, traceLoadEndTime)
+        //log.Println("Trace loading took", traceLoadEndTime.Seconds(), "s")
+        current_count += 1
 
-	overview_strings := make([]string, 0)
-	tag_strings := make([]string, 0)
-	src_strings := make([]string, 0)
-	dep_strings := make([]string, 0)
-	task_strings := make([]string, 0)
-	event_strings := make([]string, 0)
-	links_strings := make([]string, 0)
+        // Collect overview info for db insert
+        overview_strings = append(overview_strings, overview_string)
+        overview_args = append(overview_args, trace.ID)
+        overview_args = append(overview_args, stats.Duration)
+        overview_args = append(overview_args, stats.DOC.Format(createdFormat))
+        overview_args = append(overview_args, s.Traces[trace.ID])
+        overview_args = append(overview_args, stats.NumEvents)
 
-	overview_args := make([]interface{}, 0)
-	tag_args := make([]interface{}, 0)
-	src_args := make([]interface{}, 0)
-	dep_args := make([]interface{}, 0)
-	task_args := make([]interface{}, 0)
-	event_args := make([]interface{}, 0)
-	links_args := make([]interface{}, 0)
+        // Collect tags info for db insert
+        for _, tag := range stats.Tags {
+            tag_strings = append(tag_strings, tag_string)
+            tag_args = append(tag_args, trace.ID)
+            tag_args = append(tag_args, tag)
+        }
 
-	current_count := 0
-	BATCH_ARGS_LIMIT := 50000 // Acutal mysql limit is 2^16 - 1 but lets be safe with 50K
-	var traceLoadingTimes []time.Duration
+        // Collect source code info for db insert
+        for source, val := range stats.Source {
+            if source == " " || source == "" {
+                continue
+            }
+            tokens := strings.Split(source, ":")
+            linenum, err := strconv.Atoi(tokens[1])
+            if err != nil {
+                return err
+            }
+            fname := tokens[0]
+            src_strings = append(src_strings, src_string)
+            src_args = append(src_args, trace.ID)
+            src_args = append(src_args, linenum)
+            src_args = append(src_args, fname)
+            src_args = append(src_args, val)
+        }
 
-	for _, trace := range newTraces {
-		//log.Println("Processing", trace.ID)
-		traceLoadingTime := time.Now()
-		// Process all the relevant data
-		stats := processTrace(trace)
-		deps := processDependencies(trace)
-		spans := processSpans(trace)
-		traceLoadEndTime := time.Since(traceLoadingTime)
-		traceLoadingTimes = append(traceLoadingTimes, traceLoadEndTime)
-		//log.Println("Trace loading took", traceLoadEndTime.Seconds(), "s")
-		current_count += 1
+        // Collect dependency info for db insert
+        for dep, num := range deps {
+            dep_strings = append(dep_strings, dep_string)
+            dep_args = append(dep_args, trace.ID)
+            dep_args = append(dep_args, dep.Source)
+            dep_args = append(dep_args, dep.Destination)
+            dep_args = append(dep_args, num)
+        }
 
-		// Collect overview info for db insert
-		overview_strings = append(overview_strings, overview_string)
-		overview_args = append(overview_args, trace.ID)
-		overview_args = append(overview_args, stats.Duration)
-		overview_args = append(overview_args, stats.DOC.Format(createdFormat))
-		overview_args = append(overview_args, s.Traces[trace.ID])
-		overview_args = append(overview_args, stats.NumEvents)
+        opMap := make(map[string]string)
+        for _, span := range spans {
+            var linenum int
+            var fname string
+            if span.Source == " " || span.Source == "" {
+                linenum = 0
+                fname = ""
+            } else {
+                tokens := strings.Split(span.Source, ":")
+                linenum, _ = strconv.Atoi(tokens[1])
+                fname = tokens[0]
+            }
+            span.Operation = tasks[span.Source]
+            opMap[span.SpanID] = span.Operation
 
-		// Collect tags info for db insert
-		for _, tag := range stats.Tags {
-			tag_strings = append(tag_strings, tag_string)
-			tag_args = append(tag_args, trace.ID)
-			tag_args = append(tag_args, tag)
-		}
+            task_strings = append(task_strings, task_string)
+            task_args = append(task_args, span.TraceID)
+            task_args = append(task_args, span.SpanID)
+            task_args = append(task_args, span.Duration)
+            task_args = append(task_args, span.Operation)
+            task_args = append(task_args, linenum)
+            task_args = append(task_args, fname)
+            task_args = append(task_args, span.ProcessName)
+            task_args = append(task_args, span.ProcessID)
+            task_args = append(task_args, span.ThreadID)
+            task_args = append(task_args, span.StartTime)
 
-		// Collect source code info for db insert
-		for source, val := range stats.Source {
-			if source == " " || source == "" {
-				continue
-			}
-			tokens := strings.Split(source, ":")
-			linenum, err := strconv.Atoi(tokens[1])
-			if err != nil {
-				return err
-			}
-			fname := tokens[0]
-			src_strings = append(src_strings, src_string)
-			src_args = append(src_args, trace.ID)
-			src_args = append(src_args, linenum)
-			src_args = append(src_args, fname)
-			src_args = append(src_args, val)
-		}
+            for _, event := range span.Events {
+                var linenum int
+                var fname string
+                if event.Source == " " || event.Source == "" {
+                    linenum = 0
+                    fname = ""
+                } else {
+                    tokens := strings.Split(event.Source, ":")
+                    linenum, _ = strconv.Atoi(tokens[1])
+                    fname = tokens[0]
+                }
+                timestamp := time.Unix(0, event.Timestamp * 1000000)
 
-		// Collect dependency info for db insert
-		for dep, num := range deps {
-			dep_strings = append(dep_strings, dep_string)
-			dep_args = append(dep_args, trace.ID)
-			dep_args = append(dep_args, dep.Source)
-			dep_args = append(dep_args, dep.Destination)
-			dep_args = append(dep_args, num)
-		}
+                event_strings = append(event_strings, event_string)
+                event_args = append(event_args, event.EventID)
+                event_args = append(event_args, trace.ID)
+                event_args = append(event_args, span.SpanID)
+                event_args = append(event_args, span.Operation)
+                event_args = append(event_args, linenum)
+                event_args = append(event_args, fname)
+                event_args = append(event_args, timestamp)
+                event_args = append(event_args, event.Label)
+                event_args = append(event_args, event.Host)
+                event_args = append(event_args, event.Cycles)
+            }
+        }
 
-		opMap := make(map[string]string)
-		for _, span := range spans {
-			var linenum int
-			var fname string
-			if span.Source == " " || span.Source == "" {
-				linenum = 0
-				fname = ""
-			} else {
-				tokens := strings.Split(span.Source, ":")
-				linenum, _ = strconv.Atoi(tokens[1])
-				fname = tokens[0]
-			}
-			span.Operation = tasks[span.Source]
-			opMap[span.SpanID] = span.Operation
+        for _, span := range spans {
+            links_strings = append(links_strings, links_string)
+            links_args = append(links_args, trace.ID)
+            links_args = append(links_args, span.ParentSpanID)
+            links_args = append(links_args, opMap[span.ParentSpanID])
+            links_args = append(links_args, span.SpanID)
+            links_args = append(links_args, opMap[span.SpanID])
+        }
 
-			task_strings = append(task_strings, task_string)
-			task_args = append(task_args, span.TraceID)
-			task_args = append(task_args, span.SpanID)
-			task_args = append(task_args, span.Duration)
-			task_args = append(task_args, span.Operation)
-			task_args = append(task_args, linenum)
-			task_args = append(task_args, fname)
-			task_args = append(task_args, span.ProcessName)
-			task_args = append(task_args, span.ProcessID)
-			task_args = append(task_args, span.ThreadID)
-			task_args = append(task_args, span.StartTime)
+        if current_count % 1000 == 0 {
+            err = s.batchInsert(overview_query, &overview_strings, &overview_args)
+            if err != nil {
+                return err
+            }
+            err = s.batchInsert(tag_query, &tag_strings, &tag_args)
+            if err != nil {
+                return err
+            }
+            overview_strings = make([]string, 0)
+            tag_strings = make([]string, 0)
 
-			for _, event := range span.Events {
-				var linenum int
-				var fname string
-				if event.Source == " " || event.Source == "" {
-					linenum = 0
-					fname = ""
-				} else {
-					tokens := strings.Split(event.Source, ":")
-					linenum, _ = strconv.Atoi(tokens[1])
-					fname = tokens[0]
-				}
-				timestamp := time.Unix(0, event.Timestamp*1000000)
+            overview_args = make([]interface{}, 0)
+            tag_args = make([]interface{}, 0)
 
-				event_strings = append(event_strings, event_string)
-				event_args = append(event_args, event.EventID)
-				event_args = append(event_args, trace.ID)
-				event_args = append(event_args, span.SpanID)
-				event_args = append(event_args, span.Operation)
-				event_args = append(event_args, linenum)
-				event_args = append(event_args, fname)
-				event_args = append(event_args, timestamp)
-				event_args = append(event_args, event.Label)
-				event_args = append(event_args, event.Host)
-				event_args = append(event_args, event.Cycles)
-			}
-		}
-
-		for _, span := range spans {
-			links_strings = append(links_strings, links_string)
-			links_args = append(links_args, trace.ID)
-			links_args = append(links_args, span.ParentSpanID)
-			links_args = append(links_args, opMap[span.ParentSpanID])
-			links_args = append(links_args, span.SpanID)
-			links_args = append(links_args, opMap[span.SpanID])
-		}
-
-		if current_count%1000 == 0 {
-			err = s.batchInsert(overview_query, &overview_strings, &overview_args)
-			if err != nil {
-				return err
-			}
-			err = s.batchInsert(tag_query, &tag_strings, &tag_args)
-			if err != nil {
-				return err
-			}
-			overview_strings = make([]string, 0)
-			tag_strings = make([]string, 0)
-
-			overview_args = make([]interface{}, 0)
-			tag_args = make([]interface{}, 0)
-
-			log.Println("Processed", current_count, "traces")
-		}
-		if len(src_args) > BATCH_ARGS_LIMIT {
-			err = s.batchInsert(src_query, &src_strings, &src_args)
-			if err != nil {
-				return err
-			}
-			src_strings = make([]string, 0)
-			src_args = make([]interface{}, 0)
-		}
-		if len(dep_args) > BATCH_ARGS_LIMIT {
-			err = s.batchInsert(dep_query, &dep_strings, &dep_args)
-			if err != nil {
-				return err
-			}
-			dep_strings = make([]string, 0)
-			dep_args = make([]interface{}, 0)
-		}
-		if len(task_args) > BATCH_ARGS_LIMIT {
-			err = s.batchInsert(task_query, &task_strings, &task_args)
-			if err != nil {
-				return err
-			}
-			task_strings = make([]string, 0)
-			task_args = make([]interface{}, 0)
-		}
-		if len(event_args) > BATCH_ARGS_LIMIT {
-			err = s.batchInsert(event_query, &event_strings, &event_args)
-			if err != nil {
-				return err
-			}
-			event_strings = make([]string, 0)
-			event_args = make([]interface{}, 0)
-		}
-		if len(links_args) > BATCH_ARGS_LIMIT {
-			err = s.batchInsert(links_query, &links_strings, &links_args)
-			if err != nil {
-				return err
-			}
-			links_strings = make([]string, 0)
-			links_args = make([]interface{}, 0)
-		}
-	}
-
-	// err = s.batchInsert(overview_query, &overview_strings, &overview_args)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = s.batchInsert(tag_query, &tag_strings, &tag_args)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = s.batchInsert(src_query, &src_strings, &src_args)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = s.batchInsert(dep_query, &dep_strings, &dep_args)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = s.batchInsert(task_query, &task_strings, &task_args)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = s.batchInsert(event_query, &event_strings, &event_args)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = s.batchInsert(links_query, &links_strings, &links_args)
-	// if err != nil {
-	// 	return err
-	// }
-
-	log.Println("Finished processing traces")
-	f, err := os.Create("trace_loading.txt")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	for _, loadingTime := range traceLoadingTimes {
-		_, err := f.WriteString(fmt.Sprintf("%f\n", loadingTime.Seconds()))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+            log.Println("Processed", current_count, "traces")
+        }
+        if len(src_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(src_query, &src_strings, &src_args)
+            if err != nil {
+                return err
+            }
+            src_strings = make([]string, 0)
+            src_args = make([]interface{}, 0)
+        }
+        if len(dep_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(dep_query, &dep_strings, &dep_args)
+            if err != nil {
+                return err
+            }
+            dep_strings = make([]string, 0)
+            dep_args = make([]interface{}, 0)
+        }
+        if len(task_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(task_query, &task_strings, &task_args)
+            if err != nil {
+                return err
+            }
+            task_strings = make([]string, 0)
+            task_args = make([]interface{}, 0)
+        }
+        if len(event_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(event_query, &event_strings, &event_args)
+            if err != nil {
+                return err
+            }
+            event_strings = make([]string, 0)
+            event_args = make([]interface{}, 0)
+        }
+        if len(links_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(links_query, &links_strings, &links_args)
+            if err != nil {
+                return err
+            }
+            links_strings = make([]string, 0)
+            links_args = make([]interface{}, 0)
+        }
+    }
+    if len(overview_args) > 0 {
+        err = s.batchInsert(overview_query, &overview_strings, &overview_args)
+        if err != nil {
+            return err
+        }
+    }
+    if len(tag_args) > 0 {
+        err = s.batchInsert(tag_query, &tag_strings, &tag_args)
+        if err != nil {
+            return err
+        }
+    }
+    if len(src_args) > 0 {
+        err = s.batchInsert(src_query, &src_strings, &src_args)
+        if err != nil {
+            return err
+        }
+    }
+    if len(dep_args) > 0 {
+        err = s.batchInsert(dep_query, &dep_strings, &dep_args)
+        if err != nil {
+            return err
+        }
+    }
+    if len(task_args) > 0 {
+        err = s.batchInsert(task_query, &task_strings, &task_args)
+        if err != nil {
+            return err
+        }
+    }
+    if len(event_args) > 0 {
+        err = s.batchInsert(event_query, &event_strings, &event_args)
+        if err != nil {
+            return err
+        }
+    }
+    if len(links_args) > 0 {
+        err = s.batchInsert(links_query, &links_strings, &links_args)
+        if err != nil {
+            return err
+        }
+    }
+    log.Println("Finished processing traces")
+    f, err := os.Create("trace_loading.txt")
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+    for _, loadingTime := range traceLoadingTimes {
+        _, err := f.WriteString(fmt.Sprintf("%f\n",loadingTime.Seconds()))
+        if err != nil {
+            return err
+        }
+    }
+    return nil
 }
 
 //Setup the various API endpoints for this server
