@@ -656,6 +656,7 @@ func (s * Server) InsertSpanTimes() error {
     valueStrings := make([]string, 0)
     valueArgs := make([]interface{}, 0)
     current_count := 0
+    insertQuery := "INSERT IGNORE INTO span_times VALUES"
     for results.Next() {
         var span_id string
         var startTime time.Time
@@ -672,8 +673,7 @@ func (s * Server) InsertSpanTimes() error {
         valueArgs = append(valueArgs, endTime)
         current_count += 1
         if current_count % 1000 == 0 {
-            stmt := fmt.Sprintf("INSERT INTO span_times VALUES %s", strings.Join(valueStrings, ","))
-            _, err = s.DB.Exec(stmt, valueArgs...)
+            err = s.batchInsert(insertQuery, &valueStrings, &valueArgs)
             if err != nil {
                 return err
             }
@@ -681,12 +681,17 @@ func (s * Server) InsertSpanTimes() error {
             valueArgs = make([]interface{}, 0)
         }
     }
-    stmt := fmt.Sprintf("INSERT INTO span_times VALUES %s", strings.Join(valueStrings, ","))
-    _, err = s.DB.Exec(stmt, valueArgs...)
+    err = s.batchInsert(insertQuery, &valueStrings, &valueArgs)
     if err != nil {
         return err
     }
     return nil
+}
+
+func (s * Server) batchInsert(insertQuery string, valueStrings *[]string, valueArgs *[]interface{}) error {
+    stmt := fmt.Sprintf(insertQuery + " %s", strings.Join(*valueStrings, ","))
+    _, err := s.DB.Exec(stmt, *valueArgs...)
+    return err
 }
 
 //Checks and loads any new traces that are available
@@ -706,40 +711,6 @@ func (s * Server) LoadTraces() error {
         }
         s.Traces[tid] = loc
         locations[loc] = true
-    }
-
-    overview_stmtIns, err := s.DB.Prepare("INSERT INTO overview VALUES( ?, ?, ?, ?, ? )")
-    if err != nil {
-        return err
-    }
-    defer overview_stmtIns.Close()
-    tags_stmtIns, err := s.DB.Prepare("INSERT INTO tags VALUES( ?, ? )")
-    if err != nil {
-        return err
-    }
-    defer tags_stmtIns.Close()
-
-    srccode_stmtIns, err := s.DB.Prepare("INSERT INTO sourcecode VALUES( ?, ?, ?, ? )")
-    if err != nil {
-        return err
-    }
-    defer srccode_stmtIns.Close()
-
-    dep_stmtIns, err := s.DB.Prepare("INSERT INTO dependencies VALUES( ?, ?, ?, ?)")
-    if err != nil {
-        return err
-    }
-    defer dep_stmtIns.Close()
-
-    span_stmtIns, err := s.DB.Prepare("INSERT INTO tasks VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    if err != nil {
-        return err
-    }
-    defer span_stmtIns.Close()
-
-    event_stmtIns, err := s.DB.Prepare("INSERT INTO events VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    if err != nil {
-        return err
     }
 
     var newTraces []xtrace.XTrace
@@ -790,6 +761,40 @@ func (s * Server) LoadTraces() error {
     if err != nil {
 	    return err
     }
+    overview_query := "INSERT IGNORE INTO overview VALUES"
+    tag_query := "INSERT IGNORE INTO tags VALUES"
+    src_query := "INSERT IGNORE INTO sourcecode VALUES"
+    dep_query := "INSERT IGNORE INTO dependencies VALUES"
+    task_query := "INSERT IGNORE INTO tasks VALUES"
+    event_query := "INSERT IGNORE INTO events VALUES"
+    links_query := "INSERT IGNORE INTO span_links VALUES"
+
+    overview_string := "(?, ?, ?, ?, ?)"
+    tag_string := "(?, ?)"
+    src_string := "(?, ?, ?, ?)"
+    dep_string := "(?, ?, ?, ?)"
+    task_string := "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    event_string := "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    links_string := "(?, ?, ?, ?, ?)"
+
+    overview_strings := make([]string, 0)
+    tag_strings := make([]string, 0)
+    src_strings := make([]string, 0)
+    dep_strings := make([]string, 0)
+    task_strings := make([]string, 0)
+    event_strings := make([]string, 0)
+    links_strings := make([]string, 0)
+
+    overview_args := make([]interface{}, 0)
+    tag_args := make([]interface{}, 0)
+    src_args := make([]interface{}, 0)
+    dep_args := make([]interface{}, 0)
+    task_args := make([]interface{}, 0)
+    event_args := make([]interface{}, 0)
+    links_args := make([]interface{}, 0)
+
+    current_count := 0
+    BATCH_ARGS_LIMIT := 50000 // Acutal mysql limit is 2^16 - 1 but lets be safe with 50K
     var traceLoadingTimes []time.Duration
     for _, trace := range newTraces {
         //log.Println("Processing", trace.ID)
@@ -801,19 +806,24 @@ func (s * Server) LoadTraces() error {
         traceLoadEndTime := time.Since(traceLoadingTime)
         traceLoadingTimes = append(traceLoadingTimes, traceLoadEndTime)
         //log.Println("Trace loading took", traceLoadEndTime.Seconds(), "s")
+        current_count += 1
 
-        // Store the data in database
-        _, err = overview_stmtIns.Exec( trace.ID, stats.Duration, stats.DOC.Format(createdFormat), s.Traces[trace.ID], stats.NumEvents)
-        if err != nil {
-            log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
-            return err
-        }
+        // Collect overview info for db insert
+        overview_strings = append(overview_strings, overview_string)
+        overview_args = append(overview_args, trace.ID)
+        overview_args = append(overview_args, stats.Duration)
+        overview_args = append(overview_args, stats.DOC.Format(createdFormat))
+        overview_args = append(overview_args, s.Traces[trace.ID])
+        overview_args = append(overview_args, stats.NumEvents)
+
+        // Collect tags info for db insert
         for _, tag := range stats.Tags {
-            _, err = tags_stmtIns.Exec( trace.ID, tag)
-            if err != nil {
-                return err
-            }
+            tag_strings = append(tag_strings, tag_string)
+            tag_args = append(tag_args, trace.ID)
+            tag_args = append(tag_args, tag)
         }
+
+        // Collect source code info for db insert
         for source, val := range stats.Source {
             if source == " " || source == "" {
                 continue
@@ -824,18 +834,20 @@ func (s * Server) LoadTraces() error {
                 return err
             }
             fname := tokens[0]
-            _, err = srccode_stmtIns.Exec( trace.ID, linenum, fname, val)
-            if err != nil {
-                return err
-            }
+            src_strings = append(src_strings, src_string)
+            src_args = append(src_args, trace.ID)
+            src_args = append(src_args, linenum)
+            src_args = append(src_args, fname)
+            src_args = append(src_args, val)
         }
 
+        // Collect dependency info for db insert
         for dep, num := range deps {
-            _, err = dep_stmtIns.Exec( trace.ID, dep.Source, dep.Destination, num)
-            if err != nil {
-                log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
-                return err
-            }
+            dep_strings = append(dep_strings, dep_string)
+            dep_args = append(dep_args, trace.ID)
+            dep_args = append(dep_args, dep.Source)
+            dep_args = append(dep_args, dep.Destination)
+            dep_args = append(dep_args, num)
         }
 
         opMap := make(map[string]string)
@@ -852,11 +864,19 @@ func (s * Server) LoadTraces() error {
             }
             span.Operation = tasks[span.Source]
             opMap[span.SpanID] = span.Operation
-            _, err = span_stmtIns.Exec( span.TraceID, span.SpanID, span.Duration, span.Operation, linenum, fname, span.ProcessName, span.ProcessID, span.ThreadID, span.StartTime)
-            if err != nil {
-                log.Println("Error Executing", trace.ID, s.Traces[trace.ID])
-                return err
-            }
+
+            task_strings = append(task_strings, task_string)
+            task_args = append(task_args, span.TraceID)
+            task_args = append(task_args, span.SpanID)
+            task_args = append(task_args, span.Duration)
+            task_args = append(task_args, span.Operation)
+            task_args = append(task_args, linenum)
+            task_args = append(task_args, fname)
+            task_args = append(task_args, span.ProcessName)
+            task_args = append(task_args, span.ProcessID)
+            task_args = append(task_args, span.ThreadID)
+            task_args = append(task_args, span.StartTime)
+
             for _, event := range span.Events {
                 var linenum int
                 var fname string
@@ -869,32 +889,115 @@ func (s * Server) LoadTraces() error {
                     fname = tokens[0]
                 }
                 timestamp := time.Unix(0, event.Timestamp * 1000000)
-                _, err := event_stmtIns.Exec(event.EventID, trace.ID, span.SpanID, span.Operation, linenum, fname, timestamp, event.Label, event.Host, event.Cycles)
-                if err != nil {
-                    log.Println(err)
-                }
+
+                event_strings = append(event_strings, event_string)
+                event_args = append(event_args, event.EventID)
+                event_args = append(event_args, trace.ID)
+                event_args = append(event_args, span.SpanID)
+                event_args = append(event_args, span.Operation)
+                event_args = append(event_args, linenum)
+                event_args = append(event_args, fname)
+                event_args = append(event_args, timestamp)
+                event_args = append(event_args, event.Label)
+                event_args = append(event_args, event.Host)
+                event_args = append(event_args, event.Cycles)
             }
         }
 
-        // Bulk insert the links
-        // Bulk inserting code adapted from: https://stackoverflow.com/questions/12486436/how-do-i-batch-sql-statements-with-package-database-sql
-        valueStrings := make([]string, 0, len(spans))
-        valueArgs := make([]interface{}, 0, len(spans) * 5)
         for _, span := range spans {
-            valueStrings = append(valueStrings, "(?, ?, ?, ?, ?)")
-            valueArgs = append(valueArgs, trace.ID)
-            valueArgs = append(valueArgs, span.ParentSpanID)
-            valueArgs = append(valueArgs, opMap[span.ParentSpanID])
-            valueArgs = append(valueArgs, span.SpanID)
-            valueArgs = append(valueArgs, opMap[span.SpanID])
+            links_strings = append(links_strings, links_string)
+            links_args = append(links_args, trace.ID)
+            links_args = append(links_args, span.ParentSpanID)
+            links_args = append(links_args, opMap[span.ParentSpanID])
+            links_args = append(links_args, span.SpanID)
+            links_args = append(links_args, opMap[span.SpanID])
         }
 
-        stmt := fmt.Sprintf("INSERT INTO span_links (trace_id, src_span_id, src_operation, dst_span_id, dst_operation) VALUES %s", strings.Join(valueStrings, ","))
-        _, err := s.DB.Exec(stmt, valueArgs...)
-        if err != nil {
-            return err
-        }
+        if current_count % 1000 == 0 {
+            err = s.batchInsert(overview_query, &overview_strings, &overview_args)
+            if err != nil {
+                return err
+            }
+            err = s.batchInsert(tag_query, &tag_strings, &tag_args)
+            if err != nil {
+                return err
+            }
+            overview_strings = make([]string, 0)
+            tag_strings = make([]string, 0)
 
+            overview_args = make([]interface{}, 0)
+            tag_args = make([]interface{}, 0)
+
+            log.Println("Processed", current_count, "traces")
+        }
+        if len(src_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(src_query, &src_strings, &src_args)
+            if err != nil {
+                return err
+            }
+            src_strings = make([]string, 0)
+            src_args = make([]interface{}, 0)
+        }
+        if len(dep_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(dep_query, &dep_strings, &dep_args)
+            if err != nil {
+                return err
+            }
+            dep_strings = make([]string, 0)
+            dep_args = make([]interface{}, 0)
+        }
+        if len(task_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(task_query, &task_strings, &task_args)
+            if err != nil {
+                return err
+            }
+            task_strings = make([]string, 0)
+            task_args = make([]interface{}, 0)
+        }
+        if len(event_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(event_query, &event_strings, &event_args)
+            if err != nil {
+                return err
+            }
+            event_strings = make([]string, 0)
+            event_args = make([]interface{}, 0)
+        }
+        if len(links_args) > BATCH_ARGS_LIMIT {
+            err = s.batchInsert(links_query, &links_strings, &links_args)
+            if err != nil {
+                return err
+            }
+            links_strings = make([]string, 0)
+            links_args = make([]interface{}, 0)
+        }
+    }
+    err = s.batchInsert(overview_query, &overview_strings, &overview_args)
+    if err != nil {
+        return err
+    }
+    err = s.batchInsert(tag_query, &tag_strings, &tag_args)
+    if err != nil {
+        return err
+    }
+    err = s.batchInsert(src_query, &src_strings, &src_args)
+    if err != nil {
+        return err
+    }
+    err = s.batchInsert(dep_query, &dep_strings, &dep_args)
+    if err != nil {
+        return err
+    }
+    err = s.batchInsert(task_query, &task_strings, &task_args)
+    if err != nil {
+        return err
+    }
+    err = s.batchInsert(event_query, &event_strings, &event_args)
+    if err != nil {
+        return err
+    }
+    err = s.batchInsert(links_query, &links_strings, &links_args)
+    if err != nil {
+        return err
     }
     log.Println("Finished processing traces")
     f, err := os.Create("trace_loading.txt")

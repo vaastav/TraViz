@@ -24,8 +24,7 @@ CREATE TABLE `traviz`.`sourcecode`(
     linenum int,
     fname varchar(256),
     num int,
-    primary key(trace_id, linenum, fname),
-    foreign key(trace_id) references overview(trace_id)
+    primary key(trace_id, linenum, fname)
 );
 
 CREATE TABLE `traviz`.`dependencies`(
@@ -33,8 +32,7 @@ CREATE TABLE `traviz`.`dependencies`(
     source varchar(64) NOT NULL,
     destination varchar(64) NOT NULL,
     num int, 
-    primary key(trace_id, source, destination),
-    foreign key(trace_id) references overview(trace_id)
+    primary key(trace_id, source, destination)
 );
 
 CREATE TABLE `traviz`.`tasks`(
@@ -78,7 +76,6 @@ CREATE TABLE `traviz`.`events`(
     label varchar(256) NOT NULL,
     host varchar(64) NOT NULL,
     cycles BIGINT,
-    primary key(event_id, trace_id, span_id, timestamp),
-    foreign key(trace_id) references overview(trace_id)
+    primary key(event_id, trace_id, span_id, timestamp)
 );
 
