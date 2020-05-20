@@ -342,7 +342,7 @@ class SpanSwimlane extends Component {
     createSwimlane() {
         initialiseColours()
 
-        // Define events, lanes, spand and connecting lines
+        // Define events, lanes, spans and connecting lines
         let events = this.state.trace.sort((a, b) => { return a.Timestamp - b.Timestamp })
         let spans = createSpans(this.state.trace);
         let tasks = sortTasks(this.state.tasks, spans);
@@ -536,6 +536,17 @@ class SpanSwimlane extends Component {
                 .attr('height', miniHeight)
                 .attr('class', 'mini');
 
+
+            // mini.append('g').selectAll('.laneRects')
+            //     .data(lanes)
+            //     .enter().append('rect')
+            //     .attr('x', 0)
+            //     .attr('y', function (d) { return d3v3.round(y2(d.id)) + 0.5; })
+            //     .attr('width', width)
+            //     .attr('height', laneHeight)
+            //     .attr('stroke-width', 0)
+            //     .attr('fill', molehillThresholdColorString);
+
             // draw the lanes for the mini chart
             mini.append('g').selectAll('.laneLines')
                 .data(lanes)
@@ -568,12 +579,23 @@ class SpanSwimlane extends Component {
             let dataToRedraw = rectanglesToRedraw.data()
             rectanglesToRedraw.remove()
 
+            mini.selectAll('.bgroundHighlight').remove()
+
             spanRectangles
                 .data(dataToRedraw)
                 .attr('x', (d) => { return x(d.start) })
                 .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + (laneHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)) })
                 .attr('width', (d) => { return x(d.end) - x(d.start) })
-                .attr('class', (d) => { return d.class })
+                .attr('class', (d) => { return d.class });
+
+            spanRectangles.enter().append('rect')
+                .data(dataToRedraw)
+                .attr('class', (d) => { console.log(d.class);return (d.class + "bgroundHighlight bgroundHighlight") })
+                .attr('x', 0)
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 1})
+                .attr('width', width)
+                .attr('height', laneHeight-1)
+                
 
             spanRectangles.enter().append('rect')
                 .attr('x', (d) => { return x(d.start) })
