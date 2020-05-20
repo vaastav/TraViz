@@ -310,6 +310,14 @@ function mapThreadsIdsToLane(spans) {
     return threadToLaneMap
 }
 
+function getEventMap(events) {
+    let map = new Map();
+    events.forEach(event => {
+        map.set(event.EventID, event);
+    });
+    return map;
+}
+
 class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
@@ -344,11 +352,11 @@ class SpanSwimlane extends Component {
 
         // Define events, lanes, spans and connecting lines
         let events = this.state.trace.sort((a, b) => { return a.Timestamp - b.Timestamp })
+        let eventMap = getEventMap(events)
         let spans = createSpans(this.state.trace);
         let tasks = sortTasks(this.state.tasks, spans);
-        let connectingLines = getConnectingLines(events)
-        let threadToLaneMap = mapThreadsIdsToLane(spans)
-        let relationships = this.state.relationships
+        let edges = this.state.relationships
+        edges.shift()
         this.state.tasks = tasks;
         spans = addMolehills(spans, tasks);
 
@@ -437,7 +445,6 @@ class SpanSwimlane extends Component {
                     .on("mouseover", function () {
                         d3v3.selectAll("rect.bars")
                             .style("opacity", 0)
-
                         d3v3.select(this)
                             .style("opacity", 0.1)
 
@@ -484,42 +491,53 @@ class SpanSwimlane extends Component {
                             return histogramPlainColorString
                         }
                     })
-             
+
                     .style("align", "center")
                 task.bar = rect
             })
         }
 
-        function drawLines() {
+        function drawEdges() {
             mini.selectAll('.lin').remove();
-            if(structureOn){
-            let eventSize = spanHeight - 2;
+            if (structureOn) {
+                let eventSize = spanHeight - 2;
 
-            let lines = mini.append("svg")
-                .attr("stroke-width", 2)
-                .attr("stroke", linkColorString)
+                let lines = mini.append("svg")
+                    .attr("stroke-width", 2)
+                    .attr("stroke", linkColorString)
 
-            // draw the lines between parent and child events
-            let lins = lines.selectAll(".lin")
-                .data(connectingLines)
-                .attr("width", 200)
-                .attr("x1", function (d) { return 0 })
-                .attr("y1", function (d) { return 0 })
-                .attr("x2", function (d) { return 0 })
-                .attr("y2", function (d) { return 0 })
-                .attr("class", "lin");
+                // draw the lines between parent and child events
+                let lins = lines.selectAll(".lin")
+                    .data(edges)
 
-            lins.enter().append("line")
-                .attr("width", 200)
-                .attr("x1", function (d) { return x(d.origin.HRT) })
-                .attr("y1", function (d) { return y2(laneMap.get(d.origin.ThreadID).id) + ((laneHeight/2) + (spanHeight/2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
-                .attr("x2", function (d) { return x(d.destination.HRT) })
-                .attr("y2", function (d) { return y2(laneMap.get(d.destination.ThreadID).id) + ((laneHeight/2) + (spanHeight/2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
-                .attr("class", "lin");
 
-            lins.exit().remove();
+                lins.enter().append("line")
+                    .attr("stroke-width", function (d) {
+                        return Math.round(d.Percentage * 8)
+                    })
+                    .attr("x1", function (d) {
+                        let srcId = d.Src_ID.split("-")[0]
+                        return x(eventMap.get(srcId).HRT)
+                    })
+                    .attr("y1", function (d) {
+                        let srcId = d.Src_ID.split("-")[0]
+                        let threadId = eventMap.get(srcId).ThreadID
+                        return y2(laneMap.get(threadId).id) + ((laneHeight / 2) + (spanHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)));
+                    })
+                    .attr("x2", function (d) {
+                        let dstId = d.Dst_ID.split("-")[0]
+                        return x(eventMap.get(dstId).HRT)
+                    })
+                    .attr("y2", function (d) {
+                        let dstId = d.Dst_ID.split("-")[0]
+                        let threadId = eventMap.get(dstId).ThreadID
+                        return y2(laneMap.get(threadId).id) + ((laneHeight / 2) + (spanHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)));
+                    })
+                    .attr("class", "lin");
 
-        }
+                lins.exit().remove();
+
+            }
         }
 
         function initialiseChart() {
@@ -590,12 +608,12 @@ class SpanSwimlane extends Component {
 
             spanRectangles.enter().append('rect')
                 .data(dataToRedraw)
-                .attr('class', (d) => { console.log(d.class);return (d.class + "bgroundHighlight bgroundHighlight") })
+                .attr('class', (d) => { return (d.class + "bgroundHighlight bgroundHighlight") })
                 .attr('x', 0)
-                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 1})
+                .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 1 })
                 .attr('width', width)
-                .attr('height', laneHeight-1)
-                
+                .attr('height', laneHeight - 1)
+
 
             spanRectangles.enter().append('rect')
                 .attr('x', (d) => { return x(d.start) })
@@ -616,9 +634,9 @@ class SpanSwimlane extends Component {
                     redrawHighlightedSpan()
                 })
 
-            if(molehillsOn){
+            if (molehillsOn) {
                 drawMolehills();
-            } 
+            }
 
         }
 
@@ -652,7 +670,7 @@ class SpanSwimlane extends Component {
                 })
 
             drawEvents()
-            drawLines()
+            drawEdges()
         }
 
         function drawMolehills() {
@@ -844,7 +862,7 @@ class SpanSwimlane extends Component {
                         drawMolehills()
                         drawSpans()
 
-                        
+
 
                         createLegend()
 
@@ -875,7 +893,7 @@ class SpanSwimlane extends Component {
                     mini.selectAll('.gEvents').remove();
                     if (eventsOn) {
 
-                        
+
 
                         if (molehillsOn) {
                             drawMolehills()
@@ -894,7 +912,7 @@ class SpanSwimlane extends Component {
 
 
                         //need to redraw the spans to put them back in the middle of the lane
-                        
+
 
                         if (molehillsOn) {
                             drawMolehills()
@@ -930,7 +948,7 @@ class SpanSwimlane extends Component {
 
                         initialiseChart()
 
-                        
+
                         if (molehillsOn) {
 
                             drawMolehills()
@@ -954,7 +972,7 @@ class SpanSwimlane extends Component {
 
                         initialiseChart()
 
-                        
+
 
 
                         if (molehillsOn) {
@@ -982,8 +1000,8 @@ class SpanSwimlane extends Component {
                     mini.selectAll('.lin').remove();
                     if (structureOn) {
 
-                        
-                        
+
+
 
                         if (molehillsOn) {
                             drawMolehills()
@@ -1002,7 +1020,7 @@ class SpanSwimlane extends Component {
 
 
                         //need to redraw the spans to put them back in the middle of the lane
-                        
+
 
                         if (molehillsOn) {
                             drawMolehills()
