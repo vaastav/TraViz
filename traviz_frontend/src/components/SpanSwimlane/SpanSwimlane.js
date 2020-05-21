@@ -513,7 +513,17 @@ class SpanSwimlane extends Component {
 
                 lins.enter().append("line")
                     .attr("stroke-width", function (d) {
-                        return Math.round(d.Percentage * 8)
+                        if (d.Percentage < 0.5) {
+                            return 1;
+                        } else if (d.Percentage >= 0.5 && d.Percentage < 0.60) {
+                            return 2;
+                        } else if (d.Percentage >= 0.6 && d.Percentage < 0.72) {
+                            return 3;
+                        } else if (d.Percentage >= 0.72 && d.Percentage < 0.85) {
+                            return 4;
+                        } else {
+                            return 5;
+                        }
                     })
                     .attr("x1", function (d) {
                         let srcId = d.Src_ID.split("-")[0]
