@@ -728,7 +728,7 @@ class SpanSwimlane extends Component {
                     .attr("stroke", d => {
                         return colourScheme(d.Probability)
                     })
-                    .attr('width', 1)
+                    .attr('width', 3)
                     .attr('height', eventSize)
                     .attr("x", function (d) { return x(d.HRT) })
                     .attr("y", function (d) { return y2(laneMap.get(d.ThreadID).id) + ((laneHeight / 2) + (spanHeight - eventSize) / 2 - (molehillsOn ? -(molehillShift) : (spanHeight / 2))); })
