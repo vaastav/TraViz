@@ -8,8 +8,8 @@
 	--histogram-plain-color: #888888;
 	--molehill-color: var(--histogram-plain-color);
 	--molehill-threshold-color: #872829;
-	--events-low-prob-color: white;
-	--events-high-prob-color: black;
+	--events-high-prob-color: white;
+	--events-low-prob-color: black;
 	--text-color: white;
 	--link-color: #c0c6a0; 
 
