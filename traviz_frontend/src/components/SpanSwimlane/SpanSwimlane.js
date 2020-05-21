@@ -509,7 +509,7 @@ class SpanSwimlane extends Component {
                 // draw the lines between parent and child events
                 let lins = lines.selectAll(".lin")
                     .data(edges)
-
+                console.log(edges)
 
                 lins.enter().append("line")
                     .attr("stroke-width", function (d) {
@@ -526,12 +526,16 @@ class SpanSwimlane extends Component {
                         }
                     })
                     .attr("x1", function (d) {
-                        let srcId = d.Src_ID.split("-")[0]
-                        return x(eventMap.get(srcId).HRT)
+                        let dstId = d.Dst_ID.split("-")[0]
+                        let dstEvent = eventMap.get(dstId)
+                        let parentEvent = eventMap.get(dstEvent.ParentEventID[0])
+                        return x(parentEvent.HRT)
                     })
                     .attr("y1", function (d) {
-                        let srcId = d.Src_ID.split("-")[0]
-                        let threadId = eventMap.get(srcId).ThreadID
+                        let dstId = d.Dst_ID.split("-")[0]
+                        let dstEvent = eventMap.get(dstId)
+                        let parentEvent = eventMap.get(dstEvent.ParentEventID[0])
+                        let threadId = parentEvent.ThreadID
                         return y2(laneMap.get(threadId).id) + ((laneHeight / 2) + (spanHeight / 2) - (molehillsOn ? -(molehillShift) : (spanHeight / 2)));
                     })
                     .attr("x2", function (d) {
