@@ -748,7 +748,7 @@ class SpanSwimlane extends Component {
                 chart.selectAll('.legend').remove()
                 chart.selectAll('.scaleSvg').remove()
                 // create a list of keys
-                var keys = ["Span", "Selected Span"]
+                var keys = []
                 var probabilityRange = range(0, 1, 0.01)
                 var color = [spanColorString, highlightSpanColorString]
 
@@ -1049,7 +1049,7 @@ class SpanSwimlane extends Component {
 
             d3v3.select('#toolbar')
                 .append('label').attr('for', 'structureCheckbox')
-                .text('Structure')
+                .text('Edges')
 
         }
 
