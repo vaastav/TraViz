@@ -322,7 +322,7 @@ class SpanSwimlane extends Component {
     constructor(props) {
         super(props);
         this.createSwimlane = this.createSwimlane.bind(this);
-        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false, molehillThreshold: 95, eventsOn: false, legendOn: false, structureOn: false, relationships: null };
+        this.state = { trace: [], tasks: null, selectedTask: null, molehillsOn: false, molehillThreshold: 95, eventsOn: false, legendOn: false, edgesOn: false, relationships: null };
         this.traceService = new TraceService();
         this.taskService = new TaskService();
     }
@@ -387,7 +387,7 @@ class SpanSwimlane extends Component {
         var molehillsOn = this.state.molehillsOn;
         var legendOn = this.state.legendOn;
         var eventsOn = this.state.eventsOn;
-        var structureOn = this.state.structureOn;
+        var edgesOn = this.state.edgesOn;
         var molehillThreshold = this.state.molehillThreshold;
 
         var chart;
@@ -499,7 +499,7 @@ class SpanSwimlane extends Component {
 
         function drawEdges() {
             mini.selectAll('.lin').remove();
-            if (structureOn) {
+            if (edgesOn) {
                 let eventSize = spanHeight - 2;
 
                 let lines = mini.append("svg")
@@ -510,7 +510,6 @@ class SpanSwimlane extends Component {
                 // draw the lines between parent and child events
                 let lins = lines.selectAll(".lin")
                     .data(edges)
-                console.log(edges)
 
                 lins.enter().append("line")
                     .attr("stroke", linkColorString)
@@ -681,7 +680,7 @@ class SpanSwimlane extends Component {
 
                     d3v3.selectAll("rect.bars").filter((d) => d.ThreadID === e.id)
                         .style("opacity", 0.1)
-
+                        .attr('id', 'legendLabel')
                     setSelectedSpan(spans, e.id, tasks)
                     redrawHighlightedSpan()
                 })
@@ -753,13 +752,20 @@ class SpanSwimlane extends Component {
                 // create a list of keys
                 var keys = []
                 var probabilityRange = range(0, 1, 0.01)
-                var color = [spanColorString, highlightSpanColorString]
+                var color = []
 
                 if (molehillsOn) {
-                    keys.push("Contention")
-                    keys.push("Above Threshold")
+                    keys.push("Low Contention")
+                    keys.push("High Contention")
                     color.push(molehillColorString)
                     color.push(molehillThresholdColorString)
+                }
+
+                if (edgesOn) {
+                    keys.push("Low probability")
+                    keys.push("High probability")
+                    color.push(linkColorString)
+                    color.push(linkColorString)
                 }
 
                 // keys.push("Hist Scale: log₂")
@@ -777,8 +783,16 @@ class SpanSwimlane extends Component {
                     .append("rect")
                     .attr("x", 5)
                     .attr("y", function (d, i) { return startPoint + i * (box) }) // 100 is where the first dot appears. 25 is the distance between dots
-                    .attr("width", function (d, i) { return keys[i].includes("Span") ? width : height })
-                    .attr("height", function (d, i) { return keys[i].includes("Span") ? height : width })
+                    .attr("width", function (d, i) {
+                        if (keys[i].includes("Low probability")) {
+                            return 1;
+                        } else if (keys[i].includes("High probability")) {
+                            return 5
+                        } else {
+                            return height
+                        }
+                    })
+                    .attr("height", function (d, i) { return width })
                     .style("fill", function (d, i) { return color[i] })
 
                 // Add one dot in the legend for each name.
@@ -787,7 +801,7 @@ class SpanSwimlane extends Component {
                     .enter()
                     .append("text")
                     .attr("x", function (d, i) { return keys[i].includes("Scale") ? 5 : 20 })
-                    .attr("y", function (d, i) { return (startPoint + (i * box) + (keys[i].includes("Span") ? height / 2 : width / 2 + 1)) }) // 100 is where the first dot appears. 25 is the distance between dots
+                    .attr("y", function (d, i) { return (startPoint + (i * box) + (width / 2 + 5)) }) // 100 is where the first dot appears. 25 is the distance between dots
                     .style("fill", textColorString)
                     .text(function (d) { return d })
                     .attr("text-anchor", "left")
@@ -899,7 +913,53 @@ class SpanSwimlane extends Component {
 
             d3v3.select("#toolbar")
                 .append('label').attr('for', 'molehillCheckbox')
-                .text('Molehills');
+                .attr('id', 'molehillLabel')
+                .text('Contention');
+
+            d3v3.select("#toolbar").append('input')
+                .attr('type', 'checkbox')
+                .attr('id', 'edgesCheckbox')
+                .on("click", function () {
+                    edgesOn = !edgesOn;
+                    mini.selectAll('.lin').remove();
+                    if (edgesOn) {
+
+
+
+
+                        if (molehillsOn) {
+                            drawMolehills()
+                        }
+
+                        drawSpans()
+
+                        createLegend()
+
+                    } else {
+                        //this removes the <g> containing all the event markers
+
+
+                        //this removes the <g> containing all the molehill rectangles
+                        mini.selectAll('.lin').remove()
+
+
+                        //need to redraw the spans to put them back in the middle of the lane
+
+
+                        if (molehillsOn) {
+                            drawMolehills()
+                        }
+
+                        drawSpans()
+                        createLegend()
+
+                    }
+                });
+
+            d3v3.select('#toolbar')
+                .append('label').attr('for', 'edgesCheckbox')
+                .attr('id', 'edgesLabel')
+                .text('Edges')
 
             d3v3.select("#toolbar").append('input')
                 .attr('type', 'checkbox')
@@ -929,8 +989,6 @@ class SpanSwimlane extends Component {
 
 
                         //need to redraw the spans to put them back in the middle of the lane
-
-
                         if (molehillsOn) {
                             drawMolehills()
                         }
@@ -944,6 +1002,7 @@ class SpanSwimlane extends Component {
 
             d3v3.select("#toolbar")
                 .append('label').attr('for', 'eventsCheckbox')
+                .attr('id', 'eventsLabel')
                 .text('Events');
 
             d3v3.select("#toolbar").append('input')
@@ -964,8 +1023,6 @@ class SpanSwimlane extends Component {
                         chart.remove()
 
                         initialiseChart()
-
-
                         if (molehillsOn) {
 
                             drawMolehills()
@@ -1006,54 +1063,8 @@ class SpanSwimlane extends Component {
 
             d3v3.select("#toolbar")
                 .append('label').attr('for', 'legendCheckbox')
+                .attr('id', 'legendLabel')
                 .text('Legend')
-
-
-            d3v3.select("#toolbar").append('input')
-                .attr('type', 'checkbox')
-                .attr('id', 'eventsCheckbox')
-                .on("click", function () {
-                    structureOn = !structureOn;
-                    mini.selectAll('.lin').remove();
-                    if (structureOn) {
-
-
-
-
-                        if (molehillsOn) {
-                            drawMolehills()
-                        }
-
-                        drawSpans()
-
-                        createLegend()
-
-                    } else {
-                        //this removes the <g> containing all the event markers
-
-
-                        //this removes the <g> containing all the molehill rectangles
-                        mini.selectAll('.lin').remove()
-
-
-                        //need to redraw the spans to put them back in the middle of the lane
-
-
-                        if (molehillsOn) {
-                            drawMolehills()
-                        }
-
-                        drawSpans()
-                        createLegend()
-
-                    }
-                });
-
-
-            d3v3.select('#toolbar')
-                .append('label').attr('for', 'structureCheckbox')
-                .text('Edges')
-
         }
 
 
