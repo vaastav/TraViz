@@ -505,6 +505,7 @@ class SpanSwimlane extends Component {
                 let lines = mini.append("svg")
                     .attr("stroke-width", 2)
                     .attr("stroke", linkColorString)
+                    .attr("shape-rendering", 'geometricPrecision')
 
                 // draw the lines between parent and child events
                 let lins = lines.selectAll(".lin")
@@ -512,6 +513,8 @@ class SpanSwimlane extends Component {
                 console.log(edges)
 
                 lins.enter().append("line")
+                    .attr("stroke", linkColorString)
+                    .attr("shape-rendering", 'geometricPrecision')
                     .attr("stroke-width", function (d) {
                         if (d.Percentage < 0.5) {
                             return 1;
