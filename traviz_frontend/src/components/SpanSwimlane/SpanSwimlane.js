@@ -359,6 +359,7 @@ class SpanSwimlane extends Component {
         edges.shift()
         this.state.tasks = tasks;
         spans = addMolehills(spans, tasks);
+        var prev_highlighted_span = 0;
 
         let lanes = createLanes(this.state.trace);
         let laneMap = makeLaneMap(lanes);
@@ -443,6 +444,7 @@ class SpanSwimlane extends Component {
                     .style("opacity", 0)
                     .style("fill", "white")
                     .on("mouseover", function () {
+                        console.log("Hover on hist");
                         d3v3.selectAll("rect.bars")
                             .style("opacity", 0)
                         d3v3.select(this)
@@ -604,14 +606,16 @@ class SpanSwimlane extends Component {
         }
 
         function redrawHighlightedSpan() {
+            console.log(mini.selectAll('.gSpans').selectAll('rect'));
             let rectanglesToRedraw = mini.selectAll('.gSpans')
                 .selectAll('rect')
                 .filter((d) => {
-                    return d.class === "selected" || d.class === "prevselected"
+                    return d.class === "selected" 
                 })
 
             let dataToRedraw = rectanglesToRedraw.data()
             rectanglesToRedraw.remove()
+            console.log(mini.selectAll('.gSpans').selectAll('rect'));
 
             mini.selectAll('.bgroundHighlight').remove()
 
@@ -622,6 +626,7 @@ class SpanSwimlane extends Component {
                 .attr('width', (d) => { return x(d.end) - x(d.start) })
                 .attr('class', (d) => { return d.class });
 
+            console.log(mini.selectAll('.gSpans').selectAll('rect'));
             spanRectangles.enter().append('rect')
                 .data(dataToRedraw)
                 .attr('class', (d) => { return (d.class + "bgroundHighlight bgroundHighlight") })
@@ -629,7 +634,6 @@ class SpanSwimlane extends Component {
                 .attr('y', (d) => { return y2(lanes.find(l => l.ThreadID === d.id).id) + 1 })
                 .attr('width', width)
                 .attr('height', laneHeight - 1)
-
 
             spanRectangles.enter().append('rect')
                 .attr('x', (d) => { return x(d.start) })
@@ -640,15 +644,19 @@ class SpanSwimlane extends Component {
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
-                    d3v3.selectAll("rect.bars")
-                        .style("opacity", 0)
+                    if (e.id !== prev_highlighted_span) {
+                        d3v3.selectAll("rect.bars")
+                            .style("opacity", 0)
 
-                    d3v3.selectAll("rect.bars").filter((d) => d.ThreadID === e.id)
-                        .style("opacity", 0.1)
+                        d3v3.selectAll("rect.bars").filter((d) => d.ThreadID === e.id)
+                            .style("opacity", 0.1)
 
-                    setSelectedSpan(spans, e.id, tasks)
-                    redrawHighlightedSpan()
+                        setSelectedSpan(spans, e.id, tasks)
+                        prev_highlighted_span = e.id
+                        redrawHighlightedSpan()
+                    }
                 })
+            //console.log(mini.selectAll('.gSpans').selectAll('rect'));
 
             if (molehillsOn) {
                 drawMolehills();
@@ -675,14 +683,17 @@ class SpanSwimlane extends Component {
                 .attr('stroke', spanColorString)
                 .attr('fill', spanColorString)
                 .on('mouseover', (e) => {
-                    d3v3.selectAll("rect.bars")
-                        .style("opacity", 0)
+                    if (e.id !== prev_highlighted_span) {
+                        d3v3.selectAll("rect.bars")
+                            .style("opacity", 0)
 
-                    d3v3.selectAll("rect.bars").filter((d) => d.ThreadID === e.id)
-                        .style("opacity", 0.1)
-                        .attr('id', 'legendLabel')
-                    setSelectedSpan(spans, e.id, tasks)
-                    redrawHighlightedSpan()
+                        d3v3.selectAll("rect.bars").filter((d) => d.ThreadID === e.id)
+                            .style("opacity", 0.1)
+                            .attr('id', 'legendLabel')
+                        setSelectedSpan(spans, e.id, tasks)
+                        prev_highlighted_span = e.id;
+                        redrawHighlightedSpan()
+                    }
                 })
 
             drawEvents()
