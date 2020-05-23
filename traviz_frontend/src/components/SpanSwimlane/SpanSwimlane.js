@@ -500,6 +500,7 @@ class SpanSwimlane extends Component {
 
         function drawEdges() {
             mini.selectAll('.lin').remove();
+            
             if (edgesOn) {
                 let eventSize = spanHeight - 2;
 
@@ -636,6 +637,8 @@ class SpanSwimlane extends Component {
                 .attr('height', (d) => molehillY(d.val))
                 .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
                 .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString));
+
+            drawEdges()
 
 
         }
