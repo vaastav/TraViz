@@ -443,8 +443,7 @@ class SpanSwimlane extends Component {
                     .attr("class", "bars")
                     .style("opacity", 0)
                     .style("fill", "white")
-                    .on("mouseover", function () {
-                        console.log("Hover on hist");
+                    .on("mouseover", function (d) {
                         d3v3.selectAll("rect.bars")
                             .style("opacity", 0)
                         d3v3.select(this)
@@ -452,7 +451,7 @@ class SpanSwimlane extends Component {
 
                         setSelectedSpan(spans, task.ThreadID, tasks)
 
-                        redrawHighlightedSpan()
+                        redrawHighlightedSpan(d.ThreadID)
                     })
 
                 // Create actual histogram
@@ -605,17 +604,51 @@ class SpanSwimlane extends Component {
                 .attr('stroke', laneColorString);
         }
 
-        function redrawHighlightedSpan() {
-            console.log(mini.selectAll('.gSpans').selectAll('rect'));
+        function redrawHighlightedMolehill(threadID) {
+            let molehillsToRedraw = mini.selectAll('.gMolehillRectangles').filter((d) => {
+                return d.id === threadID
+            });
+
+            let span = molehillsToRedraw.data()[0]
+
+            molehillsToRedraw.remove()
+
+            var mhWidth = (x(span.end) - x(span.start)) / span.molehills.length;
+            var spanStartPoint = x(span.start);
+           
+            let gRectangle = mini.append('g').attr('class', 'gMolehillRectangles')
+            gRectangle.data([span]).enter()
+
+            let molehillRectangles = gRectangle
+                .selectAll('rect')
+                .data(span.molehills)
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('width', 10)
+
+            molehillRectangles.enter().append('rect')
+                .attr("class", 'molehillRect')
+                .attr('x', (d) => {
+                    return spanStartPoint + d.id * mhWidth;
+                })
+                .attr('y', (d) => { return (y2(lanes.find(l => l.ThreadID === span.id).id) + (laneHeight / 2) + (molehillShift - 1)) - molehillY(d.val) })
+                .attr('width', mhWidth)
+                .attr('height', (d) => molehillY(d.val))
+                .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
+                .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString));
+
+
+        }
+
+        function redrawHighlightedSpan(threadID) {
             let rectanglesToRedraw = mini.selectAll('.gSpans')
                 .selectAll('rect')
                 .filter((d) => {
-                    return d.class === "selected" 
+                    return d.class === "selected"
                 })
 
             let dataToRedraw = rectanglesToRedraw.data()
             rectanglesToRedraw.remove()
-            console.log(mini.selectAll('.gSpans').selectAll('rect'));
 
             mini.selectAll('.bgroundHighlight').remove()
 
@@ -626,7 +659,6 @@ class SpanSwimlane extends Component {
                 .attr('width', (d) => { return x(d.end) - x(d.start) })
                 .attr('class', (d) => { return d.class });
 
-            console.log(mini.selectAll('.gSpans').selectAll('rect'));
             spanRectangles.enter().append('rect')
                 .data(dataToRedraw)
                 .attr('class', (d) => { return (d.class + "bgroundHighlight bgroundHighlight") })
@@ -653,13 +685,12 @@ class SpanSwimlane extends Component {
 
                         setSelectedSpan(spans, e.id, tasks)
                         prev_highlighted_span = e.id
-                        redrawHighlightedSpan()
+                        redrawHighlightedSpan(e.id)
                     }
                 })
-            //console.log(mini.selectAll('.gSpans').selectAll('rect'));
 
             if (molehillsOn) {
-                drawMolehills();
+                redrawHighlightedMolehill(threadID);
             }
 
         }
@@ -692,7 +723,7 @@ class SpanSwimlane extends Component {
                             .attr('id', 'legendLabel')
                         setSelectedSpan(spans, e.id, tasks)
                         prev_highlighted_span = e.id;
-                        redrawHighlightedSpan()
+                        redrawHighlightedSpan(e.id)
                     }
                 })
 
@@ -701,10 +732,13 @@ class SpanSwimlane extends Component {
         }
 
         function drawMolehills() {
+            mini.selectAll(".gMolehillRectangles").remove()
+
             for (var i = 0; i < spans.length; i++) {
                 var mhWidth = (x(spans[i].end) - x(spans[i].start)) / spans[i].molehills.length;
                 var spanStartPoint = x(spans[i].start);
-                let molehillRectangles = mini.append('g').attr('class', 'gMolehillRectangles').selectAll('rect')
+                let molehillRectangles = mini.append('g').attr('class', 'gMolehillRectangles')
+                    .selectAll('rect')
                     .data(spans[i].molehills)
                     .attr('x', 0)
                     .attr('y', 0)
@@ -721,6 +755,8 @@ class SpanSwimlane extends Component {
                     .attr('stroke', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString))
                     .attr('fill', (d) => (d.val > molehillThreshold ? molehillThresholdColorString : molehillColorString));
             }
+
+            mini.selectAll(".gMolehillRectangles").data(spans).enter()
         }
 
         function drawEvents() {
@@ -1035,7 +1071,6 @@ class SpanSwimlane extends Component {
 
                         initialiseChart()
                         if (molehillsOn) {
-
                             drawMolehills()
                         }
 
